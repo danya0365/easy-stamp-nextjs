@@ -15,6 +15,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import {
+  isRemoteDb,
   schema,
   daysFromNow,
   MONTHLY_AMOUNT_SATANG,
@@ -97,6 +98,12 @@ function earnChunks(total: number): number[] {
 
 export async function seedMock(ctx: SeedContext) {
   const { db, passwordHash, log } = ctx;
+
+  // Hard stop: mock data must never touch a real production DB.
+  if (isRemoteDb()) {
+    log("mock: remote DB detected — skipping dev-only mock data");
+    return;
+  }
 
   const admin = await db.query.users.findFirst({
     where: eq(schema.users.email, "admin@easystamp.test"),

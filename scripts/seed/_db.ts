@@ -23,6 +23,11 @@ export function createSeedDb(): { db: SeedDb; client: Client } {
   return { db, client };
 }
 
+/** True when seeding against a remote (production) Turso DB rather than a local file. */
+export function isRemoteDb(): boolean {
+  return /^(libsql|https|wss):/.test(process.env.TURSO_DATABASE_URL ?? "");
+}
+
 export function daysFromNow(days: number): string {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }

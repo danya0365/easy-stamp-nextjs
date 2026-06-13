@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 import {
+  isRemoteDb,
   schema,
   daysFromNow,
   MONTHLY_AMOUNT_SATANG,
@@ -49,6 +50,12 @@ export async function seedStarter({ db, passwordHash, log }: SeedContext) {
     categoryId.set(cat.slug, id);
   }
   log(`starter: ${CATEGORIES.length} categories ensured`);
+
+  // The example shop is for local testing only — never pollute a real prod DB.
+  if (isRemoteDb()) {
+    log("starter: remote DB — skipping demo example shop (categories only)");
+    return;
+  }
 
   // --- One clean example shop for real testing ---
   const existingShop = await db.query.shops.findFirst({
