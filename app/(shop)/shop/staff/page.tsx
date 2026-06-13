@@ -1,3 +1,5 @@
+import { User } from "lucide-react";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -27,7 +29,7 @@ export default async function ShopStaffPage() {
       <Card>
         <CardHeader title={`พนักงานทั้งหมด (${staff.length})`} />
         {staff.length === 0 ? (
-          <EmptyState icon="👤" title="ยังไม่มีพนักงาน" />
+          <EmptyState icon={<User />} title="ยังไม่มีพนักงาน" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {staff.map((s) => (

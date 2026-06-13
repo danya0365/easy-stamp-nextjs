@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Smartphone, Share } from "lucide-react";
 
 import { Button } from "@/src/presentation/components/ui/Button";
 
@@ -51,7 +52,8 @@ export function InstallHint() {
           setPromptEvent(null);
         }}
       >
-        📲 เพิ่มลงหน้าจอหลัก (เปิดบัตรได้เลยครั้งหน้า)
+        <Smartphone className="size-4" />
+        เพิ่มลงหน้าจอหลัก (เปิดบัตรได้เลยครั้งหน้า)
       </Button>
     );
   }
@@ -59,8 +61,12 @@ export function InstallHint() {
   if (isIOS) {
     return (
       <p className="rounded-lg bg-brand-50 px-3 py-2 text-center text-sm text-brand-700 ring-1 ring-brand-100">
-        📲 เพิ่มลงหน้าจอหลัก: แตะ <strong>⬆️ แชร์</strong> แล้วเลือก{" "}
-        <strong>เพิ่มไปยังหน้าจอโฮม</strong>
+        <Smartphone className="mr-1 inline size-4 align-text-bottom" />
+        เพิ่มลงหน้าจอหลัก: แตะ{" "}
+        <strong className="inline-flex items-center gap-0.5 align-text-bottom">
+          <Share className="size-4" /> แชร์
+        </strong>{" "}
+        แล้วเลือก <strong>เพิ่มไปยังหน้าจอโฮม</strong>
       </p>
     );
   }

@@ -1,3 +1,5 @@
+import { Inbox } from "lucide-react";
+
 import type { CustomerCardView } from "@/src/domain/entities";
 import { computeBillingState } from "@/src/domain/services/subscription-status";
 import {
@@ -169,7 +171,7 @@ export default function PreviewPage() {
 
       <Section title="Empty state">
         <EmptyState
-          icon="📭"
+          icon={<Inbox />}
           title="ยังไม่มีลูกค้า"
           description="เริ่มเพิ่มแสตมป์ให้ลูกค้าคนแรกของคุณ"
           action={<Button size="sm">เพิ่มลูกค้า</Button>}

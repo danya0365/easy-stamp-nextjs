@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
+import { MapPin } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
@@ -39,9 +40,10 @@ export default function StoreMapView({
             setActive(loc);
           }}
         >
-          <span className="cursor-pointer text-2xl drop-shadow" aria-hidden>
-            📍
-          </span>
+          <MapPin
+            size={30}
+            className="cursor-pointer fill-brand-500 text-white drop-shadow"
+          />
         </Marker>
       ))}
 

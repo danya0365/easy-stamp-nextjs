@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleCheck } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -28,7 +29,7 @@ export default async function AdminPaymentsPage() {
     <Card>
       <CardHeader title={`คิวตรวจสอบการชำระเงิน (${pending.length})`} />
       {pending.length === 0 ? (
-        <EmptyState icon="✅" title="ไม่มีรายการรอตรวจสอบ" />
+        <EmptyState icon={<CircleCheck />} title="ไม่มีรายการรอตรวจสอบ" />
       ) : (
         <ul className="flex flex-col divide-y divide-border">
           {pending.map((p) => (

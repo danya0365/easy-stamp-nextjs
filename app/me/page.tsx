@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Smartphone, ShoppingBag, PartyPopper } from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getAllMemberTokens } from "@/src/infrastructure/auth/member";
@@ -28,13 +29,16 @@ export default async function MyCardsPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
       <header className="text-center">
-        <h1 className="text-2xl font-bold text-brand-700">บัตรของฉัน 👜</h1>
+        <h1 className="inline-flex items-center justify-center gap-2 text-2xl font-bold text-brand-700">
+          <ShoppingBag className="size-6" />
+          บัตรของฉัน
+        </h1>
         <p className="text-sm text-muted">บัตรสะสมแสตมป์ทุกร้านบนเครื่องนี้</p>
       </header>
 
       {cards.length === 0 ? (
         <EmptyState
-          icon="📱"
+          icon={<Smartphone />}
           title="ยังไม่มีบัตร"
           description="ไปที่ร้านแล้วให้พนักงานออก QR ผูกบัตร แล้วสแกนด้วยกล้องมือถือของคุณ"
         />
@@ -46,7 +50,10 @@ export default async function MyCardsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-foreground">{shopName}</span>
                   {view.eligibleToRedeem ? (
-                    <Badge tone="success">🎉 ครบ แลกได้</Badge>
+                    <Badge tone="success">
+                      <PartyPopper className="size-3.5" />
+                      ครบ แลกได้
+                    </Badge>
                   ) : (
                     <Badge tone="brand">
                       {view.card.currentStamps}/{view.threshold}

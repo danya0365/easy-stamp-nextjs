@@ -1,3 +1,5 @@
+import { Package, Receipt } from "lucide-react";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { container } from "@/src/infrastructure/di/container";
@@ -42,7 +44,7 @@ export default async function ShopBillingPage() {
         <CardHeader title="สถานะค่าบริการรายเดือน" />
         {!subscription ? (
           <EmptyState
-            icon="📦"
+            icon={<Package />}
             title="ยังไม่มีแพ็กเกจ"
             description="กรุณาติดต่อผู้ดูแลระบบเพื่อเปิดใช้งาน"
           />
@@ -96,7 +98,7 @@ export default async function ShopBillingPage() {
       <Card>
         <CardHeader title="ประวัติการชำระเงิน" />
         {payments.length === 0 ? (
-          <EmptyState icon="🧾" title="ยังไม่มีประวัติ" />
+          <EmptyState icon={<Receipt />} title="ยังไม่มีประวัติ" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {payments.map((p) => {

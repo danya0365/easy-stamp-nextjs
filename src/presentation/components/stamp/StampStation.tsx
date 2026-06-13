@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
+import { Camera, Lock, Plus, Gift, Smartphone, Sparkles } from "lucide-react";
 
 import {
   addStampsAction,
@@ -97,7 +98,8 @@ export function StampStation() {
               disabled={pending}
               title="สแกน QR ส่วนตัวลูกค้า"
             >
-              📷 สแกน
+              <Camera className="size-4" />
+              สแกน
             </Button>
           </div>
 
@@ -106,8 +108,9 @@ export function StampStation() {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <p className="text-xs text-muted">
-            🔒 เก็บเบอร์และชื่อเพื่อใช้ในระบบสะสมแต้มเท่านั้น
+          <p className="inline-flex items-center gap-1 text-xs text-muted">
+            <Lock className="size-3.5" />
+            เก็บเบอร์และชื่อเพื่อใช้ในระบบสะสมแต้มเท่านั้น
           </p>
 
           <div className="flex items-end gap-2">
@@ -127,7 +130,7 @@ export function StampStation() {
               onClick={() => run(addStampsAction)}
               disabled={pending || !phone}
             >
-              {pending ? <Spinner /> : "➕"} เพิ่มแสตมป์
+              {pending ? <Spinner /> : <Plus className="size-4" />} เพิ่มแสตมป์
             </Button>
           </div>
         </div>
@@ -156,7 +159,8 @@ export function StampStation() {
                   onClick={() => run(redeemRewardAction)}
                   disabled={pending}
                 >
-                  🎁 แลกรางวัล (ใช้ {view.threshold} ดวง)
+                  <Gift className="size-4" />
+                  แลกรางวัล (ใช้ {view.threshold} ดวง)
                 </Button>
               )}
               <Button
@@ -165,14 +169,15 @@ export function StampStation() {
                 onClick={openBind}
                 disabled={pending}
               >
-                📲 ออก QR ผูกบัตร (ให้ลูกค้าสแกนดูแต้มเอง)
+                <Smartphone className="size-4" />
+                ออก QR ผูกบัตร (ให้ลูกค้าสแกนดูแต้มเอง)
               </Button>
             </div>
           </Card>
         ) : (
           !result.error && (
             <EmptyState
-              icon="🆕"
+              icon={<Sparkles />}
               title="ลูกค้าใหม่ / ยังไม่มีแต้ม"
               description="กด «เพิ่มแสตมป์» เพื่อสร้างบัตรและเพิ่มแต้มแรก"
             />

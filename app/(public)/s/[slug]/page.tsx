@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Camera, ShoppingBag, Smartphone, TriangleAlert } from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
@@ -73,15 +74,17 @@ export default async function PublicShopCheckPage({
           {personalQrUrl && <MemberQr qrImageUrl={personalQrUrl} />}
 
           <p className="rounded-xl bg-brand-50 px-4 py-3 text-center text-sm text-brand-700 ring-1 ring-brand-100">
-            📷 <strong>เปิดบัตรซ้ำง่ายๆ:</strong> ครั้งหน้าแค่สแกน QR ที่ร้านอีกครั้ง
+            <Camera className="mr-1 inline size-4 align-text-bottom" />
+            <strong>เปิดบัตรซ้ำง่ายๆ:</strong> ครั้งหน้าแค่สแกน QR ที่ร้านอีกครั้ง
             — ไม่ต้องติดตั้งอะไร
           </p>
 
           <Link
             href="/me"
-            className="text-center text-sm font-medium text-brand-700 hover:underline"
+            className="inline-flex items-center justify-center gap-1.5 text-center text-sm font-medium text-brand-700 hover:underline"
           >
-            👜 ดูบัตรสะสมแต้มทุกร้านของฉัน
+            <ShoppingBag className="size-4" />
+            ดูบัตรสะสมแต้มทุกร้านของฉัน
           </Link>
 
           <details className="text-center">
@@ -95,7 +98,7 @@ export default async function PublicShopCheckPage({
         </>
       ) : (
         <EmptyState
-          icon={bind === "invalid" ? "⚠️" : "📱"}
+          icon={bind === "invalid" ? <TriangleAlert /> : <Smartphone />}
           title={
             bind === "invalid"
               ? "QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"

@@ -148,7 +148,7 @@ export async function redeemRewardAction(
     ).execute({ shopId, branchId, phone, performedBy: user.id });
     revalidatePath("/staff");
     revalidatePath("/shop/customers");
-    return { phone, view, searched: true, success: "แลกรางวัลสำเร็จ 🎉" };
+    return { phone, view, searched: true, success: "แลกรางวัลสำเร็จ" };
   } catch (e) {
     return { phone, error: (e as Error).message, searched: true };
   }

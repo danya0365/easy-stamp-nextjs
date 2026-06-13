@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
+import { MapPin } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
@@ -64,9 +65,10 @@ export default function BranchLocationEditorView({
                 setPos({ lng: e.lngLat.lng, lat: e.lngLat.lat })
               }
             >
-              <span className="text-2xl drop-shadow" aria-hidden>
-                📍
-              </span>
+              <MapPin
+                size={30}
+                className="cursor-grab fill-brand-500 text-white drop-shadow active:cursor-grabbing"
+              />
             </Marker>
           )}
         </Map>

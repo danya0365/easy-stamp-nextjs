@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TriangleAlert } from "lucide-react";
 import type { BillingStatus } from "@/src/domain/services/subscription-status";
 import { GRACE_DAYS } from "@/src/domain/services/subscription-status";
 
@@ -18,9 +19,12 @@ export function SuspensionBanner({ status }: { status: BillingStatus }) {
   return (
     <div className={`px-4 py-3 ring-1 print:hidden ${tone}`}>
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 text-sm">
-        <span>
-          ⚠️ ค้างชำระค่าบริการ {status.daysOverdue} วัน — กรุณาชำระภายในอีก{" "}
-          <strong>{status.graceDaysLeft} วัน</strong> มิฉะนั้นระบบจะถูกระงับ
+        <span className="inline-flex items-center gap-1.5">
+          <TriangleAlert className="size-4 shrink-0" />
+          <span>
+            ค้างชำระค่าบริการ {status.daysOverdue} วัน — กรุณาชำระภายในอีก{" "}
+            <strong>{status.graceDaysLeft} วัน</strong> มิฉะนั้นระบบจะถูกระงับ
+          </span>
         </span>
         <Link
           href="/shop/billing"

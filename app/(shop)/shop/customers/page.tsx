@@ -1,3 +1,5 @@
+import { Users } from "lucide-react";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -43,7 +45,7 @@ export default async function ShopCustomersPage({
       <Card>
         <CardHeader title={`ลูกค้า (${customers.length})`} />
         {customers.length === 0 ? (
-          <EmptyState icon="🧑‍🤝‍🧑" title="ยังไม่มีลูกค้า" />
+          <EmptyState icon={<Users />} title="ยังไม่มีลูกค้า" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {customers.map((c, i) => {

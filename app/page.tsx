@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Store } from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { StoreMap } from "@/src/presentation/components/map/StoreMap";
@@ -34,8 +35,9 @@ export default async function HomePage() {
           <StoreMap locations={locations} />
         </div>
         <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center">
-          <span className="pointer-events-auto rounded-full bg-card/90 px-4 py-1.5 text-sm font-medium text-foreground shadow-sm backdrop-blur">
-            🔎 ร้านค้าที่ร่วมรายการ {locations.length} แห่ง
+          <span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-1.5 text-sm font-medium text-foreground shadow-sm backdrop-blur">
+            <Store size={16} className="text-brand-600" />
+            ร้านค้าที่ร่วมรายการ {locations.length} แห่ง
           </span>
         </div>
       </section>

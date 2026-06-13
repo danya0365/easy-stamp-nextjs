@@ -1,3 +1,4 @@
+import { PartyPopper } from "lucide-react";
 import type { CustomerCardView } from "@/src/domain/entities";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { StampDots } from "@/src/presentation/components/ui/StampDots";
@@ -26,7 +27,10 @@ export function CardBalance({
           )}
         </div>
         {eligibleToRedeem ? (
-          <Badge tone="success">🎉 ครบแล้ว แลกได้</Badge>
+          <Badge tone="success">
+            <PartyPopper className="size-3.5" />
+            ครบแล้ว แลกได้
+          </Badge>
         ) : (
           <Badge tone="brand">
             {card.currentStamps}/{threshold} ดวง

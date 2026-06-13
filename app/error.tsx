@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Frown } from "lucide-react";
 
 export default function Error({
   error,
@@ -17,7 +18,7 @@ export default function Error({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-5 px-4 text-center">
-      <span className="text-5xl">😵</span>
+      <Frown className="size-14 text-brand-400" />
       <div>
         <h1 className="text-2xl font-bold text-brand-700">เกิดข้อผิดพลาด</h1>
         <p className="mt-2 text-sm text-muted">

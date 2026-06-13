@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Store } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -36,7 +37,7 @@ export default async function AdminShopsPage() {
       <Card>
         <CardHeader title={`ร้านค้าทั้งหมด (${shops.length})`} />
         {shops.length === 0 ? (
-          <EmptyState icon="🏪" title="ยังไม่มีร้านค้า" />
+          <EmptyState icon={<Store />} title="ยังไม่มีร้านค้า" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {shops.map((shop, i) => {

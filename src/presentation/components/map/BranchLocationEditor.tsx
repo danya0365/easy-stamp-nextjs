@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { MapPin, Plus, ChevronDown, ChevronUp } from "lucide-react";
 
 const EditorView = dynamic(() => import("./BranchLocationEditorView"), {
   ssr: false,
@@ -35,9 +36,13 @@ export function BranchLocationEditor({
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 self-start text-xs font-medium text-brand-700 hover:underline"
       >
-        <span aria-hidden>{hasLocation ? "📍" : "➕"}</span>
+        {hasLocation ? <MapPin size={14} /> : <Plus size={14} />}
         {hasLocation ? "แก้ไขตำแหน่งบนแผนที่" : "ตั้งตำแหน่งบนแผนที่"}
-        <span className="text-muted">{open ? "▲" : "▼"}</span>
+        {open ? (
+          <ChevronUp size={14} className="text-muted" />
+        ) : (
+          <ChevronDown size={14} className="text-muted" />
+        )}
       </button>
 
       {open && (

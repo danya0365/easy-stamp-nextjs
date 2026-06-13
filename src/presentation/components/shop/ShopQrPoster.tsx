@@ -1,6 +1,8 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
+import { ScanLine, Download, Printer } from "lucide-react";
+
 import { Button } from "@/src/presentation/components/ui/Button";
 
 /** Printable / downloadable shop poster: customers scan to reach /s/<slug>. */
@@ -36,17 +38,22 @@ export function ShopQrPoster({
           height={256}
           className="h-64 w-64 object-contain"
         />
-        <p className="text-lg font-semibold text-brand-700">
-          📱 สแกนเพื่อสมัคร / เปิดบัตรสะสมแต้ม
+        <p className="inline-flex items-center gap-1.5 text-lg font-semibold text-brand-700">
+          <ScanLine className="size-5" />
+          สแกนเพื่อสมัคร / เปิดบัตรสะสมแต้ม
         </p>
         <p className="text-xs break-all text-muted">{url}</p>
       </div>
 
       <div className="flex justify-center gap-2 print:hidden">
         <Button variant="outline" onClick={download}>
-          ⬇️ ดาวน์โหลด PNG
+          <Download className="size-4" />
+          ดาวน์โหลด PNG
         </Button>
-        <Button onClick={() => window.print()}>🖨️ พิมพ์ป้าย</Button>
+        <Button onClick={() => window.print()}>
+          <Printer className="size-4" />
+          พิมพ์ป้าย
+        </Button>
       </div>
     </div>
   );

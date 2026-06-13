@@ -1,3 +1,5 @@
+import { Building2 } from "lucide-react";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -22,7 +24,7 @@ export default async function ShopBranchesPage() {
       <Card>
         <CardHeader title={`สาขาทั้งหมด (${branches.length})`} />
         {branches.length === 0 ? (
-          <EmptyState icon="🏬" title="ยังไม่มีสาขา" />
+          <EmptyState icon={<Building2 />} title="ยังไม่มีสาขา" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {branches.map((b) => (
