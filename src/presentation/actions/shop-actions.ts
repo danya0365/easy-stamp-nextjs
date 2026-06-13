@@ -7,6 +7,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/UpdateShopSettingsUseCase";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
+import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
 import { CreateStaffUseCase } from "@/src/application/use-cases/shop/CreateStaffUseCase";
 
 export interface FormState {
@@ -64,6 +65,38 @@ export async function toggleBranchAction(
   if (!branch || branch.shopId !== shopId) throw new Error("ไม่พบสาขาในร้านนี้");
   await container.branchRepository.setActive(branchId, isActive);
   revalidatePath("/shop/branches");
+}
+
+export async function updateBranchLocationAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const shopId = await ownerShopId();
+    const branchId = String(formData.get("branchId") ?? "");
+    const latRaw = String(formData.get("latitude") ?? "").trim();
+    const lngRaw = String(formData.get("longitude") ?? "").trim();
+    const parse = (v: string): number | null => {
+      if (v === "") return null;
+      const n = Number(v);
+      if (Number.isNaN(n)) throw new Error("พิกัดไม่ถูกต้อง");
+      return n;
+    };
+    await new UpdateBranchLocationUseCase(container.branchRepository).execute(
+      shopId,
+      branchId,
+      {
+        latitude: parse(latRaw),
+        longitude: parse(lngRaw),
+        address: String(formData.get("address") ?? ""),
+      },
+    );
+    revalidatePath("/shop/branches");
+    revalidatePath("/");
+    return { success: "บันทึกตำแหน่งแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 export async function createStaffAction(

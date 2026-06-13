@@ -35,6 +35,10 @@ export interface Branch {
   shopId: string;
   name: string;
   isActive: boolean;
+  /** Physical location, null until the owner sets it from /shop/branches. */
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
   createdAt: string;
   updatedAt: string;
 }

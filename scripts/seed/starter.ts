@@ -90,6 +90,10 @@ export async function seedStarter({ db, passwordHash, log }: SeedContext) {
     id: nanoid(),
     shopId,
     name: "สาขาหลัก",
+    // Central Bangkok, so the public map has a pin right after a core seed.
+    latitude: 13.7563,
+    longitude: 100.5018,
+    address: "ถนนราชดำเนิน กรุงเทพฯ",
   });
 
   await db.insert(schema.users).values({

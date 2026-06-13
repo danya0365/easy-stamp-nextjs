@@ -32,6 +32,10 @@ interface ShopSpec {
   categorySlug: string;
   billing: Billing;
   rewardText: string;
+  /** Main-branch location (Bangkok) so the public map has pins to show. */
+  lat: number;
+  lng: number;
+  address: string;
 }
 
 const SHOPS: ShopSpec[] = [
@@ -41,6 +45,9 @@ const SHOPS: ShopSpec[] = [
     categorySlug: "coffee",
     billing: "active",
     rewardText: "เลือกเครื่องดื่มในร้านฟรี 1 แก้ว",
+    lat: 13.7466,
+    lng: 100.5347,
+    address: "สยามสแควร์ ปทุมวัน กรุงเทพฯ",
   },
   {
     name: "ร้านชานม C",
@@ -48,6 +55,9 @@ const SHOPS: ShopSpec[] = [
     categorySlug: "beverage",
     billing: "grace", // overdue ~3 days → escalating banner, not blocked
     rewardText: "ชานมไข่มุกฟรี 1 แก้ว",
+    lat: 13.7373,
+    lng: 100.5601,
+    address: "อโศก สุขุมวิท กรุงเทพฯ",
   },
   {
     name: "ร้านเบเกอรี่ B",
@@ -55,6 +65,9 @@ const SHOPS: ShopSpec[] = [
     categorySlug: "bakery",
     billing: "suspended", // overdue > 7 days → blocked
     rewardText: "เลือกขนมในร้านฟรี 1 ชิ้น",
+    lat: 13.7649,
+    lng: 100.5383,
+    address: "อารีย์ พหลโยธิน กรุงเทพฯ",
   },
   {
     name: "ร้านสปา D",
@@ -62,6 +75,9 @@ const SHOPS: ShopSpec[] = [
     categorySlug: "beauty",
     billing: "admin", // admin-suspended
     rewardText: "นวดฟรี 30 นาที",
+    lat: 13.7305,
+    lng: 100.5697,
+    address: "ทองหล่อ สุขุมวิท กรุงเทพฯ",
   },
 ];
 
@@ -152,12 +168,23 @@ export async function seedMock(ctx: SeedContext) {
     // Branches — second branch inactive on the admin-suspended shop, to demo state.
     const branchIds = [nanoid(), nanoid()];
     await db.insert(schema.branches).values([
-      { id: branchIds[0], shopId, name: `${opts.name} - สาขาหลัก` },
+      {
+        id: branchIds[0],
+        shopId,
+        name: `${opts.name} - สาขาหลัก`,
+        latitude: opts.lat,
+        longitude: opts.lng,
+        address: opts.address,
+      },
       {
         id: branchIds[1],
         shopId,
         name: `${opts.name} - สาขา 2`,
         isActive: opts.billing !== "admin",
+        // Offset a touch so the second branch doesn't overlap the main pin.
+        latitude: opts.lat + 0.01,
+        longitude: opts.lng + 0.01,
+        address: opts.address,
       },
     ]);
 
