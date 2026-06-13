@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Camera, ShoppingBag, Smartphone, TriangleAlert } from "lucide-react";
+import { Camera, Smartphone, TriangleAlert } from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
@@ -61,15 +61,10 @@ export default async function PublicShopCheckPage({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
-      <header className="text-center">
-        <h1 className="text-2xl font-bold text-brand-700">{shop.name}</h1>
-        <p className="text-sm text-muted">บัตรสะสมแสตมป์</p>
-      </header>
-
       {view ? (
         <>
           <Card>
-            <CardBalance view={view} dotSize="md" />
+            <CardBalance view={view} shopName={shop.name} dotSize="md" />
           </Card>
           {personalQrUrl && <MemberQr qrImageUrl={personalQrUrl} />}
 
@@ -78,14 +73,6 @@ export default async function PublicShopCheckPage({
             <strong>เปิดบัตรซ้ำง่ายๆ:</strong> ครั้งหน้าแค่สแกน QR ที่ร้านอีกครั้ง
             — ไม่ต้องติดตั้งอะไร
           </p>
-
-          <Link
-            href="/me"
-            className="inline-flex items-center justify-center gap-1.5 text-center text-sm font-medium text-brand-700 hover:underline"
-          >
-            <ShoppingBag className="size-4" />
-            ดูบัตรสะสมแต้มทุกร้านของฉัน
-          </Link>
 
           <details className="text-center">
             <summary className="cursor-pointer text-xs text-muted">
@@ -97,15 +84,21 @@ export default async function PublicShopCheckPage({
           </details>
         </>
       ) : (
-        <EmptyState
-          icon={bind === "invalid" ? <TriangleAlert /> : <Smartphone />}
-          title={
-            bind === "invalid"
-              ? "QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
-              : "ยังไม่ได้ผูกอุปกรณ์นี้"
-          }
-          description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตร แล้วสแกนด้วยกล้องมือถือของคุณ เพื่อดูแต้มสะสม"
-        />
+        <>
+          <header className="text-center">
+            <h1 className="text-2xl font-bold text-brand-700">{shop.name}</h1>
+            <p className="text-sm text-muted">บัตรสะสมแสตมป์</p>
+          </header>
+          <EmptyState
+            icon={bind === "invalid" ? <TriangleAlert /> : <Smartphone />}
+            title={
+              bind === "invalid"
+                ? "QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
+                : "ยังไม่ได้ผูกอุปกรณ์นี้"
+            }
+            description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตร แล้วสแกนด้วยกล้องมือถือของคุณ เพื่อดูแต้มสะสม"
+          />
+        </>
       )}
 
       <Link

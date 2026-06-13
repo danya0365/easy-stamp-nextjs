@@ -12,7 +12,8 @@ export default async function HomePage() {
   const locations = await container.branchRepository.listMapLocations();
 
   return (
-    <main className="flex min-h-dvh flex-col">
+    // Fill the viewport minus the bottom tab bar (h-16) so the map sits above it.
+    <main className="flex min-h-[calc(100dvh-4rem)] flex-col">
       <header className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
           <h1 className="text-xl font-bold text-foreground sm:text-2xl">
@@ -41,15 +42,6 @@ export default async function HomePage() {
           </span>
         </div>
       </section>
-
-      <footer className="flex items-center justify-center px-4 py-3 text-center">
-        <Link
-          href="/info"
-          className="text-sm font-medium text-brand-700 hover:underline"
-        >
-          เกี่ยวกับระบบ · ดูว่าทำอะไรได้บ้าง →
-        </Link>
-      </footer>
     </main>
   );
 }

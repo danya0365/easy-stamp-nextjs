@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Smartphone, ShoppingBag, PartyPopper } from "lucide-react";
+import {
+  Smartphone,
+  ShoppingBag,
+  PartyPopper,
+  Store,
+  ChevronRight,
+} from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getAllMemberTokens } from "@/src/infrastructure/auth/member";
@@ -47,8 +53,13 @@ export default async function MyCardsPage() {
           {cards.map(({ shopName, slug, view }) => (
             <Link key={slug} href={`/s/${slug}`}>
               <Card className="flex flex-col gap-3 transition hover:ring-brand-300">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-foreground">{shopName}</span>
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                    <Store className="size-5" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                    {shopName}
+                  </span>
                   {view.eligibleToRedeem ? (
                     <Badge tone="success">
                       <PartyPopper className="size-3.5" />
@@ -59,6 +70,7 @@ export default async function MyCardsPage() {
                       {view.card.currentStamps}/{view.threshold}
                     </Badge>
                   )}
+                  <ChevronRight className="size-4 shrink-0 text-muted" />
                 </div>
                 <StampDots
                   current={view.card.currentStamps}

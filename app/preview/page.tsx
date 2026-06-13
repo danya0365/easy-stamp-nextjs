@@ -144,10 +144,10 @@ export default function PreviewPage() {
       <Section title="Card balance (ลูกค้า)">
         <div className="grid gap-4 sm:grid-cols-2">
           <Card>
-            <CardBalance view={mockView(5)} />
+            <CardBalance view={mockView(5)} shopName="ร้านกาแฟตัวอย่าง" />
           </Card>
           <Card>
-            <CardBalance view={mockView(10)} />
+            <CardBalance view={mockView(10)} shopName="ร้านกาแฟตัวอย่าง" />
           </Card>
         </div>
       </Section>

@@ -23,15 +23,15 @@ export function StampDots({ current, threshold, size = "md" }: StampDotsProps) {
           <div
             key={i}
             className={cn(
-              "flex items-center justify-center rounded-full font-bold transition",
+              "flex items-center justify-center rounded-full leading-none transition",
               SIZES[size],
               isFilled
-                ? "bg-brand-500 text-white shadow-sm"
-                : "border-2 border-dashed border-brand-200 text-brand-200",
+                ? "bg-brand-500 text-white shadow-sm ring-1 ring-brand-600/20"
+                : "border border-brand-200 bg-brand-50 text-brand-200",
             )}
             aria-label={isFilled ? "ดวงที่สะสมแล้ว" : "ดวงที่ว่าง"}
           >
-            {isFilled ? "★" : i + 1}
+            ★
           </div>
         );
       })}
