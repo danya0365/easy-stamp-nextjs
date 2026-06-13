@@ -1,0 +1,20 @@
+export interface SaveSlipInput {
+  shopId: string;
+  paymentId: string;
+  /** Original filename, used to derive the stored extension. */
+  filename: string;
+  contentType: string;
+  bytes: Uint8Array;
+}
+
+/**
+ * Abstraction over where uploaded payment slips live. Phase 1 writes to local
+ * disk; a future implementation could store in object storage (S3/R2) without
+ * touching the billing use cases.
+ */
+export interface ISlipStorage {
+  /** Persist the slip and return a URL/path retrievable later. */
+  save(input: SaveSlipInput): Promise<{ url: string }>;
+  /** Read raw bytes for serving via the auth-gated slip route handler. */
+  read(url: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
+}

@@ -1,0 +1,53 @@
+"use client";
+
+import {
+  useThemeStore,
+  type ThemeTemplate,
+} from "@/src/presentation/stores/theme.store";
+import { cn } from "@/src/presentation/components/ui/cn";
+
+const TEMPLATES: { value: ThemeTemplate; label: string; icon: string }[] = [
+  { value: "cafe", label: "คาเฟ่", icon: "🧋" },
+  { value: "minimal", label: "มินิมอล", icon: "◻️" },
+  { value: "retro", label: "เรโทร", icon: "📰" },
+];
+
+/** Compact template + dark switcher, intended for the header. */
+export function ThemeSwitcher() {
+  const template = useThemeStore((s) => s.template);
+  const dark = useThemeStore((s) => s.dark);
+  const setTemplate = useThemeStore((s) => s.setTemplate);
+  const toggleDark = useThemeStore((s) => s.toggleDark);
+
+  return (
+    <div className="flex items-center gap-1 rounded-full bg-muted-surface p-1">
+      {TEMPLATES.map((t) => (
+        <button
+          key={t.value}
+          type="button"
+          onClick={() => setTemplate(t.value)}
+          title={t.label}
+          aria-pressed={template === t.value}
+          className={cn(
+            "rounded-full px-2.5 py-1 text-sm transition",
+            template === t.value
+              ? "bg-brand-500 text-white"
+              : "text-muted hover:text-foreground",
+          )}
+        >
+          <span aria-hidden>{t.icon}</span>
+          <span className="ml-1 hidden sm:inline">{t.label}</span>
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={toggleDark}
+        title={dark ? "โหมดสว่าง" : "โหมดมืด"}
+        aria-pressed={dark}
+        className="rounded-full px-2.5 py-1 text-sm text-muted transition hover:text-foreground"
+      >
+        {dark ? "☀️" : "🌙"}
+      </button>
+    </div>
+  );
+}

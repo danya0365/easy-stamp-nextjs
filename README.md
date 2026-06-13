@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Easy Stamp
 
-## Getting Started
+A multi-tenant **stamp-card loyalty SaaS** for merchants running several shops and branches. Customers earn stamps on each purchase, reach a per-shop threshold (default 10), and redeem a free reward — **no app install and no customer login required**. Each shop pays a monthly subscription via PromptPay; the platform admin verifies payments manually. The UI is in Thai.
 
-First, run the development server:
+> There is an in-app, human-readable overview of the product at **`/info`** (for both shop owners and customers).
+
+## Features (Phase 1)
+
+**Customer stamp flow (no login)**
+- Identity is a **device-bound secret token** set by scanning the shop's one-time QR — not a phone-number login, so others can't impersonate a customer.
+- Returning customers just re-scan the shop QR to reopen their card (cookie persists 1 year). Switching devices → re-bind at the shop.
+- **"My Cards" page (`/me`)** aggregates every shop bound on the device, with a single installable PWA icon.
+
+**Staff & shops**
+- Staff add stamps and redeem rewards from a counter screen; **scan the customer's QR** instead of typing a phone every time.
+- Every add/redeem is recorded in a ledger.
+- **Multi-tenant + branches**: many shops, each with its own branches, staff, threshold, and reward text.
+- **Three roles**: `platform_admin`, `shop_owner`, `branch_staff` (custom session auth, scoped access).
+
+**Billing**
+- Per-shop **monthly subscription** paid via **PromptPay QR + slip upload**; admin verifies and activates.
+- Escalating in-app reminder (days 1–7), then **automatic suspension** — derived from the due date, no cron.
+- Payment verification sits behind an `IPaymentVerifier` interface (`ManualSlipPaymentVerifier` today) so an auto-verify provider can be swapped in later.
+
+## Tech stack
+
+- **Next.js 16** (App Router) — async `params`/`searchParams`/`cookies()`/`headers()`, `proxy.ts` (not `middleware.ts`), Turbopack. Read `node_modules/next/dist/docs/` before relying on older Next conventions.
+- **React 19**
+- **Turso / libSQL + Drizzle ORM** (`dialect: "turso"`, `snake_case` casing)
+- **Custom session auth** — bcryptjs + httpOnly cookie + a `sessions` table
+- **Tailwind v4** multi-theme — semantic CSS tokens in `public/styles/`, runtime theme switch (cafe / minimal / retro + dark) via Zustand + ThemeProvider
+- zod · react-hook-form · zustand · qrcode (PromptPay EMVCo payload) · qr-scanner (in-browser camera)
+
+## Architecture
+
+Clean Architecture layering:
+
+| Layer | Path | Holds |
+| --- | --- | --- |
+| Routing / UI entry | `app/` | App Router pages, route handlers, layouts |
+| Domain | `src/domain/` | Entities + pure services (card view, billing state, phone, PromptPay) |
+| Application | `src/application/` | Repository interfaces + use cases |
+| Infrastructure | `src/infrastructure/` | Drizzle repositories, auth, services, DI container |
+| Presentation | `src/presentation/` | Components, stores, presenters, Server Actions |
+
+Deliberate (approved) deviations from the base init SKILL: **Turso instead of Supabase**, `Drizzle*Repository` implementations, **Server Actions** instead of an HTTP `Api*Repository` layer, and the `@/src/...` import alias.
+
+## Getting started
+
+**Prerequisites:** Node.js 20+. For local dev the database defaults to a SQLite file (`file:./local.db`) — no Turso account needed. For production, create a Turso database.
+
+**Environment variables** (`.env.local`):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Database — omit both for local file DB (file:./local.db)
+TURSO_DATABASE_URL=libsql://<your-db>.turso.io
+TURSO_AUTH_TOKEN=<your-token>
+
+# Absolute base URL used to build QR / bind links (defaults to the request host)
+APP_URL=https://your-domain.example
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Install and run:**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run db:push     # create tables in the DB
+npm run db:seed     # seed reference + demo data (see logins below)
+npm run dev         # http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start the dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
+| `npm run db:generate` | Generate Drizzle migrations from the schema |
+| `npm run db:migrate` | Apply migrations |
+| `npm run db:push` | Push the schema straight to the DB (dev) |
+| `npm run db:seed` | Seed everything: reference + starter + mock data |
+| `npm run db:seed:core` | Seed only reference + starter data (no mock) |
 
-To learn more about Next.js, take a look at the following resources:
+## Seed logins
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All seeded users share the password **`password123`**:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Email | Role |
+| --- | --- |
+| `admin@easystamp.test` | platform admin |
+| `owner@coffee-a.test` | shop owner (active shop) |
+| `owner@bakery-b.test` | shop owner (overdue / suspended demo) |
+| `staff1@coffee-a.test` | branch staff |
 
-## Deploy on Vercel
+Public / customer routes need no login: `/s/<shop-slug>` (a shop's card), `/me` (all cards on the device), `/info` (product overview).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> `/preview` is a **dev-only** design-system showcase — remove it before production.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notes
+
+- **Customers have no login by design** — identity is the device-bound token, so camera-scan binding and PWA install must be **tested on a real mobile device** (they can't be verified headless).
+- Money is stored as integer satang; IDs are nanoid text; timestamps are ISO strings.

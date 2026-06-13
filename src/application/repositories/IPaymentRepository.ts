@@ -1,0 +1,26 @@
+import type { Payment, PaymentStatus } from "@/src/domain/entities";
+
+export interface CreatePaymentInput {
+  shopId: string;
+  subscriptionId: string;
+  amountSatang: number;
+  slipUrl: string;
+  submittedBy: string;
+  coversPeriodStartAt: string;
+  coversPeriodDueAt: string;
+}
+
+export interface ResolvePaymentInput {
+  status: Extract<PaymentStatus, "approved" | "rejected">;
+  verifiedBy: string | null;
+  verifiedAt: string;
+  rejectReason?: string | null;
+}
+
+export interface IPaymentRepository {
+  create(input: CreatePaymentInput): Promise<Payment>;
+  findById(id: string): Promise<Payment | null>;
+  listByShop(shopId: string, limit?: number): Promise<Payment[]>;
+  listByStatus(status: PaymentStatus): Promise<Payment[]>;
+  resolve(id: string, input: ResolvePaymentInput): Promise<Payment>;
+}

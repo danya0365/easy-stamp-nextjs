@@ -1,0 +1,116 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { container } from "@/src/infrastructure/di/container";
+import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
+import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
+import { getBaseUrl } from "@/src/presentation/lib/base-url";
+import { Card } from "@/src/presentation/components/ui/Card";
+import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
+import { CardBalance } from "@/src/presentation/components/stamp/CardBalance";
+import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
+import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const shop = await container.shopRepository.findBySlug(slug);
+  return {
+    title: shop ? `${shop.name} · สะสมแสตมป์` : "ไม่พบร้านค้า",
+    // Per-shop manifest → installed icon opens this shop's card.
+    manifest: shop ? `/s/${slug}/site.webmanifest` : undefined,
+  };
+}
+
+export default async function PublicShopCheckPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ bind?: string }>;
+}) {
+  const { slug } = await params;
+  const { bind } = await searchParams;
+
+  const shop = await container.shopRepository.findBySlug(slug);
+  if (!shop) notFound();
+
+  // Card view comes ONLY from a bound device (secret token cookie).
+  const token = await getMemberToken(slug);
+  const view = token
+    ? await new GetCardByDeviceTokenUseCase(
+        container.shopRepository,
+        container.customerDeviceRepository,
+        container.stampCardRepository,
+      ).execute(shop.id, token)
+    : null;
+
+  const personalQrUrl = view
+    ? await renderQrDataUrl(
+        `${await getBaseUrl()}/s/${slug}?c=${view.customer.publicCode}`,
+      )
+    : null;
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
+      <header className="text-center">
+        <h1 className="text-2xl font-bold text-brand-700">{shop.name}</h1>
+        <p className="text-sm text-muted">บัตรสะสมแสตมป์</p>
+      </header>
+
+      {view ? (
+        <>
+          <Card>
+            <CardBalance view={view} dotSize="md" />
+          </Card>
+          {personalQrUrl && <MemberQr qrImageUrl={personalQrUrl} />}
+
+          <p className="rounded-xl bg-brand-50 px-4 py-3 text-center text-sm text-brand-700 ring-1 ring-brand-100">
+            📷 <strong>เปิดบัตรซ้ำง่ายๆ:</strong> ครั้งหน้าแค่สแกน QR ที่ร้านอีกครั้ง
+            — ไม่ต้องติดตั้งอะไร
+          </p>
+
+          <Link
+            href="/me"
+            className="text-center text-sm font-medium text-brand-700 hover:underline"
+          >
+            👜 ดูบัตรสะสมแต้มทุกร้านของฉัน
+          </Link>
+
+          <details className="text-center">
+            <summary className="cursor-pointer text-xs text-muted">
+              หรือเพิ่มลงหน้าจอหลัก (ไม่บังคับ)
+            </summary>
+            <div className="mt-2">
+              <InstallHint />
+            </div>
+          </details>
+        </>
+      ) : (
+        <EmptyState
+          icon={bind === "invalid" ? "⚠️" : "📱"}
+          title={
+            bind === "invalid"
+              ? "QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
+              : "ยังไม่ได้ผูกอุปกรณ์นี้"
+          }
+          description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตร แล้วสแกนด้วยกล้องมือถือของคุณ เพื่อดูแต้มสะสม"
+        />
+      )}
+
+      <Link
+        href="/privacy"
+        className="mt-auto text-center text-xs text-muted hover:underline"
+      >
+        นโยบายความเป็นส่วนตัว
+      </Link>
+    </main>
+  );
+}

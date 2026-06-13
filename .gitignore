@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Easy Stamp local data
+/uploads
+/local.db
+local.db*
