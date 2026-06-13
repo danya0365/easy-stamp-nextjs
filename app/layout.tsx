@@ -13,13 +13,38 @@ const notoSansThai = Noto_Sans_Thai({
   display: "swap",
 });
 
+// Base URL used to turn the file-based opengraph-image/twitter-image into
+// absolute URLs (crawlers like Facebook/LINE require absolute image URLs).
+// Set APP_URL to the deployed domain in production.
+const siteUrl = process.env.APP_URL ?? "http://localhost:3000";
+
+const title = "Easy Stamp — ระบบบัตรสะสมแสตมป์";
+const description =
+  "บัตรสะสมแสตมป์ดิจิทัลสำหรับร้านค้าหลายสาขา ลูกค้าสะสมแต้มผ่านการสแกน QR ไม่ต้องพกบัตร ร้านจัดการง่ายในที่เดียว";
+
 export const metadata: Metadata = {
-  title: "Easy Stamp — ระบบบัตรสะสมแสตมป์",
-  description: "ระบบสะสมแสตมป์สำหรับร้านค้าหลายสาขา",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Easy Stamp",
+  },
+  // og:image / twitter:image are added automatically from app/opengraph-image.png
+  // and app/twitter-image.png (file-based metadata).
+  openGraph: {
+    type: "website",
+    siteName: "Easy Stamp",
+    locale: "th_TH",
+    url: siteUrl,
+    title,
+    description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
   },
 };
 
