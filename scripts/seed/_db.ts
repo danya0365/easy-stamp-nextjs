@@ -13,7 +13,6 @@ export interface SeedContext {
 }
 
 export const DEFAULT_PASSWORD = "password123";
-export const MONTHLY_AMOUNT_SATANG = 29900; // 299.00 THB / month
 
 export function createSeedDb(): { db: SeedDb; client: Client } {
   const url = process.env.TURSO_DATABASE_URL ?? "file:./local.db";

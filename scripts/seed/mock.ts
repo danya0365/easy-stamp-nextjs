@@ -1,28 +1,26 @@
 /**
- * MOCK data — fake-but-realistic data for development & demos. DO NOT run in
- * production. Idempotent (keyed by shop slug).
+ * MOCK data — fake-but-realistic data for development & demos. DEV ONLY
+ * (the orchestrator refuses to run this against a remote DB). Idempotent
+ * (keyed by shop slug).
  *
  * Covers every table and every UI state:
  *  - 4 shops across all billing states: active / overdue-in-grace (banner) /
  *    overdue-suspended / admin-suspended
  *  - branches (incl. an inactive one), owner + staff (incl. an inactive one)
  *  - customers with varied balances AND redemption history
- *  - stamp_transactions (earn + redeem_adjust) with back-dated timestamps
- *  - reward_redemptions history
- *  - payments in all 3 states (pending / approved / rejected)
+ *  - stamp_transactions (earn + redeem_adjust), reward_redemptions
+ *  - payments in all 3 states + topup_transactions ledger for approved ones
  */
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 
-import {
-  isRemoteDb,
-  schema,
-  daysFromNow,
-  MONTHLY_AMOUNT_SATANG,
-  type SeedContext,
-} from "./_db";
+import { schema, daysFromNow, type SeedContext } from "./_db";
+import { getOrCreate, insert, quotePayment, approveTopup } from "./_helpers";
+import { DEFAULT_PRICE_PER_DAY_SATANG } from "../../src/domain/services/topup-pricing";
 
 const THRESHOLD = 10;
+const DAY = 864e5;
+const RATE = DEFAULT_PRICE_PER_DAY_SATANG;
+const SLIP = "slips/seed-placeholder.png";
 
 type Billing = "active" | "grace" | "suspended" | "admin";
 
@@ -115,127 +113,105 @@ function earnChunks(total: number): number[] {
 export async function seedMock(ctx: SeedContext) {
   const { db, passwordHash, log } = ctx;
 
-  // Hard stop: mock data must never touch a real production DB.
-  if (isRemoteDb()) {
-    log("mock: remote DB detected — skipping dev-only mock data");
-    return;
-  }
-
   const admin = await db.query.users.findFirst({
     where: eq(schema.users.email, "admin@easystamp.test"),
   });
-  const adminId = admin?.id ?? null;
-
-  async function categoryIdBySlug(slug: string): Promise<string | null> {
-    const c = await db.query.shopCategories.findFirst({
-      where: eq(schema.shopCategories.slug, slug),
-    });
-    return c?.id ?? null;
+  if (!admin) {
+    throw new Error(
+      "mock: ต้องมี platform admin ก่อน — รัน `production` ก่อน (หรือรันแบบไม่ระบุ profile เพื่อ seed ทั้งคู่)",
+    );
   }
+  const adminId = admin.id;
 
-  for (let si = 0; si < SHOPS.length; si++) {
-    const opts = SHOPS[si];
-    const exists = await db.query.shops.findFirst({
-      where: eq(schema.shops.slug, opts.slug),
+  for (const opts of SHOPS) {
+    const bf = billingFields(opts.billing);
+    const category = await db.query.shopCategories.findFirst({
+      where: eq(schema.shopCategories.slug, opts.categorySlug),
     });
-    if (exists) {
-      log(`mock: shop "${opts.slug}" already exists — skip`);
+
+    const shop = await getOrCreate(
+      db,
+      schema.shops,
+      db.query.shops.findFirst({ where: eq(schema.shops.slug, opts.slug) }),
+      {
+        name: opts.name,
+        slug: opts.slug,
+        status: bf.shopStatus,
+        categoryId: category?.id ?? null,
+        stampThreshold: THRESHOLD,
+        rewardText: opts.rewardText,
+      },
+    );
+    if (!shop.created) {
+      log(`mock: shop "${opts.slug}" exists — skip`);
       continue;
     }
+    const shopId = shop.id;
 
-    const bf = billingFields(opts.billing);
-    const shopId = nanoid();
-    await db.insert(schema.shops).values({
-      id: shopId,
-      name: opts.name,
-      slug: opts.slug,
-      status: bf.shopStatus,
-      categoryId: await categoryIdBySlug(opts.categorySlug),
-      stampThreshold: THRESHOLD,
-      rewardText: opts.rewardText,
-    });
-
-    const subId = nanoid();
-    await db.insert(schema.subscriptions).values({
-      id: subId,
+    const subId = await insert(db, schema.subscriptions, {
       shopId,
       status: bf.subStatus,
-      amountSatang: MONTHLY_AMOUNT_SATANG,
+      pricePerDaySatang: RATE,
       currentPeriodStartAt: daysFromNow(bf.dueOffset - 30),
       currentPeriodDueAt: daysFromNow(bf.dueOffset),
     });
 
     // Branches — second branch inactive on the admin-suspended shop, to demo state.
-    const branchIds = [nanoid(), nanoid()];
-    await db.insert(schema.branches).values([
-      {
-        id: branchIds[0],
-        shopId,
-        name: `${opts.name} - สาขาหลัก`,
-        latitude: opts.lat,
-        longitude: opts.lng,
-        address: opts.address,
-      },
-      {
-        id: branchIds[1],
-        shopId,
-        name: `${opts.name} - สาขา 2`,
-        isActive: opts.billing !== "admin",
-        // Offset a touch so the second branch doesn't overlap the main pin.
-        latitude: opts.lat + 0.01,
-        longitude: opts.lng + 0.01,
-        address: opts.address,
-      },
-    ]);
+    const mainBranchId = await insert(db, schema.branches, {
+      shopId,
+      name: `${opts.name} - สาขาหลัก`,
+      latitude: opts.lat,
+      longitude: opts.lng,
+      address: opts.address,
+    });
+    const branch2Id = await insert(db, schema.branches, {
+      shopId,
+      name: `${opts.name} - สาขา 2`,
+      isActive: opts.billing !== "admin",
+      // Offset a touch so the second branch doesn't overlap the main pin.
+      latitude: opts.lat + 0.01,
+      longitude: opts.lng + 0.01,
+      address: opts.address,
+    });
+    const branchIds = [mainBranchId, branch2Id];
 
     // Owner + 2 staff (staff2 inactive on the suspended shop).
-    const ownerId = nanoid();
-    await db.insert(schema.users).values({
-      id: ownerId,
+    const ownerId = await insert(db, schema.users, {
       email: `owner@${opts.slug}.test`,
       passwordHash,
       role: "shop_owner",
       shopId,
       branchId: null,
     });
-    const staffIds = [nanoid(), nanoid()];
-    await db.insert(schema.users).values([
-      {
-        id: staffIds[0],
-        email: `staff1@${opts.slug}.test`,
-        passwordHash,
-        role: "branch_staff",
-        shopId,
-        branchId: branchIds[0],
-      },
-      {
-        id: staffIds[1],
-        email: `staff2@${opts.slug}.test`,
-        passwordHash,
-        role: "branch_staff",
-        shopId,
-        branchId: branchIds[1],
-        isActive: opts.billing !== "suspended",
-      },
-    ]);
-    const actors = [ownerId, staffIds[0], staffIds[1]];
+    const staff1Id = await insert(db, schema.users, {
+      email: `staff1@${opts.slug}.test`,
+      passwordHash,
+      role: "branch_staff",
+      shopId,
+      branchId: branchIds[0],
+    });
+    const staff2Id = await insert(db, schema.users, {
+      email: `staff2@${opts.slug}.test`,
+      passwordHash,
+      role: "branch_staff",
+      shopId,
+      branchId: branchIds[1],
+      isActive: opts.billing !== "suspended",
+    });
+    const actors = [ownerId, staff1Id, staff2Id];
 
     // Customers + cards + transaction/redemption history.
     let tcount = 0;
     for (let ci = 0; ci < CUSTOMERS.length; ci++) {
       const spec = CUSTOMERS[ci];
       const current = spec.lifetime - spec.rewards * THRESHOLD;
-      const customerId = nanoid();
-      await db.insert(schema.customers).values({
-        id: customerId,
+      const customerId = await insert(db, schema.customers, {
         shopId,
         phone: spec.phone,
         displayName: spec.name,
         createdAt: daysFromNow(-60 + ci),
       });
-      const cardId = nanoid();
-      await db.insert(schema.stampCards).values({
-        id: cardId,
+      const cardId = await insert(db, schema.stampCards, {
         shopId,
         customerId,
         currentStamps: current,
@@ -246,8 +222,7 @@ export async function seedMock(ctx: SeedContext) {
       // Earn transactions (back-dated, alternating branch/actor).
       const chunks = earnChunks(spec.lifetime);
       for (let k = 0; k < chunks.length; k++) {
-        await db.insert(schema.stampTransactions).values({
-          id: nanoid(),
+        await insert(db, schema.stampTransactions, {
           shopId,
           branchId: branchIds[k % 2],
           customerId,
@@ -263,8 +238,7 @@ export async function seedMock(ctx: SeedContext) {
       // Redemption history.
       for (let r = 0; r < spec.rewards; r++) {
         const when = daysFromNow(-20 + tcount++);
-        await db.insert(schema.rewardRedemptions).values({
-          id: nanoid(),
+        await insert(db, schema.rewardRedemptions, {
           shopId,
           branchId: branchIds[r % 2],
           customerId,
@@ -274,8 +248,7 @@ export async function seedMock(ctx: SeedContext) {
           performedBy: actors[r % actors.length],
           createdAt: when,
         });
-        await db.insert(schema.stampTransactions).values({
-          id: nanoid(),
+        await insert(db, schema.stampTransactions, {
           shopId,
           branchId: branchIds[r % 2],
           customerId,
@@ -289,66 +262,85 @@ export async function seedMock(ctx: SeedContext) {
       }
     }
 
-    // Payment history per billing state.
-    if (opts.billing === "active") {
-      // One approved payment last cycle.
-      await db.insert(schema.payments).values({
-        id: nanoid(),
-        shopId,
-        subscriptionId: subId,
-        amountSatang: MONTHLY_AMOUNT_SATANG,
-        slipUrl: "slips/seed-placeholder.png",
-        status: "approved",
-        submittedBy: ownerId,
-        verifiedBy: adminId,
-        verifiedAt: daysFromNow(-28),
-        coversPeriodStartAt: daysFromNow(-30),
-        coversPeriodDueAt: daysFromNow(0),
-        createdAt: daysFromNow(-29),
-      });
-    } else if (opts.billing === "suspended") {
-      // A rejected attempt + a fresh pending one in the admin queue.
-      await db.insert(schema.payments).values({
-        id: nanoid(),
-        shopId,
-        subscriptionId: subId,
-        amountSatang: MONTHLY_AMOUNT_SATANG,
-        slipUrl: "slips/seed-placeholder.png",
-        status: "rejected",
-        submittedBy: ownerId,
-        verifiedBy: adminId,
-        verifiedAt: daysFromNow(-2),
-        rejectReason: "ยอดเงินในสลิปไม่ตรงกับที่แจ้ง",
-        createdAt: daysFromNow(-3),
-      });
-      await db.insert(schema.payments).values({
-        id: nanoid(),
-        shopId,
-        subscriptionId: subId,
-        amountSatang: MONTHLY_AMOUNT_SATANG,
-        slipUrl: "slips/seed-placeholder.png",
-        status: "pending",
-        submittedBy: ownerId,
-        coversPeriodStartAt: daysFromNow(0),
-        coversPeriodDueAt: daysFromNow(30),
-        createdAt: daysFromNow(0),
-      });
-    } else if (opts.billing === "grace") {
-      // A pending payment awaiting review.
-      await db.insert(schema.payments).values({
-        id: nanoid(),
-        shopId,
-        subscriptionId: subId,
-        amountSatang: MONTHLY_AMOUNT_SATANG,
-        slipUrl: "slips/seed-placeholder.png",
-        status: "pending",
-        submittedBy: ownerId,
-        coversPeriodStartAt: daysFromNow(0),
-        coversPeriodDueAt: daysFromNow(30),
-        createdAt: daysFromNow(0),
-      });
-    }
+    await seedPayments({ ctx, opts, shopId, subId, ownerId, adminId });
 
     log(`mock: created "${opts.slug}" (${opts.billing}) + customers/history`);
   }
+}
+
+/** Payment + ledger history per billing state, via the real top-up write path. */
+async function seedPayments(args: {
+  ctx: SeedContext;
+  opts: ShopSpec;
+  shopId: string;
+  subId: string;
+  ownerId: string;
+  adminId: string;
+}) {
+  const { db } = args.ctx;
+  const { opts, shopId, subId, ownerId, adminId } = args;
+
+  /** Insert a payment row from a quote; returns its id. */
+  async function addPayment(
+    packageId: string,
+    status: "pending" | "approved" | "rejected",
+    submittedDaysAgo: number,
+    extra: Record<string, unknown> = {},
+  ) {
+    const submitNow = new Date(Date.now() - submittedDaysAgo * DAY);
+    const expiryAtSubmit = daysFromNow(-submittedDaysAgo);
+    const { quote, paymentFields } = quotePayment({
+      packageId,
+      pricePerDaySatang: RATE,
+      expiryAtSubmit,
+      now: submitNow,
+    });
+    const paymentId = await insert(db, schema.payments, {
+      shopId,
+      subscriptionId: subId,
+      ...paymentFields,
+      slipUrl: SLIP,
+      status,
+      submittedBy: ownerId,
+      createdAt: daysFromNow(-submittedDaysAgo),
+      ...extra,
+    });
+    return { paymentId, quote, expiryAtSubmit };
+  }
+
+  if (opts.billing === "active") {
+    // One approved d180 top-up last month → matching ledger row (bonus 20 days).
+    const { paymentId, quote, expiryAtSubmit } = await addPayment(
+      "d180",
+      "approved",
+      29,
+      { verifiedBy: adminId, verifiedAt: daysFromNow(-28) },
+    );
+    const { ledgerRow } = approveTopup({
+      shopId,
+      paymentId,
+      reviewerId: adminId,
+      daysToAdd: quote.baseDays,
+      bonusDays: quote.bonusDays,
+      amountSatang: quote.amountSatang,
+      expiryBeforeAt: expiryAtSubmit,
+      now: new Date(Date.now() - 28 * DAY),
+    });
+    await insert(db, schema.topupTransactions, {
+      ...ledgerRow,
+      createdAt: daysFromNow(-28),
+    });
+  } else if (opts.billing === "grace") {
+    // A pending payment awaiting review (no ledger until approved).
+    await addPayment("d30", "pending", 0);
+  } else if (opts.billing === "suspended") {
+    // A rejected attempt + a fresh pending one in the admin queue.
+    await addPayment("d30", "rejected", 3, {
+      verifiedBy: adminId,
+      verifiedAt: daysFromNow(-2),
+      rejectReason: "ยอดเงินในสลิปไม่ตรงกับที่แจ้ง",
+    });
+    await addPayment("d30", "pending", 0);
+  }
+  // admin-suspended: no payment history needed.
 }
