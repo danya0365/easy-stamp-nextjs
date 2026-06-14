@@ -6,7 +6,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  TOPUP_PRESETS,
   TOPUP_PROMO,
   DEFAULT_PRICE_PER_DAY_SATANG,
   computeCustomBonusDays,
@@ -23,19 +22,30 @@ const DAY = 864e5;
 const NO_PROMO: PromoConfig = { active: false, percentOff: 0, label: "" };
 const PROMO50: PromoConfig = { active: true, percentOff: 50, label: "x" };
 
-test("presets resolve to correct total days + fixed price (no promo)", () => {
-  const byId = Object.fromEntries(TOPUP_PRESETS.map((p) => [p.id, p]));
+test("presets resolve to correct total days + price = days × rate (no promo)", () => {
   const q90 = resolveTopupQuote({ packageId: "d90" }, RATE, NO_PROMO);
   assert.equal(q90.baseDays, 90);
   assert.equal(q90.bonusDays, 7);
   assert.equal(q90.totalDays, 97);
-  assert.equal(q90.amountSatang, byId.d90.priceSatang);
-  assert.equal(q90.fullAmountSatang, byId.d90.priceSatang);
+  assert.equal(q90.amountSatang, 90 * RATE);
+  assert.equal(q90.fullAmountSatang, 90 * RATE);
   assert.equal(q90.promoPercentOff, 0);
 
   const q365 = resolveTopupQuote({ packageId: "d365" }, RATE, NO_PROMO);
   assert.equal(q365.totalDays, 410);
-  assert.equal(q365.amountSatang, 365000);
+  assert.equal(q365.amountSatang, 365 * RATE);
+});
+
+test("preset price scales with the shop's per-day rate", () => {
+  // At ฿20/วัน (2000 satang) a 30-day preset costs 30 × 2000 = 60000.
+  const q30 = resolveTopupQuote({ packageId: "d30" }, 2000, NO_PROMO);
+  assert.equal(q30.amountSatang, 60000);
+  assert.equal(q30.fullAmountSatang, 60000);
+  assert.equal(q30.bonusDays, 0); // bonus days unaffected by rate
+
+  const q365 = resolveTopupQuote({ packageId: "d365" }, 2000, NO_PROMO);
+  assert.equal(q365.amountSatang, 365 * 2000);
+  assert.equal(q365.bonusDays, 45);
 });
 
 test("unknown package id throws", () => {
