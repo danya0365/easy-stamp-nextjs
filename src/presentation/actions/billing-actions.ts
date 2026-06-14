@@ -7,6 +7,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { SubmitPaymentSlipUseCase } from "@/src/application/use-cases/billing/SubmitPaymentSlipUseCase";
 import { resolveTopupQuote } from "@/src/domain/services/topup-pricing";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
+import { satangToBaht } from "@/src/presentation/lib/money";
 
 export interface BillingFormState {
   error?: string;
@@ -80,7 +81,7 @@ export async function submitSlipAction(
     const customDaysRaw = String(formData.get("customDays") ?? "");
     const customDays = customDaysRaw ? Number(customDaysRaw) : null;
 
-    await new SubmitPaymentSlipUseCase(
+    const payment = await new SubmitPaymentSlipUseCase(
       container.paymentRepository,
       container.subscriptionRepository,
       container.slipStorage,
@@ -92,6 +93,16 @@ export async function submitSlipAction(
       bytes,
       packageId,
       customDays,
+    });
+
+    // Alert admins that a slip is waiting for review (best-effort).
+    const shop = await container.shopRepository.findById(user.shopId);
+    const totalDays = payment.daysToAdd + payment.bonusDays;
+    await container.notificationService.notifyAdmins({
+      type: "payment_submitted",
+      title: "แจ้งชำระเงินใหม่",
+      body: `ร้าน ${shop?.name ?? "-"} แจ้งชำระเงิน ${satangToBaht(payment.amountSatang)} บาท (เติม ${totalDays} วัน)`,
+      linkUrl: "/admin/payments",
     });
 
     revalidatePath("/shop/billing");

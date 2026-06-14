@@ -17,6 +17,11 @@ export interface IUserRepository {
   /** Includes the password hash — for verifying the current password on change. */
   findByIdWithSecret(id: string): Promise<UserWithSecret | null>;
   listByShop(shopId: string): Promise<User[]>;
+  listByRole(role: Role): Promise<User[]>;
   setActive(id: string, isActive: boolean): Promise<User>;
   updatePassword(id: string, passwordHash: string): Promise<User>;
+  /** LINE account linking. */
+  setLineUserId(id: string, lineUserId: string | null): Promise<User>;
+  setLineLinkCode(id: string, code: string | null): Promise<User>;
+  findByLineLinkCode(code: string): Promise<User | null>;
 }

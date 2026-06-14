@@ -5,6 +5,8 @@ import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { SettingsForm } from "@/src/presentation/components/shop/SettingsForm";
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
+import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
+import { LineLinkCard } from "@/src/presentation/components/line/LineLinkCard";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,25 @@ export default async function ShopSettingsPage() {
       <Card className="mt-4">
         <CardHeader title="เปลี่ยนรหัสผ่าน" />
         <ChangePasswordForm />
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader
+          title="แจ้งเตือนผ่าน LINE"
+          subtitle="เชื่อมต่อ LINE เพื่อรับแจ้งเตือนการอนุมัติ/ปฏิเสธการชำระเงิน"
+        />
+        <LineLinkCard
+          linked={!!user.lineUserId}
+          addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
+        />
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader
+          title="ติดต่อผู้ดูแลระบบ"
+          subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแลได้ที่นี่"
+        />
+        <ContactAdminButton />
       </Card>
     </div>
   );

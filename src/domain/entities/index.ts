@@ -9,6 +9,12 @@ export type SubscriptionStatus =
 export type PaymentStatus = "pending" | "approved" | "rejected";
 export type StampTxType = "earn" | "redeem_adjust";
 export type TopupTxType = "topup" | "adjustment";
+export type NotificationType =
+  | "payment_submitted"
+  | "payment_approved"
+  | "payment_rejected"
+  | "contact_request";
+export type ContactRequestStatus = "open" | "resolved";
 
 export interface ShopCategory {
   id: string;
@@ -51,6 +57,8 @@ export interface User {
   shopId: string | null;
   branchId: string | null;
   isActive: boolean;
+  /** LINE Messaging API push target, null until the operator links their LINE. */
+  lineUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -176,4 +184,29 @@ export interface CustomerCardView {
   eligibleToRedeem: boolean;
   /** Stamps still needed for the next reward (0 when eligible). */
   remaining: number;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  linkUrl: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface ContactRequest {
+  id: string;
+  shopId: string;
+  createdBy: string;
+  subject: string;
+  message: string;
+  contactChannel: string;
+  status: ContactRequestStatus;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
 }

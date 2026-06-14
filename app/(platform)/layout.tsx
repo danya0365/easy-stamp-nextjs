@@ -1,4 +1,5 @@
 import { requireRole } from "@/src/infrastructure/auth/session";
+import { container } from "@/src/infrastructure/di/container";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
@@ -9,9 +10,14 @@ export default async function PlatformLayout({
   children: React.ReactNode;
 }) {
   const user = await requireRole("platform_admin");
+  const unread = await container.notificationRepository.countUnread(user.id);
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader brand="Easy Stamp · Admin" userEmail={user.email} />
+      <AppHeader
+        brand="Easy Stamp · Admin"
+        userEmail={user.email}
+        notifications={{ href: "/admin/notifications", unread }}
+      />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {children}
         <AppVersion />
