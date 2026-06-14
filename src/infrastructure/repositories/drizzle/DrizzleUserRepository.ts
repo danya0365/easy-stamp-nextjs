@@ -48,6 +48,11 @@ export class DrizzleUserRepository implements IUserRepository {
     return row ? { ...toUser(row), passwordHash: row.passwordHash } : null;
   }
 
+  async findByIdWithSecret(id: string): Promise<UserWithSecret | null> {
+    const row = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
+    return row ? { ...toUser(row), passwordHash: row.passwordHash } : null;
+  }
+
   async listByShop(shopId: string): Promise<User[]> {
     const rows = await db.query.users.findMany({
       where: eq(schema.users.shopId, shopId),
@@ -59,6 +64,15 @@ export class DrizzleUserRepository implements IUserRepository {
     const [row] = await db
       .update(schema.users)
       .set({ isActive })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return toUser(row);
+  }
+
+  async updatePassword(id: string, passwordHash: string): Promise<User> {
+    const [row] = await db
+      .update(schema.users)
+      .set({ passwordHash })
       .where(eq(schema.users.id, id))
       .returning();
     return toUser(row);

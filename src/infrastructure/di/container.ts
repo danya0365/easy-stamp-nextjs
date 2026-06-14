@@ -18,6 +18,10 @@ import { DrizzleTopupTransactionRepository } from "@/src/infrastructure/reposito
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import { ManualSlipPaymentVerifier } from "@/src/infrastructure/services/ManualSlipPaymentVerifier";
 import { LocalSlipStorage } from "@/src/infrastructure/services/LocalSlipStorage";
+import {
+  R2SlipStorage,
+  r2ConfigFromEnv,
+} from "@/src/infrastructure/services/R2SlipStorage";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -36,6 +40,12 @@ import type { ITopupTransactionRepository } from "@/src/application/repositories
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
+
+/** R2 in any environment that configures it (prod/Vercel); local disk otherwise. */
+function createSlipStorage(): ISlipStorage {
+  const r2 = r2ConfigFromEnv();
+  return r2 ? new R2SlipStorage(r2) : new LocalSlipStorage();
+}
 
 /**
  * Server-side composition root: singleton repositories + services with their
@@ -71,7 +81,7 @@ class Container {
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();
-  readonly slipStorage: ISlipStorage = new LocalSlipStorage();
+  readonly slipStorage: ISlipStorage = createSlipStorage();
 }
 
 const globalForContainer = globalThis as unknown as {

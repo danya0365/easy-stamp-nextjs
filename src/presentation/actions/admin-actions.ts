@@ -6,6 +6,7 @@ import { container } from "@/src/infrastructure/di/container";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { VerifyPaymentUseCase } from "@/src/application/use-cases/billing/VerifyPaymentUseCase";
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
+import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
 
 export interface AdminFormState {
@@ -67,4 +68,25 @@ export async function setShopStatusAction(
   await requireRole("platform_admin");
   await container.shopRepository.setStatus(shopId, status);
   revalidatePath("/admin/shops");
+}
+
+/** Admin sets a new password for a shop owner (e.g. they forgot it). */
+export async function adminResetOwnerPasswordAction(
+  userId: string,
+  newPassword: string,
+): Promise<{ error?: string }> {
+  try {
+    await requireRole("platform_admin");
+    const target = await container.userRepository.findById(userId);
+    if (!target || target.role !== "shop_owner") {
+      throw new Error("ไม่พบบัญชีเจ้าของร้าน");
+    }
+    await new ResetPasswordUseCase(
+      container.userRepository,
+      container.passwordHasher,
+    ).execute(userId, newPassword);
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }

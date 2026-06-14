@@ -4,6 +4,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { SettingsForm } from "@/src/presentation/components/shop/SettingsForm";
+import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,11 @@ export default async function ShopSettingsPage() {
         >
           → เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
         </Link>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader title="เปลี่ยนรหัสผ่าน" />
+        <ChangePasswordForm />
       </Card>
     </div>
   );

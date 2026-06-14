@@ -1,6 +1,8 @@
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { StampStation } from "@/src/presentation/components/stamp/StampStation";
+import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +21,11 @@ export default async function StaffHomePage() {
         </p>
       </div>
       <StampStation />
+
+      <Card className="max-w-lg">
+        <CardHeader title="เปลี่ยนรหัสผ่าน" />
+        <ChangePasswordForm />
+      </Card>
     </div>
   );
 }

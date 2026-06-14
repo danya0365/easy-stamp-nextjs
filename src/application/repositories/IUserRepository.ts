@@ -14,6 +14,9 @@ export interface IUserRepository {
   findById(id: string): Promise<User | null>;
   /** Includes the password hash — for login verification only. */
   findByEmailWithSecret(email: string): Promise<UserWithSecret | null>;
+  /** Includes the password hash — for verifying the current password on change. */
+  findByIdWithSecret(id: string): Promise<UserWithSecret | null>;
   listByShop(shopId: string): Promise<User[]>;
   setActive(id: string, isActive: boolean): Promise<User>;
+  updatePassword(id: string, passwordHash: string): Promise<User>;
 }

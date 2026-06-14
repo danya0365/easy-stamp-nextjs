@@ -9,6 +9,7 @@ import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/Upda
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
 import { CreateStaffUseCase } from "@/src/application/use-cases/shop/CreateStaffUseCase";
+import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 
 export interface FormState {
   error?: string;
@@ -133,4 +134,25 @@ export async function toggleStaffAction(
   }
   await container.userRepository.setActive(userId, isActive);
   revalidatePath("/shop/staff");
+}
+
+/** Owner sets a new password for one of their staff (e.g. they forgot it). */
+export async function resetStaffPasswordAction(
+  userId: string,
+  newPassword: string,
+): Promise<{ error?: string }> {
+  try {
+    const shopId = await ownerShopId();
+    const target = await container.userRepository.findById(userId);
+    if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
+      throw new Error("ไม่พบพนักงานในร้านนี้");
+    }
+    await new ResetPasswordUseCase(
+      container.userRepository,
+      container.passwordHasher,
+    ).execute(userId, newPassword);
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }

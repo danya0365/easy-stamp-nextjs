@@ -6,6 +6,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { AddStaffForm } from "@/src/presentation/components/shop/AddStaffForm";
 import { ToggleActiveButton } from "@/src/presentation/components/shop/ToggleActiveButton";
+import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,14 @@ export default async function ShopStaffPage() {
                     {s.branchId ? branchName.get(s.branchId) ?? "—" : "—"}
                   </p>
                 </div>
-                <ToggleActiveButton kind="staff" id={s.id} isActive={s.isActive} />
+                <div className="flex items-start gap-2">
+                  <ToggleActiveButton
+                    kind="staff"
+                    id={s.id}
+                    isActive={s.isActive}
+                  />
+                  <ResetPasswordControl kind="staff" userId={s.id} />
+                </div>
               </li>
             ))}
           </ul>

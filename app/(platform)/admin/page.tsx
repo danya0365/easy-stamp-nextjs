@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
-import { Card } from "@/src/presentation/components/ui/Card";
+import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,11 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
       </div>
+
+      <Card className="max-w-lg">
+        <CardHeader title="เปลี่ยนรหัสผ่าน" />
+        <ChangePasswordForm />
+      </Card>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopForm";
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
+import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,15 @@ export default async function AdminShopsPage() {
     container.shopRepository,
     container.subscriptionRepository,
   );
-  const states = await Promise.all(shops.map((s) => billing.execute(s.id)));
+  const [states, owners] = await Promise.all([
+    Promise.all(shops.map((s) => billing.execute(s.id))),
+    Promise.all(
+      shops.map(async (s) => {
+        const members = await container.userRepository.listByShop(s.id);
+        return members.find((u) => u.role === "shop_owner") ?? null;
+      }),
+    ),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,6 +51,7 @@ export default async function AdminShopsPage() {
           <ul className="flex flex-col divide-y divide-border">
             {shops.map((shop, i) => {
               const { status } = states[i];
+              const owner = owners[i];
               const adminSuspended = shop.status === "suspended_by_admin";
               return (
                 <li
@@ -63,8 +73,11 @@ export default async function AdminShopsPage() {
                     >
                       /s/{shop.slug}
                     </Link>
+                    {owner && (
+                      <p className="text-xs text-muted">เจ้าของ: {owner.email}</p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-2">
                     {adminSuspended ? (
                       <Badge tone="danger">ระงับโดยแอดมิน</Badge>
                     ) : status.isSuspended ? (
@@ -78,6 +91,9 @@ export default async function AdminShopsPage() {
                       shopId={shop.id}
                       adminSuspended={adminSuspended}
                     />
+                    {owner && (
+                      <ResetPasswordControl kind="owner" userId={owner.id} />
+                    )}
                   </div>
                 </li>
               );
