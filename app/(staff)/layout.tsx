@@ -1,14 +1,10 @@
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
-import {
-  AppHeader,
-  type NavLink,
-} from "@/src/presentation/components/layout/AppHeader";
+import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 
-const LINKS: NavLink[] = [{ href: "/staff", label: "หน้าหลัก" }];
-
+// Staff has a single page, so no bottom tab bar — just the top header.
 export default async function StaffLayout({
   children,
 }: {
@@ -19,7 +15,7 @@ export default async function StaffLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader brand="Easy Stamp · พนักงาน" links={LINKS} userEmail={user.email} />
+      <AppHeader brand="Easy Stamp · พนักงาน" userEmail={user.email} />
       <SuspensionBanner status={status} />
       <PreExpiryBanner status={status} />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
