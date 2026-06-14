@@ -7,26 +7,33 @@ import assert from "node:assert/strict";
 
 import {
   TOPUP_PRESETS,
+  TOPUP_PROMO,
   DEFAULT_PRICE_PER_DAY_SATANG,
   computeCustomBonusDays,
   resolveTopupQuote,
   computeSavingsPercent,
   computeNewExpiry,
+  isPromoActive,
+  type PromoConfig,
 } from "./topup-pricing";
 import { computeBillingState } from "./subscription-status";
 
 const RATE = DEFAULT_PRICE_PER_DAY_SATANG; // 1000 satang = ฿10/วัน
 const DAY = 864e5;
+const NO_PROMO: PromoConfig = { active: false, percentOff: 0, label: "" };
+const PROMO50: PromoConfig = { active: true, percentOff: 50, label: "x" };
 
-test("presets resolve to correct total days + fixed price", () => {
+test("presets resolve to correct total days + fixed price (no promo)", () => {
   const byId = Object.fromEntries(TOPUP_PRESETS.map((p) => [p.id, p]));
-  const q90 = resolveTopupQuote({ packageId: "d90" }, RATE);
+  const q90 = resolveTopupQuote({ packageId: "d90" }, RATE, NO_PROMO);
   assert.equal(q90.baseDays, 90);
   assert.equal(q90.bonusDays, 7);
   assert.equal(q90.totalDays, 97);
   assert.equal(q90.amountSatang, byId.d90.priceSatang);
+  assert.equal(q90.fullAmountSatang, byId.d90.priceSatang);
+  assert.equal(q90.promoPercentOff, 0);
 
-  const q365 = resolveTopupQuote({ packageId: "d365" }, RATE);
+  const q365 = resolveTopupQuote({ packageId: "d365" }, RATE, NO_PROMO);
   assert.equal(q365.totalDays, 410);
   assert.equal(q365.amountSatang, 365000);
 });
@@ -44,8 +51,8 @@ test("custom bonus tiers at boundaries", () => {
   assert.equal(computeCustomBonusDays(365), 45);
 });
 
-test("custom quote prices days * rate and adds tiered bonus", () => {
-  const q = resolveTopupQuote({ customDays: 150 }, RATE);
+test("custom quote prices days * rate and adds tiered bonus (no promo)", () => {
+  const q = resolveTopupQuote({ customDays: 150 }, RATE, NO_PROMO);
   assert.equal(q.packageId, null);
   assert.equal(q.baseDays, 150);
   assert.equal(q.bonusDays, 30);
@@ -53,17 +60,46 @@ test("custom quote prices days * rate and adds tiered bonus", () => {
   assert.equal(q.amountSatang, 150 * RATE);
 });
 
+test("promo discounts both presets and custom orders", () => {
+  // preset: full 180000 → 50% off = 90000, full kept for strikethrough.
+  const q180 = resolveTopupQuote({ packageId: "d180" }, RATE, PROMO50);
+  assert.equal(q180.fullAmountSatang, 180000);
+  assert.equal(q180.amountSatang, 90000);
+  assert.equal(q180.promoPercentOff, 50);
+  assert.equal(q180.totalDays, 200); // days/bonus unaffected by discount
+
+  // custom: 100 days * 1000 = 100000 → 50000.
+  const qc = resolveTopupQuote({ customDays: 100 }, RATE, PROMO50);
+  assert.equal(qc.fullAmountSatang, 100000);
+  assert.equal(qc.amountSatang, 50000);
+  assert.equal(qc.promoPercentOff, 50);
+
+  // off-switch: inactive promo → amount equals full, no discount.
+  const off = resolveTopupQuote({ packageId: "d180" }, RATE, NO_PROMO);
+  assert.equal(off.amountSatang, off.fullAmountSatang);
+  assert.equal(off.promoPercentOff, 0);
+
+  assert.equal(isPromoActive(PROMO50), true);
+  assert.equal(isPromoActive(NO_PROMO), false);
+});
+
+test("default promo param matches the live TOPUP_PROMO config", () => {
+  const q = resolveTopupQuote({ packageId: "d30" }, RATE); // no promo arg
+  const expected = isPromoActive(TOPUP_PROMO) ? TOPUP_PROMO.percentOff : 0;
+  assert.equal(q.promoPercentOff, expected);
+});
+
 test("custom days out of range throws", () => {
   assert.throws(() => resolveTopupQuote({ customDays: 0 }, RATE));
   assert.throws(() => resolveTopupQuote({ customDays: 99999 }, RATE));
 });
 
-test("savings reflect free bonus days", () => {
+test("savings reflect free bonus days (no promo)", () => {
   // 180-day preset: total 200 days valued at 200*1000=200000, price 180000 → 10%.
-  const q180 = resolveTopupQuote({ packageId: "d180" }, RATE);
+  const q180 = resolveTopupQuote({ packageId: "d180" }, RATE, NO_PROMO);
   assert.equal(computeSavingsPercent(q180, RATE), 10);
   // 30-day preset: no bonus → 0% savings.
-  const q30 = resolveTopupQuote({ packageId: "d30" }, RATE);
+  const q30 = resolveTopupQuote({ packageId: "d30" }, RATE, NO_PROMO);
   assert.equal(computeSavingsPercent(q30, RATE), 0);
 });
 

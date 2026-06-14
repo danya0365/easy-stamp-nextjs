@@ -18,6 +18,8 @@ import {
 import { Button } from "@/src/presentation/components/ui/Button";
 import {
   TOPUP_PRESETS,
+  TOPUP_PROMO,
+  isPromoActive,
   resolveTopupQuote,
   computeSavingsPercent,
   MIN_CUSTOM_DAYS,
@@ -43,9 +45,13 @@ export function TopupForm({
     id: "d180",
   });
   const [customDays, setCustomDays] = useState("90");
-  const [qr, setQr] = useState<{ amountSatang: number; qrDataUrl: string; target: string } | null>(
-    null,
-  );
+  const [qr, setQr] = useState<{
+    amountSatang: number;
+    fullAmountSatang: number;
+    promoPercentOff: number;
+    qrDataUrl: string;
+    target: string;
+  } | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
   const [qrPending, startQr] = useTransition();
   const [state, action, pending] = useActionState<BillingFormState, FormData>(
@@ -117,7 +123,13 @@ export function TopupForm({
       startQr(async () => {
         const res = await topupQuoteAction({ packageId, customDays: customDaysNum });
         if (res.ok) {
-          setQr({ amountSatang: res.amountSatang, qrDataUrl: res.qrDataUrl, target: res.target });
+          setQr({
+            amountSatang: res.amountSatang,
+            fullAmountSatang: res.fullAmountSatang,
+            promoPercentOff: res.promoPercentOff,
+            qrDataUrl: res.qrDataUrl,
+            target: res.target,
+          });
           setQrError(null);
         } else {
           setQr(null);
@@ -129,8 +141,20 @@ export function TopupForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageId, customDaysNum, previewError]);
 
+  const promoOn = isPromoActive();
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Launch promo banner */}
+      {promoOn && (
+        <div className="rounded-2xl bg-accent-500 px-4 py-3 text-white">
+          <p className="text-sm font-bold">🎉 {TOPUP_PROMO.label}</p>
+          <p className="text-xs opacity-90">
+            ราคาพิเศษช่วงแนะนำ — เติมแพ็กยาววันนี้คุ้มสุด
+          </p>
+        </div>
+      )}
+
       {/* Preset packages */}
       <div className="grid grid-cols-2 gap-2">
         {TOPUP_PRESETS.map((p) => {
@@ -148,10 +172,16 @@ export function TopupForm({
                   : "bg-card ring-border hover:ring-brand-300"
               }`}
             >
-              {p.badge && (
-                <span className="absolute -top-2 right-2 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-medium text-white">
-                  {BADGE_LABEL[p.badge]}
+              {q.promoPercentOff > 0 ? (
+                <span className="absolute -top-2 right-2 rounded-full bg-accent-500 px-2 py-0.5 text-[10px] font-medium text-white">
+                  ลด {q.promoPercentOff}%
                 </span>
+              ) : (
+                p.badge && (
+                  <span className="absolute -top-2 right-2 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-medium text-white">
+                    {BADGE_LABEL[p.badge]}
+                  </span>
+                )
               )}
               <span className="text-base font-bold text-foreground">{p.label}</span>
               {p.bonusDays > 0 ? (
@@ -161,10 +191,17 @@ export function TopupForm({
               ) : (
                 <span className="text-xs text-muted">&nbsp;</span>
               )}
-              <span className="mt-1 text-sm font-semibold text-foreground">
-                ฿{satangToBaht(p.priceSatang)}
+              <span className="mt-1 flex items-baseline gap-1.5">
+                {q.promoPercentOff > 0 && (
+                  <span className="text-xs text-muted line-through">
+                    ฿{satangToBaht(q.fullAmountSatang)}
+                  </span>
+                )}
+                <span className="text-sm font-semibold text-foreground">
+                  ฿{satangToBaht(q.amountSatang)}
+                </span>
               </span>
-              {pct > 0 && (
+              {q.promoPercentOff === 0 && pct > 0 && (
                 <span className="text-xs text-brand-600">ประหยัด {pct}%</span>
               )}
             </button>
@@ -223,14 +260,27 @@ export function TopupForm({
           )}
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-sm text-muted">ยอดชำระ</span>
-            <span className="text-2xl font-bold text-foreground">
-              ฿{satangToBaht(preview.amountSatang)}
+            <span className="flex items-baseline gap-2">
+              {preview.promoPercentOff > 0 && (
+                <span className="text-sm text-muted line-through">
+                  ฿{satangToBaht(preview.fullAmountSatang)}
+                </span>
+              )}
+              <span className="text-2xl font-bold text-foreground">
+                ฿{satangToBaht(preview.amountSatang)}
+              </span>
             </span>
           </div>
-          {savings > 0 && (
-            <p className="mt-1 text-right text-xs font-medium text-brand-600">
-              คุ้มกว่าเติมรายเดือน ~{savings}%
+          {preview.promoPercentOff > 0 ? (
+            <p className="mt-1 text-right text-xs font-medium text-accent-600">
+              ราคาโปรเปิดตัว (ลด {preview.promoPercentOff}%)
             </p>
+          ) : (
+            savings > 0 && (
+              <p className="mt-1 text-right text-xs font-medium text-brand-600">
+                คุ้มกว่าเติมรายเดือน ~{savings}%
+              </p>
+            )
           )}
         </div>
       ) : null}
@@ -265,6 +315,15 @@ export function TopupForm({
                 <p className="text-2xl font-bold text-foreground">
                   ฿{satangToBaht(qr.amountSatang)}
                 </p>
+                {qr.promoPercentOff > 0 && (
+                  <p className="text-xs text-muted">
+                    ราคาปกติ{" "}
+                    <span className="line-through">
+                      ฿{satangToBaht(qr.fullAmountSatang)}
+                    </span>{" "}
+                    · ลด {qr.promoPercentOff}%
+                  </p>
+                )}
                 <p className="text-xs text-muted">พร้อมเพย์: {qr.target}</p>
               </>
             )}

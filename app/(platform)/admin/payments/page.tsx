@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { PaymentReview } from "@/src/presentation/components/admin/PaymentReview";
 import { satangToBaht } from "@/src/presentation/lib/money";
+import { TOPUP_PROMO, isPromoActive } from "@/src/domain/services/topup-pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,11 @@ export default async function AdminPaymentsPage() {
   return (
     <Card>
       <CardHeader title={`คิวตรวจสอบการชำระเงิน (${pending.length})`} />
+      {isPromoActive() && (
+        <p className="mb-3 rounded-lg bg-accent-100 px-3 py-2 text-xs text-accent-600">
+          ⚡ {TOPUP_PROMO.label} — ยอดในสลิปจะต่ำกว่าราคาปกติ ({TOPUP_PROMO.percentOff}%)
+        </p>
+      )}
       {pending.length === 0 ? (
         <EmptyState icon={<CircleCheck />} title="ไม่มีรายการรอตรวจสอบ" />
       ) : (

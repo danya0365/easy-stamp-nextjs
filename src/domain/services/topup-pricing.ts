@@ -26,6 +26,33 @@ export interface TopupPackage {
 /** Default per-day rate: ฿10/วัน → ~฿300/เดือน (≈ the previous ฿299 monthly). */
 export const DEFAULT_PRICE_PER_DAY_SATANG = 1000;
 
+export interface PromoConfig {
+  active: boolean;
+  /** Whole-percent discount applied to every top-up price. */
+  percentOff: number;
+  /** Shown on the promo banner. */
+  label: string;
+}
+
+/**
+ * Hardcoded launch promo. To END the promo, set `active: false` and redeploy —
+ * every price reverts to full automatically (single source: resolveTopupQuote).
+ */
+export const TOPUP_PROMO: PromoConfig = {
+  active: true,
+  percentOff: 50,
+  label: "โปรเปิดตัว ลดทุกแพ็ก 50%",
+};
+
+export function isPromoActive(promo: PromoConfig = TOPUP_PROMO): boolean {
+  return promo.active && promo.percentOff > 0;
+}
+
+function discounted(fullSatang: number, promo: PromoConfig): number {
+  if (!isPromoActive(promo)) return fullSatang;
+  return Math.round(fullSatang * (1 - promo.percentOff / 100));
+}
+
 export const MIN_CUSTOM_DAYS = 1;
 /** Cap a single top-up at 3 years. */
 export const MAX_CUSTOM_DAYS = 1095;
@@ -85,22 +112,29 @@ export interface TopupQuote {
   bonusDays: number;
   /** baseDays + bonusDays — the actual days added to the shop. */
   totalDays: number;
-  /** Server-trusted charge in satang. */
+  /** Server-trusted charge in satang (already discounted when a promo is on). */
   amountSatang: number;
+  /** Pre-promo list price in satang (for strikethrough display). */
+  fullAmountSatang: number;
+  /** Discount applied, in whole percent (0 when no promo). */
+  promoPercentOff: number;
 }
 
 /**
  * Resolve any order (preset id OR custom days) into a normalized, server-trusted
- * quote. Throws on an unknown package id or an out-of-range day count.
+ * quote. Applies the active promo discount to BOTH presets and custom day counts.
+ * Throws on an unknown package id or an out-of-range day count.
  */
 export function resolveTopupQuote(
   input: { packageId?: string | null; customDays?: number | null },
   pricePerDaySatang: number,
+  promo: PromoConfig = TOPUP_PROMO,
 ): TopupQuote {
   const rate =
     Number.isFinite(pricePerDaySatang) && pricePerDaySatang > 0
       ? Math.round(pricePerDaySatang)
       : DEFAULT_PRICE_PER_DAY_SATANG;
+  const promoPercentOff = isPromoActive(promo) ? promo.percentOff : 0;
 
   if (input.packageId) {
     const preset = findPreset(input.packageId);
@@ -110,7 +144,9 @@ export function resolveTopupQuote(
       baseDays: preset.days,
       bonusDays: preset.bonusDays,
       totalDays: preset.days + preset.bonusDays,
-      amountSatang: preset.priceSatang,
+      amountSatang: discounted(preset.priceSatang, promo),
+      fullAmountSatang: preset.priceSatang,
+      promoPercentOff,
     };
   }
 
@@ -122,12 +158,15 @@ export function resolveTopupQuote(
     throw new Error(`จำนวนวันสูงสุดต่อครั้งคือ ${MAX_CUSTOM_DAYS} วัน`);
   }
   const bonusDays = computeCustomBonusDays(days);
+  const fullAmountSatang = days * rate;
   return {
     packageId: null,
     baseDays: days,
     bonusDays,
     totalDays: days + bonusDays,
-    amountSatang: days * rate,
+    amountSatang: discounted(fullAmountSatang, promo),
+    fullAmountSatang,
+    promoPercentOff,
   };
 }
 

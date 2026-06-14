@@ -20,6 +20,8 @@ export type TopupQuoteResult =
       bonusDays: number;
       totalDays: number;
       amountSatang: number;
+      fullAmountSatang: number;
+      promoPercentOff: number;
       target: string;
       qrDataUrl: string;
     }
@@ -49,6 +51,8 @@ export async function topupQuoteAction(input: {
       bonusDays: quote.bonusDays,
       totalDays: quote.totalDays,
       amountSatang: quote.amountSatang,
+      fullAmountSatang: quote.fullAmountSatang,
+      promoPercentOff: quote.promoPercentOff,
       target,
       qrDataUrl,
     };
