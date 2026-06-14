@@ -1,7 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ChangeEvent,
+} from "react";
 
 import {
   submitSlipAction,
@@ -45,6 +52,46 @@ export function TopupForm({
     submitSlipAction,
     {},
   );
+  const slipRef = useRef<HTMLInputElement>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [slipNote, setSlipNote] = useState<string | null>(null);
+
+  // Shrink the slip in the browser before it ever hits the server action:
+  // cap to 2000×2000 and re-encode as JPEG, so large phone photos don't blow
+  // past Next's server-action body limit.
+  async function onPickSlip(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setSlipNote(null);
+      return;
+    }
+    setCompressing(true);
+    setSlipNote("กำลังย่อรูป...");
+    try {
+      const { default: imageCompression } = await import(
+        "browser-image-compression"
+      );
+      const compressed = await imageCompression(file, {
+        maxWidthOrHeight: 2000,
+        maxSizeMB: 1,
+        useWebWorker: true,
+        fileType: "image/jpeg",
+      });
+      const baseName = file.name.replace(/\.[^.]+$/, "") || "slip";
+      const named = new File([compressed], `${baseName}.jpg`, {
+        type: "image/jpeg",
+      });
+      const dt = new DataTransfer();
+      dt.items.add(named);
+      if (slipRef.current) slipRef.current.files = dt.files;
+      setSlipNote(`พร้อมส่ง: ${Math.round(named.size / 1024)} KB`);
+    } catch {
+      // Couldn't process (e.g. unsupported format) — send the original as-is.
+      setSlipNote(null);
+    } finally {
+      setCompressing(false);
+    }
+  }
 
   const packageId = selection.kind === "preset" ? selection.id : null;
   const customDaysNum = selection.kind === "custom" ? Number(customDays) : null;
@@ -228,20 +275,31 @@ export function TopupForm({
               โอนแล้วแนบสลิปเพื่อให้ผู้ดูแลตรวจสอบและเติมวันให้
             </p>
             <input
+              ref={slipRef}
               type="file"
               name="slip"
               accept="image/png,image/jpeg,image/webp"
               required
+              onChange={onPickSlip}
               className="block w-full text-sm text-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-100 file:px-4 file:py-2 file:text-brand-700"
             />
+            {slipNote && <p className="mt-1 text-xs text-muted">{slipNote}</p>}
             {state.error && (
               <p className="mt-2 text-sm text-error">{state.error}</p>
             )}
             {state.success && (
               <p className="mt-2 text-sm text-success">{state.success}</p>
             )}
-            <Button type="submit" disabled={pending} className="mt-3 w-full">
-              {pending ? "กำลังส่ง..." : "ส่งสลิปการชำระเงิน"}
+            <Button
+              type="submit"
+              disabled={pending || compressing}
+              className="mt-3 w-full"
+            >
+              {pending
+                ? "กำลังส่ง..."
+                : compressing
+                  ? "กำลังย่อรูป..."
+                  : "ส่งสลิปการชำระเงิน"}
             </Button>
           </div>
         </form>
