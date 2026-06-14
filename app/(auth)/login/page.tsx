@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/src/infrastructure/auth/session";
 import { ROLE_HOME } from "@/src/domain/types/roles";
 import { LoginForm } from "@/src/presentation/components/auth/LoginForm";
+import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | Easy Stamp",
@@ -16,7 +17,7 @@ export default async function LoginPage() {
   if (user) redirect(ROLE_HOME[user.role]);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background px-4">
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-sm ring-1 ring-border">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground">Easy Stamp</h1>
@@ -49,6 +50,7 @@ export default async function LoginPage() {
           </div>
         </div>
       </div>
+      <AppVersion />
     </main>
   );
 }

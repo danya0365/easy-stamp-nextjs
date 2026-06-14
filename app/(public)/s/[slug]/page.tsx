@@ -8,9 +8,13 @@ import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/
 import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
-import { Card } from "@/src/presentation/components/ui/Card";
+import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CardBalance } from "@/src/presentation/components/stamp/CardBalance";
+import {
+  RedemptionHistory,
+  type RedemptionItem,
+} from "@/src/presentation/components/stamp/RedemptionHistory";
 import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 
@@ -59,6 +63,22 @@ export default async function PublicShopCheckPage({
       )
     : null;
 
+  // The customer's own redemption history for this shop.
+  const [redemptions, branches] = view
+    ? await Promise.all([
+        container.rewardRedemptionRepository.listByCustomer(
+          shop.id,
+          view.customer.id,
+        ),
+        container.branchRepository.listByShop(shop.id),
+      ])
+    : [[], []];
+  const branchName = new Map(branches.map((b) => [b.id, b.name]));
+  const historyItems: RedemptionItem[] = redemptions.map((r) => ({
+    ...r,
+    branchLabel: r.branchId ? (branchName.get(r.branchId) ?? null) : null,
+  }));
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
       {view ? (
@@ -82,6 +102,13 @@ export default async function PublicShopCheckPage({
               <InstallHint />
             </div>
           </details>
+
+          {historyItems.length > 0 && (
+            <Card>
+              <CardHeader title="ประวัติการแลกรางวัล" />
+              <RedemptionHistory items={historyItems} />
+            </Card>
+          )}
         </>
       ) : (
         <>

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
+import Map, {
+  Marker,
+  Popup,
+  NavigationControl,
+  GeolocateControl,
+} from "react-map-gl/maplibre";
 import { MapPin } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -28,6 +33,13 @@ export default function StoreMapView({
       attributionControl={{ compact: true }}
     >
       <NavigationControl position="top-right" showCompass={false} />
+      {/* "Locate me" — centers the map on the user so they can spot nearby shops. */}
+      <GeolocateControl
+        position="top-right"
+        positionOptions={{ enableHighAccuracy: true }}
+        trackUserLocation
+        showUserLocation
+      />
 
       {locations.map((loc) => (
         <Marker
