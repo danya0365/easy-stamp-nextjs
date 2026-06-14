@@ -1,0 +1,56 @@
+import { Gift } from "lucide-react";
+
+import type { RewardRedemption } from "@/src/domain/entities";
+import { Badge } from "../ui/Badge";
+import { EmptyState } from "../ui/EmptyState";
+import { formatDateTime } from "@/src/presentation/lib/format-date";
+
+export interface RedemptionItem extends RewardRedemption {
+  /** Customer name/phone — only shown on the shop-facing list. */
+  customerLabel?: string;
+  /** Branch name, when the redemption was tied to a branch. */
+  branchLabel?: string | null;
+}
+
+/**
+ * Shared list of past reward redemptions. Used on the shop history page
+ * (showCustomer) and the customer's own card page.
+ */
+export function RedemptionHistory({
+  items,
+  showCustomer = false,
+}: {
+  items: RedemptionItem[];
+  showCustomer?: boolean;
+}) {
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        icon={<Gift />}
+        title="ยังไม่มีประวัติการแลกรางวัล"
+        description="เมื่อมีการแลกของรางวัล รายการจะแสดงที่นี่"
+      />
+    );
+  }
+
+  return (
+    <ul className="flex flex-col divide-y divide-border">
+      {items.map((r) => (
+        <li key={r.id} className="flex items-start justify-between gap-3 py-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 truncate font-medium text-foreground">
+              <Gift className="size-4 shrink-0 text-brand-500" />
+              {r.rewardTextSnapshot || "ของรางวัล"}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              {showCustomer && r.customerLabel ? `${r.customerLabel} · ` : ""}
+              {formatDateTime(r.createdAt)}
+              {r.branchLabel ? ` · ${r.branchLabel}` : ""}
+            </p>
+          </div>
+          <Badge tone="neutral">−{r.stampsSpent} ดวง</Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}

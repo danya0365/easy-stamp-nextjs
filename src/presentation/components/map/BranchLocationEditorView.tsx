@@ -1,8 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
-import { MapPin } from "lucide-react";
+import { useActionState, useRef, useState } from "react";
+import Map, {
+  Marker,
+  NavigationControl,
+  type MapRef,
+} from "react-map-gl/maplibre";
+import { LocateFixed, MapPin } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
@@ -31,10 +35,40 @@ export default function BranchLocationEditorView({
       ? { lng: longitude, lat: latitude }
       : null,
   );
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const mapRef = useRef<MapRef>(null);
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateBranchLocationAction,
     {},
   );
+
+  function detectCurrentLocation() {
+    if (!navigator.geolocation) {
+      setGeoError("อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง");
+      return;
+    }
+    setLocating(true);
+    setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const lng = p.coords.longitude;
+        const lat = p.coords.latitude;
+        setPos({ lng, lat });
+        mapRef.current?.flyTo({ center: [lng, lat], zoom: 16 });
+        setLocating(false);
+      },
+      (err) => {
+        setGeoError(
+          err.code === err.PERMISSION_DENIED
+            ? "กรุณาอนุญาตให้เข้าถึงตำแหน่งในเบราว์เซอร์"
+            : "ระบุตำแหน่งไม่สำเร็จ ลองใหม่อีกครั้ง",
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
 
   const initialViewState = pos
     ? { longitude: pos.lng, latitude: pos.lat, zoom: 15 }
@@ -42,12 +76,26 @@ export default function BranchLocationEditorView({
 
   return (
     <form action={action} className="flex flex-col gap-2">
-      <p className="text-xs text-muted">
-        แตะบนแผนที่เพื่อปักหมุด หรือลากหมุดเพื่อปรับตำแหน่ง
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted">
+          แตะบนแผนที่เพื่อปักหมุด หรือลากหมุดเพื่อปรับตำแหน่ง
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={detectCurrentLocation}
+          disabled={locating}
+        >
+          <LocateFixed size={14} />
+          {locating ? "กำลังหาตำแหน่ง…" : "ตำแหน่งปัจจุบัน"}
+        </Button>
+      </div>
+      {geoError && <p className="text-xs text-error">{geoError}</p>}
 
       <div className="h-56 w-full overflow-hidden rounded-lg border border-border">
         <Map
+          ref={mapRef}
           initialViewState={initialViewState}
           mapStyle={OSM_STYLE}
           style={{ width: "100%", height: "100%" }}

@@ -14,6 +14,7 @@ const LINKS: NavLink[] = [
   { href: "/shop", label: "แดชบอร์ด" },
   { href: "/shop/stamps", label: "เพิ่ม/แลกแสตมป์" },
   { href: "/shop/customers", label: "ลูกค้า" },
+  { href: "/shop/redemptions", label: "ประวัติแลกรางวัล" },
   { href: "/shop/branches", label: "สาขา" },
   { href: "/shop/staff", label: "พนักงาน" },
   { href: "/shop/qr", label: "ป้าย QR" },
