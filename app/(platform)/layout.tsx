@@ -1,6 +1,7 @@
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
+import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 
 export default async function PlatformLayout({
   children,
@@ -13,6 +14,7 @@ export default async function PlatformLayout({
       <AppHeader brand="Easy Stamp · Admin" userEmail={user.email} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {children}
+        <AppVersion />
       </main>
       <AppTabBar nav="admin" />
     </div>

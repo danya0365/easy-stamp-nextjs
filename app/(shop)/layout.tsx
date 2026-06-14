@@ -5,6 +5,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
+import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 
@@ -29,6 +30,7 @@ export default async function ShopLayout({
       <PreExpiryBanner status={status} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {children}
+        <AppVersion />
       </main>
       <AppTabBar nav="shop" />
     </div>
