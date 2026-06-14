@@ -30,7 +30,9 @@ export async function createShopAction(
       slug: String(formData.get("slug") ?? ""),
       ownerEmail: String(formData.get("ownerEmail") ?? ""),
       ownerPassword: String(formData.get("ownerPassword") ?? ""),
-      amountSatang: bahtToSatang(Number(formData.get("amountBaht") ?? 0)),
+      pricePerDaySatang: bahtToSatang(
+        Number(formData.get("pricePerDayBaht") ?? 0),
+      ),
       categoryId: String(formData.get("categoryId") ?? "") || null,
       stampThreshold: Number(formData.get("stampThreshold") ?? 10),
       rewardText: String(formData.get("rewardText") ?? ""),
@@ -52,6 +54,7 @@ export async function verifyPaymentAction(
     container.paymentRepository,
     container.subscriptionRepository,
     container.paymentVerifier,
+    container.topupTransactionRepository,
   ).execute({ paymentId, reviewerUserId: admin.id, decision, rejectReason });
   revalidatePath("/admin/payments");
   revalidatePath("/admin/shops");

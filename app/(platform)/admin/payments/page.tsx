@@ -44,6 +44,13 @@ export default async function AdminPaymentsPage() {
                 <p className="text-sm text-muted">
                   ฿{satangToBaht(p.amountSatang)} · {fmtDate(p.createdAt)}
                 </p>
+                <p className="text-xs text-brand-700">
+                  เติม {p.daysToAdd} วัน
+                  {p.bonusDays > 0 ? ` + โบนัส ${p.bonusDays} วัน` : ""}
+                  {p.coversPeriodDueAt
+                    ? ` → ใช้ได้ถึง ${fmtDate(p.coversPeriodDueAt)}`
+                    : ""}
+                </p>
                 <Link
                   href={`/api/slips/${p.id}`}
                   target="_blank"

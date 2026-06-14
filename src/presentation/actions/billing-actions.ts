@@ -5,10 +5,56 @@ import { revalidatePath } from "next/cache";
 import { container } from "@/src/infrastructure/di/container";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { SubmitPaymentSlipUseCase } from "@/src/application/use-cases/billing/SubmitPaymentSlipUseCase";
+import { resolveTopupQuote } from "@/src/domain/services/topup-pricing";
+import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
 
 export interface BillingFormState {
   error?: string;
   success?: string;
+}
+
+export type TopupQuoteResult =
+  | {
+      ok: true;
+      baseDays: number;
+      bonusDays: number;
+      totalDays: number;
+      amountSatang: number;
+      target: string;
+      qrDataUrl: string;
+    }
+  | { ok: false; error: string };
+
+/**
+ * Resolve a top-up order server-side (authoritative price + bonus) and render
+ * the matching PromptPay QR. The client uses this so the QR amount always
+ * equals what the server will actually charge.
+ */
+export async function topupQuoteAction(input: {
+  packageId: string | null;
+  customDays: number | null;
+}): Promise<TopupQuoteResult> {
+  try {
+    const user = await requireRole("shop_owner");
+    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    const sub = await container.subscriptionRepository.findByShop(user.shopId);
+    if (!sub) throw new Error("ยังไม่มีแพ็กเกจสำหรับร้านนี้");
+
+    const quote = resolveTopupQuote(input, sub.pricePerDaySatang);
+    const target = process.env.PROMPTPAY_TARGET || "0000000000";
+    const qrDataUrl = await renderPromptPayQR(target, quote.amountSatang);
+    return {
+      ok: true,
+      baseDays: quote.baseDays,
+      bonusDays: quote.bonusDays,
+      totalDays: quote.totalDays,
+      amountSatang: quote.amountSatang,
+      target,
+      qrDataUrl,
+    };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }
 
 export async function submitSlipAction(
@@ -26,6 +72,10 @@ export async function submitSlipAction(
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
 
+    const packageId = String(formData.get("packageId") ?? "") || null;
+    const customDaysRaw = String(formData.get("customDays") ?? "");
+    const customDays = customDaysRaw ? Number(customDaysRaw) : null;
+
     await new SubmitPaymentSlipUseCase(
       container.paymentRepository,
       container.subscriptionRepository,
@@ -36,6 +86,8 @@ export async function submitSlipAction(
       filename: file.name,
       contentType: file.type,
       bytes,
+      packageId,
+      customDays,
     });
 
     revalidatePath("/shop/billing");

@@ -12,8 +12,11 @@ export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
 /**
  * One subscription per shop. The stored `status` is a convenience cache;
- * the source of truth for enforcement is `currentPeriodDueAt` vs now,
- * computed by domain/services/subscription-status.ts.
+ * the source of truth for enforcement is `currentPeriodDueAt` (the shop's
+ * expiry / paid-through date) vs now, computed by subscription-status.ts.
+ *
+ * Prepaid "day top-up" model: topping up extends `currentPeriodDueAt`. Custom
+ * top-ups are priced from `pricePerDaySatang`; presets carry their own price.
  */
 export const subscriptions = sqliteTable("subscriptions", {
   id: id(),
@@ -22,10 +25,13 @@ export const subscriptions = sqliteTable("subscriptions", {
     .unique()
     .references(() => shops.id, { onDelete: "cascade" }),
   status: text({ enum: SUBSCRIPTION_STATUSES }).notNull().default("trialing"),
-  // Fixed monthly price, stored in satang (THB cents).
-  amountSatang: integer().notNull(),
+  // Per-day rate for custom top-ups, in satang (THB cents). ฿10/วัน default.
+  pricePerDaySatang: integer().notNull().default(1000),
+  // Vestigial: the old fixed monthly price. Kept for back-compat; unused going
+  // forward (SQLite column drops are painful — remove in a later migration).
+  amountSatang: integer().notNull().default(0),
   currentPeriodStartAt: text().notNull(),
-  // The due date that dunning/suspension is computed from.
+  // The expiry date that dunning/suspension is computed from.
   currentPeriodDueAt: text().notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

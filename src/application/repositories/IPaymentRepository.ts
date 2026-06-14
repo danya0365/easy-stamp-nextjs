@@ -4,6 +4,9 @@ export interface CreatePaymentInput {
   shopId: string;
   subscriptionId: string;
   amountSatang: number;
+  daysToAdd: number;
+  bonusDays: number;
+  packageId: string | null;
   slipUrl: string;
   submittedBy: string;
   coversPeriodStartAt: string;

@@ -14,6 +14,7 @@ function toSub(r: Row): Subscription {
     id: r.id,
     shopId: r.shopId,
     status: r.status,
+    pricePerDaySatang: r.pricePerDaySatang,
     amountSatang: r.amountSatang,
     currentPeriodStartAt: r.currentPeriodStartAt,
     currentPeriodDueAt: r.currentPeriodDueAt,
@@ -28,7 +29,7 @@ export class DrizzleSubscriptionRepository implements ISubscriptionRepository {
       .insert(schema.subscriptions)
       .values({
         shopId: input.shopId,
-        amountSatang: input.amountSatang,
+        pricePerDaySatang: input.pricePerDaySatang,
         status: input.status ?? "trialing",
         currentPeriodStartAt: input.currentPeriodStartAt,
         currentPeriodDueAt: input.currentPeriodDueAt,

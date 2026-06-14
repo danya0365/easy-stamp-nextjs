@@ -8,6 +8,7 @@ import {
   type NavLink,
 } from "@/src/presentation/components/layout/AppHeader";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
+import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 
 const LINKS: NavLink[] = [
   { href: "/shop", label: "แดชบอร์ด" },
@@ -38,6 +39,7 @@ export default async function ShopLayout({
     <div className="flex min-h-dvh flex-col">
       <AppHeader brand="Easy Stamp · ร้านค้า" links={LINKS} userEmail={user.email} />
       <SuspensionBanner status={status} />
+      <PreExpiryBanner status={status} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
     </div>
   );

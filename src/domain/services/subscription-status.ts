@@ -6,18 +6,25 @@ export interface BillingStatus {
   state: BillingState;
   /** Whole days past the due date (0 if not yet due). */
   daysOverdue: number;
+  /** Whole days remaining until expiry (0 once expired). */
+  daysUntilDue: number;
   /** True when access should be blocked (overdue > grace, or admin-suspended). */
   isSuspended: boolean;
-  /** 0 = no banner; 1–7 = escalating dunning banner. */
+  /** 0 = no banner; 1–7 = escalating dunning banner (after expiry). */
   bannerLevel: number;
+  /** 0 = none; 1–7 = escalating "expiring soon" nudge (before expiry). */
+  preExpiryBannerLevel: number;
   /** Days remaining in the grace window before suspension (0 when suspended). */
   graceDaysLeft: number;
   /** Why the shop is suspended, when it is. */
   suspendReason: "none" | "overdue" | "admin";
 }
 
-/** Number of days a shop may remain overdue before the system blocks it. */
+/** Number of days a shop may remain expired before the system blocks it. */
 export const GRACE_DAYS = 7;
+
+/** Days before expiry within which we start nudging the owner to top up. */
+export const PRE_EXPIRY_WARN_DAYS = 7;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -39,8 +46,10 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
     return {
       state: "suspended",
       daysOverdue: 0,
+      daysUntilDue: 0,
       isSuspended: true,
       bannerLevel: 0,
+      preExpiryBannerLevel: 0,
       graceDaysLeft: 0,
       suspendReason: "admin",
     };
@@ -51,11 +60,20 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
   const daysOverdue = diffMs <= 0 ? 0 : Math.floor(diffMs / DAY_MS);
 
   if (daysOverdue === 0) {
+    // Still active: how many whole days of usage remain (ceil so it shows ≥1
+    // until the moment of expiry), and whether to nudge before it lapses.
+    const daysUntilDue = Math.max(0, Math.ceil(-diffMs / DAY_MS));
+    const preExpiryBannerLevel =
+      daysUntilDue > 0 && daysUntilDue <= PRE_EXPIRY_WARN_DAYS
+        ? PRE_EXPIRY_WARN_DAYS - daysUntilDue + 1
+        : 0;
     return {
       state: "active",
       daysOverdue: 0,
+      daysUntilDue,
       isSuspended: false,
       bannerLevel: 0,
+      preExpiryBannerLevel,
       graceDaysLeft: GRACE_DAYS,
       suspendReason: "none",
     };
@@ -65,8 +83,10 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
     return {
       state: "suspended",
       daysOverdue,
+      daysUntilDue: 0,
       isSuspended: true,
       bannerLevel: GRACE_DAYS,
+      preExpiryBannerLevel: 0,
       graceDaysLeft: 0,
       suspendReason: "overdue",
     };
@@ -75,8 +95,10 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
   return {
     state: "overdue",
     daysOverdue,
+    daysUntilDue: 0,
     isSuspended: false,
     bannerLevel: daysOverdue,
+    preExpiryBannerLevel: 0,
     graceDaysLeft: GRACE_DAYS - daysOverdue,
     suspendReason: "none",
   };

@@ -2,7 +2,7 @@ import type { Subscription, SubscriptionStatus } from "@/src/domain/entities";
 
 export interface CreateSubscriptionInput {
   shopId: string;
-  amountSatang: number;
+  pricePerDaySatang: number;
   status?: SubscriptionStatus;
   currentPeriodStartAt: string;
   currentPeriodDueAt: string;

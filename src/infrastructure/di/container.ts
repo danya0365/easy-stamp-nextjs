@@ -13,6 +13,7 @@ import { DrizzleStampTransactionRepository } from "@/src/infrastructure/reposito
 import { DrizzleRewardRedemptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleRewardRedemptionRepository";
 import { DrizzleSubscriptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleSubscriptionRepository";
 import { DrizzlePaymentRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePaymentRepository";
+import { DrizzleTopupTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleTopupTransactionRepository";
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import { ManualSlipPaymentVerifier } from "@/src/infrastructure/services/ManualSlipPaymentVerifier";
@@ -31,6 +32,7 @@ import type { IStampTransactionRepository } from "@/src/application/repositories
 import type { IRewardRedemptionRepository } from "@/src/application/repositories/IRewardRedemptionRepository";
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
 import type { IPaymentRepository } from "@/src/application/repositories/IPaymentRepository";
+import type { ITopupTransactionRepository } from "@/src/application/repositories/ITopupTransactionRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
@@ -64,6 +66,8 @@ class Container {
     new DrizzleSubscriptionRepository();
   readonly paymentRepository: IPaymentRepository =
     new DrizzlePaymentRepository();
+  readonly topupTransactionRepository: ITopupTransactionRepository =
+    new DrizzleTopupTransactionRepository();
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();

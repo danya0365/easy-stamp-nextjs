@@ -7,7 +7,7 @@ import { users } from "./users";
 export const PAYMENT_STATUSES = ["pending", "approved", "rejected"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-/** A monthly payment submission (PromptPay slip) awaiting admin verification. */
+/** A top-up payment submission (PromptPay slip) awaiting admin verification. */
 export const payments = sqliteTable(
   "payments",
   {
@@ -19,6 +19,11 @@ export const payments = sqliteTable(
       .notNull()
       .references(() => subscriptions.id, { onDelete: "cascade" }),
     amountSatang: integer().notNull(),
+    // What this top-up grants: base days, free bonus days, and the chosen preset
+    // id (null = a custom-day order). All server-computed, never client-supplied.
+    daysToAdd: integer().notNull().default(30),
+    bonusDays: integer().notNull().default(0),
+    packageId: text(),
     // Path/URL to the uploaded slip image.
     slipUrl: text().notNull(),
     status: text({ enum: PAYMENT_STATUSES }).notNull().default("pending"),
@@ -28,7 +33,8 @@ export const payments = sqliteTable(
     verifiedBy: text().references(() => users.id),
     verifiedAt: text(),
     rejectReason: text(),
-    // The new period this payment sets on the subscription if approved.
+    // Snapshot (at submit time) of the expiry this payment would set if approved.
+    // Approval recomputes from the live expiry so late approvals aren't shorted.
     coversPeriodStartAt: text(),
     coversPeriodDueAt: text(),
     createdAt: createdAt(),

@@ -8,6 +8,7 @@ export type SubscriptionStatus =
   | "suspended";
 export type PaymentStatus = "pending" | "approved" | "rejected";
 export type StampTxType = "earn" | "redeem_adjust";
+export type TopupTxType = "topup" | "adjustment";
 
 export interface ShopCategory {
   id: string;
@@ -116,8 +117,12 @@ export interface Subscription {
   id: string;
   shopId: string;
   status: SubscriptionStatus;
+  /** Per-day rate for custom top-ups, in satang. */
+  pricePerDaySatang: number;
+  /** Vestigial old monthly price; unused going forward. */
   amountSatang: number;
   currentPeriodStartAt: string;
+  /** Expiry / paid-through date. */
   currentPeriodDueAt: string;
   createdAt: string;
   updatedAt: string;
@@ -128,6 +133,12 @@ export interface Payment {
   shopId: string;
   subscriptionId: string;
   amountSatang: number;
+  /** Base days this top-up buys. */
+  daysToAdd: number;
+  /** Free bonus days granted on approval. */
+  bonusDays: number;
+  /** Preset package id, or null for a custom-day order. */
+  packageId: string | null;
   slipUrl: string;
   status: PaymentStatus;
   submittedBy: string;
@@ -138,6 +149,21 @@ export interface Payment {
   coversPeriodDueAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TopupTransaction {
+  id: string;
+  shopId: string;
+  paymentId: string | null;
+  type: TopupTxType;
+  daysAdded: number;
+  bonusDaysAdded: number;
+  amountSatang: number;
+  expiryBeforeAt: string | null;
+  expiryAfterAt: string;
+  performedBy: string;
+  note: string | null;
+  createdAt: string;
 }
 
 /** A customer's card enriched with the shop's threshold + derived eligibility. */

@@ -1,14 +1,12 @@
-import { Package, Receipt } from "lucide-react";
+import { CalendarClock, Package, Receipt, TriangleAlert } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { container } from "@/src/infrastructure/di/container";
-import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
-import { PromptPayQR } from "@/src/presentation/components/billing/PromptPayQR";
-import { SlipUploadForm } from "@/src/presentation/components/billing/SlipUploadForm";
+import { TopupForm } from "@/src/presentation/components/billing/TopupForm";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import type { PaymentStatus } from "@/src/domain/entities";
 
@@ -36,12 +34,33 @@ export default async function ShopBillingPage() {
   const shopId = user.shopId!;
   const { subscription, status } = await getBillingState(shopId);
   const payments = await container.paymentRepository.listByShop(shopId, 10);
-  const target = process.env.PROMPTPAY_TARGET || "0000000000";
+  const customers = await container.customerRepository.listByShop(shopId);
 
   return (
     <div className="flex max-w-lg flex-col gap-4">
+      {/* Loss-aversion lock notice */}
+      {status.isSuspended && (
+        <Card className="bg-error-surface ring-1 ring-red-200">
+          <div className="flex items-start gap-3">
+            <TriangleAlert className="mt-0.5 size-6 shrink-0 text-error" />
+            <div>
+              <p className="font-semibold text-error">
+                ระบบถูกระงับ — เติมวันเพื่อเปิดใช้งานต่อ
+              </p>
+              <p className="mt-1 text-sm text-foreground">
+                ตอนนี้พนักงานกดแสตมป์และแลกของรางวัลให้ลูกค้าไม่ได้
+                ลูกค้า <strong>{customers.length} คน</strong> ของคุณกำลังสะสมแต้มค้างอยู่
+                และจะสะสมต่อไม่ได้จนกว่าคุณจะเติมวัน — ทุกวันที่ปล่อยไว้
+                คือโอกาสที่ลูกค้าจะหายไปหาคู่แข่ง
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Status */}
       <Card>
-        <CardHeader title="สถานะค่าบริการรายเดือน" />
+        <CardHeader title="วันใช้งานคงเหลือ" />
         {!subscription ? (
           <EmptyState
             icon={<Package />}
@@ -53,66 +72,77 @@ export default async function ShopBillingPage() {
             <div className="flex justify-between">
               <span className="text-muted">สถานะ</span>
               {status.isSuspended ? (
-                <Badge tone="danger">ถูกระงับ (ค้างชำระ)</Badge>
+                <Badge tone="danger">ถูกระงับ (หมดอายุ)</Badge>
               ) : status.state === "overdue" ? (
-                <Badge tone="warning">ค้างชำระ {status.daysOverdue} วัน</Badge>
+                <Badge tone="warning">
+                  หมดอายุแล้ว {status.daysOverdue} วัน
+                </Badge>
+              ) : subscription.status === "trialing" ? (
+                <Badge tone="success">ทดลองใช้งาน</Badge>
               ) : (
                 <Badge tone="success">ใช้งานปกติ</Badge>
               )}
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">ครบกำหนดชำระ</span>
-              <span className="text-foreground">
+              <span className="text-muted">ใช้งานได้ถึง</span>
+              <span className="inline-flex items-center gap-1.5 text-foreground">
+                <CalendarClock className="size-4 text-muted" />
                 {fmtDate(subscription.currentPeriodDueAt)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">ยอดชำระ/เดือน</span>
+              <span className="text-muted">คงเหลือ</span>
               <span className="font-semibold text-foreground">
-                ฿{satangToBaht(subscription.amountSatang)}
+                {status.state === "active"
+                  ? `${status.daysUntilDue} วัน`
+                  : status.isSuspended
+                    ? "—"
+                    : `หมดอายุ — เติมได้อีก ${status.graceDaysLeft} วันก่อนถูกระงับ`}
               </span>
             </div>
           </div>
         )}
       </Card>
 
+      {/* Top up */}
       {subscription && (
         <Card>
           <CardHeader
-            title="ชำระเงิน"
-            subtitle="สแกนจ่ายผ่าน PromptPay แล้วอัปโหลดสลิปเพื่อให้ผู้ดูแลตรวจสอบ"
+            title="เติมวัน"
+            subtitle="เลือกแพ็กเกจหรือเติมวันอิสระ — เติมยิ่งเยอะ ยิ่งได้วันแถม"
           />
-          <div className="flex flex-col items-center gap-4">
-            <PromptPayQR
-              qrImageUrl={await renderPromptPayQR(target, subscription.amountSatang)}
-              amountSatang={subscription.amountSatang}
-              target={target}
-            />
-            <div className="w-full">
-              <SlipUploadForm />
-            </div>
-          </div>
+          <TopupForm pricePerDaySatang={subscription.pricePerDaySatang} />
         </Card>
       )}
 
+      {/* History */}
       <Card>
-        <CardHeader title="ประวัติการชำระเงิน" />
+        <CardHeader title="ประวัติการเติมวัน" />
         {payments.length === 0 ? (
           <EmptyState icon={<Receipt />} title="ยังไม่มีประวัติ" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {payments.map((p) => {
               const badge = PAYMENT_BADGE[p.status];
+              const totalDays = p.daysToAdd + p.bonusDays;
               return (
                 <li
                   key={p.id}
                   className="flex items-center justify-between gap-3 py-2.5 text-sm"
                 >
                   <div>
-                    <p className="text-foreground">฿{satangToBaht(p.amountSatang)}</p>
+                    <p className="text-foreground">
+                      ฿{satangToBaht(p.amountSatang)} ·{" "}
+                      <span className="text-muted">
+                        {totalDays} วัน
+                        {p.bonusDays > 0 ? ` (แถม ${p.bonusDays})` : ""}
+                      </span>
+                    </p>
                     <p className="text-xs text-muted">{fmtDate(p.createdAt)}</p>
                     {p.status === "rejected" && p.rejectReason && (
-                      <p className="text-xs text-error">เหตุผล: {p.rejectReason}</p>
+                      <p className="text-xs text-error">
+                        เหตุผล: {p.rejectReason}
+                      </p>
                     )}
                   </div>
                   <Badge tone={badge.tone}>{badge.label}</Badge>

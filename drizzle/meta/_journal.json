@@ -15,6 +15,13 @@
       "when": 1781368264449,
       "tag": "0001_damp_random",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781375491225,
+      "tag": "0002_living_dragon_man",
+      "breakpoints": true
     }
   ]
 }

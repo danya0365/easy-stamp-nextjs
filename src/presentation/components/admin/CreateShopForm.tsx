@@ -35,13 +35,14 @@ export function CreateShopForm({
         <FormField label="รหัสผ่านเจ้าของร้าน" htmlFor="ownerPassword">
           <Input id="ownerPassword" name="ownerPassword" type="text" required />
         </FormField>
-        <FormField label="ค่าบริการ/เดือน (บาท)" htmlFor="amountBaht">
+        <FormField label="ราคา/วัน (บาท)" htmlFor="pricePerDayBaht">
           <Input
-            id="amountBaht"
-            name="amountBaht"
+            id="pricePerDayBaht"
+            name="pricePerDayBaht"
             type="number"
-            min={0}
-            defaultValue={299}
+            min={1}
+            step="0.5"
+            defaultValue={10}
             required
           />
         </FormField>

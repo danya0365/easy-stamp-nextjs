@@ -4,21 +4,23 @@ import type { IShopCategoryRepository } from "@/src/application/repositories/ISh
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
+import { DEFAULT_PRICE_PER_DAY_SATANG } from "@/src/domain/services/topup-pricing";
 
-const PERIOD_DAYS = 30;
+/** New shops get a free trial before their first top-up is required. */
+const TRIAL_DAYS = 30;
 
 export interface CreateShopInput {
   name: string;
   slug: string;
   ownerEmail: string;
   ownerPassword: string;
-  amountSatang: number;
+  pricePerDaySatang?: number;
   categoryId?: string | null;
   stampThreshold?: number;
   rewardText?: string;
 }
 
-/** Onboard a new tenant: shop + owner account + monthly subscription. */
+/** Onboard a new tenant: shop + owner account + a 30-day trial subscription. */
 export class CreateShopUseCase {
   constructor(
     private readonly shops: IShopRepository,
@@ -44,9 +46,10 @@ export class CreateShopUseCase {
     if (input.ownerPassword.length < 6) {
       throw new Error("รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร");
     }
-    if (!Number.isFinite(input.amountSatang) || input.amountSatang < 0) {
-      throw new Error("ยอดค่าบริการไม่ถูกต้อง");
-    }
+    const pricePerDaySatang =
+      input.pricePerDaySatang && input.pricePerDaySatang > 0
+        ? Math.round(input.pricePerDaySatang)
+        : DEFAULT_PRICE_PER_DAY_SATANG;
     if (await this.shops.findBySlug(slug)) {
       throw new Error("slug นี้ถูกใช้แล้ว");
     }
@@ -72,10 +75,10 @@ export class CreateShopUseCase {
     const now = Date.now();
     await this.subscriptions.create({
       shopId: shop.id,
-      amountSatang: input.amountSatang,
-      status: "active",
+      pricePerDaySatang,
+      status: "trialing",
       currentPeriodStartAt: new Date(now).toISOString(),
-      currentPeriodDueAt: new Date(now + PERIOD_DAYS * 864e5).toISOString(),
+      currentPeriodDueAt: new Date(now + TRIAL_DAYS * 864e5).toISOString(),
     });
 
     const passwordHash = await this.hasher.hash(input.ownerPassword);
