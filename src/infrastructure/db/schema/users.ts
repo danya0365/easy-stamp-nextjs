@@ -29,9 +29,11 @@ export const users = sqliteTable(
     isActive: integer({ mode: "boolean" }).notNull().default(true),
     // LINE Messaging API push target, set once the operator links their LINE
     // (via the webhook flow). lineLinkCode is the transient code they send in
-    // chat to prove ownership; cleared on successful link.
+    // chat to prove ownership; cleared on successful link. lineLinkCodeExpiresAt
+    // bounds the code's validity (anti-brute-force) — null/past = no valid code.
     lineUserId: text().unique(),
     lineLinkCode: text(),
+    lineLinkCodeExpiresAt: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

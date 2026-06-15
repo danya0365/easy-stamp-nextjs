@@ -22,6 +22,11 @@ export interface IUserRepository {
   updatePassword(id: string, passwordHash: string): Promise<User>;
   /** LINE account linking. */
   setLineUserId(id: string, lineUserId: string | null): Promise<User>;
-  setLineLinkCode(id: string, code: string | null): Promise<User>;
+  setLineLinkCode(
+    id: string,
+    code: string | null,
+    expiresAt: string | null,
+  ): Promise<User>;
+  /** Returns the user whose UNEXPIRED link code matches, or null. */
   findByLineLinkCode(code: string): Promise<User | null>;
 }

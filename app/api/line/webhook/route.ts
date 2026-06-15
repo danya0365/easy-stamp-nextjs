@@ -99,12 +99,15 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error("[LINE] webhook event error:", e);
       if (event.replyToken) {
-        // Most likely this LINE is already linked to another account (lineUserId
-        // is unique). Tell the user instead of failing silently.
+        // Only the unique-constraint case means "already linked elsewhere";
+        // anything else is a generic error (don't leak linkage state).
+        const alreadyLinked = /UNIQUE/i.test((e as Error)?.message ?? "");
         await reply(
           config.channelAccessToken,
           event.replyToken,
-          "เชื่อมต่อไม่สำเร็จ — LINE นี้อาจถูกผูกกับบัญชีอื่นแล้ว หรือเกิดข้อผิดพลาด กรุณาลองใหม่",
+          alreadyLinked
+            ? "เชื่อมต่อไม่สำเร็จ — LINE นี้ถูกผูกกับบัญชีอื่นแล้ว"
+            : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
         );
       }
     }

@@ -39,7 +39,11 @@ export async function contactAdminAction(
       );
     }
     if (latest) {
-      const elapsed = Date.now() - new Date(latest.createdAt).getTime();
+      // Here the latest is resolved (open case returned above). Measure cooldown
+      // from the resolution time, so a quick admin resolve doesn't block a
+      // legitimate follow-up sooner than intended.
+      const since = new Date(latest.resolvedAt ?? latest.createdAt).getTime();
+      const elapsed = Date.now() - since;
       if (elapsed < CONTACT_COOLDOWN_MS) {
         const mins = Math.ceil((CONTACT_COOLDOWN_MS - elapsed) / 60_000);
         throw new Error(`กรุณารออีกประมาณ ${mins} นาที ก่อนส่งคำขอใหม่`);
@@ -62,6 +66,7 @@ export async function contactAdminAction(
       linkUrl: "/admin/contacts",
     });
 
+    revalidatePath("/shop/contact");
     return { success: "ส่งคำขอติดต่อแล้ว ผู้ดูแลจะติดต่อกลับโดยเร็ว" };
   } catch (e) {
     return { error: (e as Error).message };
@@ -84,4 +89,5 @@ export async function resolveContactAction(id: string): Promise<void> {
   }
 
   revalidatePath("/admin/contacts");
+  revalidatePath("/shop/contact");
 }
