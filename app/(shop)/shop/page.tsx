@@ -3,18 +3,10 @@ import Link from "next/link";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { StatCard } from "@/src/presentation/components/ui/StatCard";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 
 export const dynamic = "force-dynamic";
-
-function Stat({ label, value }: { label: string; value: number | string }) {
-  return (
-    <Card className="flex flex-col gap-1">
-      <span className="text-2xl font-bold text-brand-600">{value}</span>
-      <span className="text-sm text-muted">{label}</span>
-    </Card>
-  );
-}
 
 export default async function ShopDashboardPage() {
   const user = await requireRole("shop_owner");
@@ -42,11 +34,11 @@ export default async function ShopDashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="ประเภทแสตมป์" value={stampTypes.length} />
-        <Stat label="สาขา" value={branches.length} />
-        <Stat label="พนักงาน" value={staffCount} />
-        <Stat label="ลูกค้า" value={customers.length} />
-        <Stat label="แลกรางวัลแล้ว" value={redemptions.length} />
+        <StatCard label="ประเภทแสตมป์" value={stampTypes.length} />
+        <StatCard label="สาขา" value={branches.length} />
+        <StatCard label="พนักงาน" value={staffCount} />
+        <StatCard label="ลูกค้า" value={customers.length} />
+        <StatCard label="แลกรางวัลแล้ว" value={redemptions.length} />
       </div>
 
       <Card>

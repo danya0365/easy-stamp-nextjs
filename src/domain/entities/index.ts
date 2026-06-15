@@ -245,3 +245,64 @@ export interface ContactRequest {
   resolvedAt: string | null;
   createdAt: string;
 }
+
+// --- Analytics (read models; derived, not stored) ---
+
+export interface AnalyticsSummary {
+  /** Total stamps given out in the range (sum of earn quantity). */
+  stampsIssued: number;
+  /** Rewards redeemed in the range. */
+  redemptions: number;
+  /** Distinct customers who earned a stamp in the range. */
+  activeCustomers: number;
+  /** Distinct customers who redeemed a reward in the range. */
+  redeemers: number;
+  /** Customers first seen in the range. */
+  newCustomers: number;
+  /** All-time customer count for the shop. */
+  totalCustomers: number;
+}
+
+/** One Bangkok-day bucket of activity. `day` is "YYYY-MM-DD". */
+export interface AnalyticsDailyPoint {
+  day: string;
+  stamps: number;
+  redemptions: number;
+}
+
+export interface AnalyticsTypeRow {
+  stampTypeId: string | null;
+  name: string;
+  stamps: number;
+  redemptions: number;
+}
+
+export interface AnalyticsBranchRow {
+  branchId: string | null;
+  name: string;
+  stamps: number;
+  redemptions: number;
+}
+
+export interface AnalyticsTopCustomer {
+  customerId: string;
+  label: string;
+  stamps: number;
+}
+
+export interface ShopAnalyticsView {
+  rangeDays: number;
+  summary: AnalyticsSummary;
+  /** % of active customers who also redeemed (0–100). */
+  redemptionRate: number;
+  daily: AnalyticsDailyPoint[];
+  byType: AnalyticsTypeRow[];
+  byBranch: AnalyticsBranchRow[];
+  topCustomers: AnalyticsTopCustomer[];
+}
+
+/** A sparse {day,value} bucket as returned by the analytics repo. */
+export interface DailyBucket {
+  day: string;
+  value: number;
+}
