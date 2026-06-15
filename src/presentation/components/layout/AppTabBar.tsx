@@ -9,6 +9,7 @@ import {
   CreditCard,
   History,
   LayoutDashboard,
+  LifeBuoy,
   MessageSquare,
   MoreHorizontal,
   QrCode,
@@ -44,6 +45,7 @@ const NAVS = {
     { href: "/shop/qr", label: "ป้าย QR", icon: QrCode },
     { href: "/shop/settings", label: "ตั้งค่า", icon: Settings },
     { href: "/shop/billing", label: "ชำระเงิน", icon: CreditCard },
+    { href: "/shop/contact", label: "ติดต่อผู้ดูแล", icon: LifeBuoy },
   ],
   admin: [
     { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },

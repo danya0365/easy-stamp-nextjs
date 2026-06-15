@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
-import { Card } from "@/src/presentation/components/ui/Card";
+import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,14 @@ export default async function ShopDashboardPage() {
             ตั้งค่าร้าน →
           </Link>
         </div>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="ต้องการความช่วยเหลือ?"
+          subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ติดต่อผู้ดูแลได้เลย"
+        />
+        <ContactAdminButton />
       </Card>
     </div>
   );
