@@ -42,6 +42,12 @@ interface LineEvent {
   message?: { type: string; text?: string };
 }
 
+/** Health check — lets you confirm the route is deployed and whether LINE env is set
+ *  (no secrets exposed) by opening the URL in a browser. */
+export async function GET() {
+  return Response.json({ ok: true, lineConfigured: lineConfigFromEnv() !== null });
+}
+
 export async function POST(req: Request) {
   const config = lineConfigFromEnv();
   // Always 200 so LINE doesn't retry; do nothing if not configured.
@@ -62,25 +68,40 @@ export async function POST(req: Request) {
   const linkUseCase = new LinkLineAccountUseCase(container.userRepository);
 
   for (const event of events) {
-    const lineUserId = event.source?.userId;
-    if (event.type === "message" && event.message?.type === "text" && lineUserId) {
-      const code = (event.message.text ?? "").trim().toUpperCase();
-      const linkedEmail = await linkUseCase.execute(code, lineUserId);
-      if (event.replyToken) {
+    // Isolate each event: one failure (e.g. a duplicate lineUserId hitting the
+    // unique constraint) must not 500 the whole webhook and trigger LINE retries.
+    try {
+      const lineUserId = event.source?.userId;
+      if (event.type === "message" && event.message?.type === "text" && lineUserId) {
+        const code = (event.message.text ?? "").trim().toUpperCase();
+        const linkedEmail = await linkUseCase.execute(code, lineUserId);
+        if (event.replyToken) {
+          await reply(
+            config.channelAccessToken,
+            event.replyToken,
+            linkedEmail
+              ? `เชื่อมต่อสำเร็จ ✅ (${linkedEmail})\nคุณจะได้รับการแจ้งเตือนผ่าน LINE นี้`
+              : "ไม่พบโค้ดนี้ กรุณาสร้างโค้ดใหม่ในแอปแล้วลองอีกครั้ง",
+          );
+        }
+      } else if (event.type === "follow" && event.replyToken) {
         await reply(
           config.channelAccessToken,
           event.replyToken,
-          linkedEmail
-            ? `เชื่อมต่อสำเร็จ ✅ (${linkedEmail})\nคุณจะได้รับการแจ้งเตือนผ่าน LINE นี้`
-            : "ไม่พบโค้ดนี้ กรุณาสร้างโค้ดใหม่ในแอปแล้วลองอีกครั้ง",
+          "ขอบคุณที่เพิ่มเพื่อน 🎉\nพิมพ์โค้ดเชื่อมต่อจากแอป Easy Stamp เพื่อรับการแจ้งเตือน",
         );
       }
-    } else if (event.type === "follow" && event.replyToken) {
-      await reply(
-        config.channelAccessToken,
-        event.replyToken,
-        "ขอบคุณที่เพิ่มเพื่อน 🎉\nพิมพ์โค้ดเชื่อมต่อจากแอป Easy Stamp เพื่อรับการแจ้งเตือน",
-      );
+    } catch (e) {
+      console.error("[LINE] webhook event error:", e);
+      if (event.replyToken) {
+        // Most likely this LINE is already linked to another account (lineUserId
+        // is unique). Tell the user instead of failing silently.
+        await reply(
+          config.channelAccessToken,
+          event.replyToken,
+          "เชื่อมต่อไม่สำเร็จ — LINE นี้อาจถูกผูกกับบัญชีอื่นแล้ว หรือเกิดข้อผิดพลาด กรุณาลองใหม่",
+        );
+      }
     }
   }
 
