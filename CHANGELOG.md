@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-06-15
+
+### Fixed
+- แก้ขอบการ์ดสว่างผิดปกติใน dark mode — เปลี่ยนเส้นขอบการ์ดจาก `ring-brand-100` (สีพีชอ่อนคงที่) มาใช้สีขอบตามธีม (`ring-border`) ให้มืดกลมกลืนใน dark mode ทั้ง 3 ธีม
+
 ## [1.2.0] - 2026-06-15
 
 ### Added
@@ -41,6 +46,7 @@
 - เพิ่ม loading skeleton ทุกหน้าให้รู้สึกลื่นขึ้นระหว่างโหลด
 
 [Unreleased]: https://github.com/
+[1.2.1]: https://github.com/
 [1.2.0]: https://github.com/
 [1.1.0]: https://github.com/
 [1.0.0]: https://github.com/
