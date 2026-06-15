@@ -26,6 +26,7 @@ function toUser(row: UserRow): User {
     shopId: row.shopId,
     branchId: row.branchId,
     isActive: row.isActive,
+    lineUserId: row.lineUserId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

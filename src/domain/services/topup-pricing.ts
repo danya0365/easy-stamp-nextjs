@@ -13,12 +13,10 @@ export interface TopupPackage {
   /** Stable id, stored on the payment so historical orders stay accurate. */
   id: string;
   label: string;
-  /** Base paid days. */
+  /** Base paid days. Price is derived as `days × shop's pricePerDaySatang`. */
   days: number;
   /** Free days granted on top of `days`. */
   bonusDays: number;
-  /** Fixed package price in satang (THB cents). */
-  priceSatang: number;
   /** Marketing badge shown on the card. */
   badge?: "popular" | "best_value";
 }
@@ -63,29 +61,16 @@ export const PRE_EXPIRY_WARN_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Preset packages. Prices are set so that longer packages "feel" the same per
- * day, but earn progressively more bonus days — the long packages are the
- * anchors we want owners to choose.
+ * Preset packages. Price is computed as `days × the shop's pricePerDaySatang`
+ * (see resolveTopupQuote), so each shop's rate flows through to presets too.
+ * Longer packages earn progressively more bonus days — the anchors we want
+ * owners to choose.
  */
 export const TOPUP_PRESETS: readonly TopupPackage[] = [
-  { id: "d30", label: "30 วัน", days: 30, bonusDays: 0, priceSatang: 30000 },
-  { id: "d90", label: "90 วัน", days: 90, bonusDays: 7, priceSatang: 90000 },
-  {
-    id: "d180",
-    label: "180 วัน",
-    days: 180,
-    bonusDays: 20,
-    priceSatang: 180000,
-    badge: "popular",
-  },
-  {
-    id: "d365",
-    label: "365 วัน",
-    days: 365,
-    bonusDays: 45,
-    priceSatang: 365000,
-    badge: "best_value",
-  },
+  { id: "d30", label: "30 วัน", days: 30, bonusDays: 0 },
+  { id: "d90", label: "90 วัน", days: 90, bonusDays: 7 },
+  { id: "d180", label: "180 วัน", days: 180, bonusDays: 20, badge: "popular" },
+  { id: "d365", label: "365 วัน", days: 365, bonusDays: 45, badge: "best_value" },
 ];
 
 export function findPreset(id: string): TopupPackage | null {
@@ -139,13 +124,16 @@ export function resolveTopupQuote(
   if (input.packageId) {
     const preset = findPreset(input.packageId);
     if (!preset) throw new Error("ไม่พบแพ็กเกจที่เลือก");
+    // Price derives from the shop's per-day rate, like a custom order — the
+    // bonus days are the only "deal".
+    const fullAmountSatang = preset.days * rate;
     return {
       packageId: preset.id,
       baseDays: preset.days,
       bonusDays: preset.bonusDays,
       totalDays: preset.days + preset.bonusDays,
-      amountSatang: discounted(preset.priceSatang, promo),
-      fullAmountSatang: preset.priceSatang,
+      amountSatang: discounted(fullAmountSatang, promo),
+      fullAmountSatang,
       promoPercentOff,
     };
   }

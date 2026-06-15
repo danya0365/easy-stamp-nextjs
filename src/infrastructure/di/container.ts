@@ -14,6 +14,8 @@ import { DrizzleRewardRedemptionRepository } from "@/src/infrastructure/reposito
 import { DrizzleSubscriptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleSubscriptionRepository";
 import { DrizzlePaymentRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePaymentRepository";
 import { DrizzleTopupTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleTopupTransactionRepository";
+import { DrizzleNotificationRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleNotificationRepository";
+import { DrizzleContactRequestRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleContactRequestRepository";
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import { ManualSlipPaymentVerifier } from "@/src/infrastructure/services/ManualSlipPaymentVerifier";
@@ -22,6 +24,12 @@ import {
   R2SlipStorage,
   r2ConfigFromEnv,
 } from "@/src/infrastructure/services/R2SlipStorage";
+import {
+  LineMessagingPusher,
+  NullMessagePusher,
+  lineConfigFromEnv,
+} from "@/src/infrastructure/services/LineMessagingPusher";
+import { NotificationService } from "@/src/application/services/NotificationService";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -37,14 +45,23 @@ import type { IRewardRedemptionRepository } from "@/src/application/repositories
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
 import type { IPaymentRepository } from "@/src/application/repositories/IPaymentRepository";
 import type { ITopupTransactionRepository } from "@/src/application/repositories/ITopupTransactionRepository";
+import type { INotificationRepository } from "@/src/application/repositories/INotificationRepository";
+import type { IContactRequestRepository } from "@/src/application/repositories/IContactRequestRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
+import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
 
 /** R2 in any environment that configures it (prod/Vercel); local disk otherwise. */
 function createSlipStorage(): ISlipStorage {
   const r2 = r2ConfigFromEnv();
   return r2 ? new R2SlipStorage(r2) : new LocalSlipStorage();
+}
+
+/** LINE pusher when credentials are configured; a no-op pusher otherwise. */
+function createMessagePusher(): IMessagePusher {
+  const line = lineConfigFromEnv();
+  return line ? new LineMessagingPusher(line) : new NullMessagePusher();
 }
 
 /**
@@ -78,10 +95,21 @@ class Container {
     new DrizzlePaymentRepository();
   readonly topupTransactionRepository: ITopupTransactionRepository =
     new DrizzleTopupTransactionRepository();
+  readonly notificationRepository: INotificationRepository =
+    new DrizzleNotificationRepository();
+  readonly contactRequestRepository: IContactRequestRepository =
+    new DrizzleContactRequestRepository();
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();
   readonly slipStorage: ISlipStorage = createSlipStorage();
+  readonly messagePusher: IMessagePusher = createMessagePusher();
+
+  readonly notificationService: NotificationService = new NotificationService(
+    this.notificationRepository,
+    this.userRepository,
+    this.messagePusher,
+  );
 }
 
 const globalForContainer = globalThis as unknown as {

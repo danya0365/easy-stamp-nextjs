@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { User, UserWithSecret } from "@/src/domain/entities";
+import type { Role } from "@/src/domain/types/roles";
 import type {
   CreateUserInput,
   IUserRepository,
@@ -16,6 +17,7 @@ function toUser(row: Row): User {
     shopId: row.shopId,
     branchId: row.branchId,
     isActive: row.isActive,
+    lineUserId: row.lineUserId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -60,6 +62,13 @@ export class DrizzleUserRepository implements IUserRepository {
     return rows.map(toUser);
   }
 
+  async listByRole(role: Role): Promise<User[]> {
+    const rows = await db.query.users.findMany({
+      where: eq(schema.users.role, role),
+    });
+    return rows.map(toUser);
+  }
+
   async setActive(id: string, isActive: boolean): Promise<User> {
     const [row] = await db
       .update(schema.users)
@@ -76,5 +85,30 @@ export class DrizzleUserRepository implements IUserRepository {
       .where(eq(schema.users.id, id))
       .returning();
     return toUser(row);
+  }
+
+  async setLineUserId(id: string, lineUserId: string | null): Promise<User> {
+    const [row] = await db
+      .update(schema.users)
+      .set({ lineUserId })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return toUser(row);
+  }
+
+  async setLineLinkCode(id: string, code: string | null): Promise<User> {
+    const [row] = await db
+      .update(schema.users)
+      .set({ lineLinkCode: code })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return toUser(row);
+  }
+
+  async findByLineLinkCode(code: string): Promise<User | null> {
+    const row = await db.query.users.findFirst({
+      where: eq(schema.users.lineLinkCode, code),
+    });
+    return row ? toUser(row) : null;
   }
 }

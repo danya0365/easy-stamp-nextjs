@@ -27,6 +27,11 @@ export const users = sqliteTable(
     shopId: text().references(() => shops.id, { onDelete: "cascade" }),
     branchId: text().references(() => branches.id, { onDelete: "set null" }),
     isActive: integer({ mode: "boolean" }).notNull().default(true),
+    // LINE Messaging API push target, set once the operator links their LINE
+    // (via the webhook flow). lineLinkCode is the transient code they send in
+    // chat to prove ownership; cleared on successful link.
+    lineUserId: text().unique(),
+    lineLinkCode: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -34,5 +39,6 @@ export const users = sqliteTable(
     index("users_email_idx").on(t.email),
     index("users_shop_idx").on(t.shopId),
     index("users_branch_idx").on(t.branchId),
+    index("users_line_link_code_idx").on(t.lineLinkCode),
   ],
 );

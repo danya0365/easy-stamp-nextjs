@@ -7,7 +7,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { VerifyPaymentUseCase } from "@/src/application/use-cases/billing/VerifyPaymentUseCase";
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
-import { bahtToSatang } from "@/src/presentation/lib/money";
+import { bahtToSatang, satangToBaht } from "@/src/presentation/lib/money";
 
 export interface AdminFormState {
   error?: string;
@@ -51,12 +51,33 @@ export async function verifyPaymentAction(
   rejectReason?: string,
 ): Promise<void> {
   const admin = await requireRole("platform_admin");
-  await new VerifyPaymentUseCase(
+  const payment = await new VerifyPaymentUseCase(
     container.paymentRepository,
     container.subscriptionRepository,
     container.paymentVerifier,
     container.topupTransactionRepository,
   ).execute({ paymentId, reviewerUserId: admin.id, decision, rejectReason });
+
+  // Tell the shop owner the outcome (best-effort: in-app + LINE).
+  const amount = satangToBaht(payment.amountSatang);
+  if (payment.status === "approved") {
+    await container.notificationService.notifyShopOwner(payment.shopId, {
+      type: "payment_approved",
+      title: "อนุมัติการชำระเงินแล้ว ✅",
+      body: `ชำระเงิน ${amount} บาท ได้รับการอนุมัติ — เติมวันใช้งานเรียบร้อย`,
+      linkUrl: "/shop/billing",
+    });
+  } else {
+    await container.notificationService.notifyShopOwner(payment.shopId, {
+      type: "payment_rejected",
+      title: "การชำระเงินถูกปฏิเสธ",
+      body: payment.rejectReason
+        ? `ชำระเงิน ${amount} บาท ถูกปฏิเสธ — เหตุผล: ${payment.rejectReason}`
+        : `ชำระเงิน ${amount} บาท ถูกปฏิเสธ กรุณาตรวจสอบและส่งใหม่`,
+      linkUrl: "/shop/billing",
+    });
+  }
+
   revalidatePath("/admin/payments");
   revalidatePath("/admin/shops");
 }

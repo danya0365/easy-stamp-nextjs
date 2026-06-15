@@ -12,3 +12,5 @@ export * from "./reward-redemptions";
 export * from "./subscriptions";
 export * from "./payments";
 export * from "./topup-transactions";
+export * from "./notifications";
+export * from "./contact-requests";
