@@ -7,6 +7,7 @@ export const NOTIFICATION_TYPES = [
   "payment_approved",
   "payment_rejected",
   "contact_request",
+  "contact_resolved",
 ] as const;
 
 /** Per-recipient in-app notifications (operators only — customers are anonymous). */
