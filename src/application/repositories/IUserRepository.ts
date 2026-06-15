@@ -29,4 +29,14 @@ export interface IUserRepository {
   ): Promise<User>;
   /** Returns the user whose UNEXPIRED link code matches, or null. */
   findByLineLinkCode(code: string): Promise<User | null>;
+  /** Passwordless login OTP (bcrypt-hashed). Sets hash+expiry, resets attempts. */
+  setLoginOtp(id: string, otpHash: string, expiresAt: string): Promise<void>;
+  /** Reads the current OTP state, or null if the user does not exist. */
+  getLoginOtp(
+    id: string,
+  ): Promise<{ hash: string | null; expiresAt: string | null; attempts: number } | null>;
+  /** Increments the wrong-attempt counter; returns the new count. */
+  bumpLoginOtpAttempts(id: string): Promise<number>;
+  /** Clears the OTP (hash/expiry null, attempts 0) after success or invalidation. */
+  clearLoginOtp(id: string): Promise<void>;
 }

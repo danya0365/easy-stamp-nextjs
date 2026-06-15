@@ -50,6 +50,13 @@
       "when": 1781518460355,
       "tag": "0006_thankful_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1781523597187,
+      "tag": "0007_unusual_lifeguard",
+      "breakpoints": true
     }
   ]
 }
