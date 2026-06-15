@@ -54,6 +54,8 @@ export default async function PublicShopCheckPage({
         container.shopRepository,
         container.customerDeviceRepository,
         container.stampCardRepository,
+        container.stampTypeRepository,
+        container.stampBalanceRepository,
       ).execute(shop.id, token)
     : null;
 

@@ -46,7 +46,7 @@ export function CreateShopForm({
             required
           />
         </FormField>
-        <FormField label="เกณฑ์แสตมป์" htmlFor="stampThreshold">
+        <FormField label="เกณฑ์แสตมป์เริ่มต้น" htmlFor="stampThreshold">
           <Input
             id="stampThreshold"
             name="stampThreshold"
@@ -71,9 +71,12 @@ export function CreateShopForm({
           </select>
         </FormField>
       </div>
-      <FormField label="ของรางวัล (ข้อความ)" htmlFor="rewardText">
+      <FormField label="ของรางวัลเริ่มต้น (ข้อความ)" htmlFor="rewardText">
         <Input id="rewardText" name="rewardText" placeholder="เครื่องดื่มฟรี 1 แก้ว" />
       </FormField>
+      <p className="text-xs text-muted">
+        ระบบจะสร้าง “ประเภทแสตมป์เริ่มต้น” ให้จากค่านี้ — เจ้าของร้านเพิ่มประเภทอื่นได้เองในหน้าตั้งค่า
+      </p>
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}

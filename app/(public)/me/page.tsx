@@ -30,6 +30,8 @@ export default async function MyCardsPage() {
     container.shopRepository,
     container.customerDeviceRepository,
     container.stampCardRepository,
+    container.stampTypeRepository,
+    container.stampBalanceRepository,
   ).execute(tokens.map((t) => t.token));
 
   return (
@@ -50,36 +52,51 @@ export default async function MyCardsPage() {
         />
       ) : (
         <div className="flex flex-col gap-3">
-          {cards.map(({ shopName, slug, view }) => (
-            <Link key={slug} href={`/s/${slug}`}>
-              <Card className="flex flex-col gap-3 transition hover:ring-brand-300">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
-                    <Store className="size-5" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
-                    {shopName}
-                  </span>
-                  {view.eligibleToRedeem ? (
-                    <Badge tone="success">
-                      <PartyPopper className="size-3.5" />
-                      ครบ แลกได้
-                    </Badge>
-                  ) : (
-                    <Badge tone="brand">
-                      {view.card.currentStamps}/{view.threshold}
-                    </Badge>
-                  )}
-                  <ChevronRight className="size-4 shrink-0 text-muted" />
-                </div>
-                <StampDots
-                  current={view.card.currentStamps}
-                  threshold={view.threshold}
-                  size="sm"
-                />
-              </Card>
-            </Link>
-          ))}
+          {cards.map(({ shopName, slug, view }) => {
+            const eligibleCount = view.types.filter(
+              (t) => t.eligibleToRedeem,
+            ).length;
+            return (
+              <Link key={slug} href={`/s/${slug}`}>
+                <Card className="flex flex-col gap-3 transition hover:ring-brand-300">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+                      <Store className="size-5" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                      {shopName}
+                    </span>
+                    {eligibleCount > 0 && (
+                      <Badge tone="success">
+                        <PartyPopper className="size-3.5" />
+                        ครบ แลกได้{eligibleCount > 1 ? ` ${eligibleCount}` : ""}
+                      </Badge>
+                    )}
+                    <ChevronRight className="size-4 shrink-0 text-muted" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {view.types.map((t) => (
+                      <div key={t.type.id} className="flex items-center gap-2">
+                        <span className="w-20 shrink-0 truncate text-xs text-muted">
+                          {t.type.name}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <StampDots
+                            current={t.currentStamps}
+                            threshold={t.type.threshold}
+                            size="sm"
+                          />
+                        </div>
+                        <span className="shrink-0 text-xs text-muted">
+                          {t.currentStamps}/{t.type.threshold}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </Link>
+            );
+          })}
           <InstallHint />
         </div>
       )}

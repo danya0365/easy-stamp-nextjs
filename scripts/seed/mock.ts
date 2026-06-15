@@ -148,6 +148,31 @@ export async function seedMock(ctx: SeedContext) {
     }
     const shopId = shop.id;
 
+    // Default stamp type (carries the legacy threshold/reward). The active demo
+    // shop gets a 2nd type to exercise the multi-type UI.
+    const defaultTypeId = await insert(db, schema.stampTypes, {
+      shopId,
+      name: "แสตมป์",
+      threshold: THRESHOLD,
+      rewardText: opts.rewardText,
+      isDefault: true,
+      isActive: true,
+      sortOrder: 0,
+    });
+    const secondTypeId =
+      opts.slug === "coffee-a"
+        ? await insert(db, schema.stampTypes, {
+            shopId,
+            name: "แสตมป์ของหวาน",
+            threshold: 5,
+            rewardText: "ขนมหวานฟรี 1 ชิ้น",
+            priceSatang: 5000,
+            isDefault: false,
+            isActive: true,
+            sortOrder: 1,
+          })
+        : null;
+
     const subId = await insert(db, schema.subscriptions, {
       shopId,
       status: bf.subStatus,
@@ -218,6 +243,36 @@ export async function seedMock(ctx: SeedContext) {
         lifetimeStamps: spec.lifetime,
         rewardsEarned: spec.rewards,
       });
+      // Per-type balance (default type) mirroring the card.
+      await insert(db, schema.stampBalances, {
+        cardId,
+        stampTypeId: defaultTypeId,
+        currentStamps: current,
+        lifetimeStamps: spec.lifetime,
+        rewardsEarned: spec.rewards,
+      });
+      // Multi-type demo: give the first customer some stamps in the 2nd type.
+      if (secondTypeId && ci === 0) {
+        await insert(db, schema.stampBalances, {
+          cardId,
+          stampTypeId: secondTypeId,
+          currentStamps: 2,
+          lifetimeStamps: 2,
+          rewardsEarned: 0,
+        });
+        await insert(db, schema.stampTransactions, {
+          shopId,
+          branchId: branchIds[0],
+          customerId,
+          cardId,
+          stampTypeId: secondTypeId,
+          type: "earn",
+          quantity: 2,
+          performedBy: actors[0],
+          note: "seed",
+          createdAt: daysFromNow(-40 + tcount++),
+        });
+      }
 
       // Earn transactions (back-dated, alternating branch/actor).
       const chunks = earnChunks(spec.lifetime);
@@ -227,6 +282,7 @@ export async function seedMock(ctx: SeedContext) {
           branchId: branchIds[k % 2],
           customerId,
           cardId,
+          stampTypeId: defaultTypeId,
           type: "earn",
           quantity: chunks[k],
           performedBy: actors[(ci + k) % actors.length],
@@ -243,6 +299,7 @@ export async function seedMock(ctx: SeedContext) {
           branchId: branchIds[r % 2],
           customerId,
           cardId,
+          stampTypeId: defaultTypeId,
           rewardTextSnapshot: opts.rewardText,
           stampsSpent: THRESHOLD,
           performedBy: actors[r % actors.length],
@@ -253,6 +310,7 @@ export async function seedMock(ctx: SeedContext) {
           branchId: branchIds[r % 2],
           customerId,
           cardId,
+          stampTypeId: defaultTypeId,
           type: "redeem_adjust",
           quantity: -THRESHOLD,
           performedBy: actors[r % actors.length],

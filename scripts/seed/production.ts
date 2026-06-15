@@ -87,6 +87,17 @@ export async function seedProduction({ db, passwordHash, log }: SeedContext) {
     return;
   }
 
+  // Default stamp type (source of truth for threshold/reward going forward).
+  await insert(db, schema.stampTypes, {
+    shopId: shop.id,
+    name: "แสตมป์",
+    threshold: 10,
+    rewardText: "เลือกเครื่องดื่มในร้านฟรี 1 แก้ว",
+    isDefault: true,
+    isActive: true,
+    sortOrder: 0,
+  });
+
   // 30-day trial, matching CreateShopUseCase (prepaid day model).
   await insert(db, schema.subscriptions, {
     shopId: shop.id,

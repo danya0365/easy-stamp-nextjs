@@ -3,6 +3,7 @@ import type { IShopRepository } from "@/src/application/repositories/IShopReposi
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
+import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import { DEFAULT_PRICE_PER_DAY_SATANG } from "@/src/domain/services/topup-pricing";
 
@@ -28,6 +29,7 @@ export class CreateShopUseCase {
     private readonly subscriptions: ISubscriptionRepository,
     private readonly hasher: IPasswordHasher,
     private readonly categories: IShopCategoryRepository,
+    private readonly stampTypes: IStampTypeRepository,
   ) {}
 
   async execute(input: CreateShopInput): Promise<Shop> {
@@ -70,6 +72,18 @@ export class CreateShopUseCase {
       categoryId,
       stampThreshold: input.stampThreshold ?? 10,
       rewardText: input.rewardText ?? "",
+    });
+
+    // Every shop starts with one default stamp type (the source of truth going
+    // forward; shop.stampThreshold/rewardText are kept only as legacy seed).
+    await this.stampTypes.create({
+      shopId: shop.id,
+      name: "แสตมป์",
+      threshold: input.stampThreshold ?? 10,
+      rewardText: input.rewardText ?? "",
+      isDefault: true,
+      isActive: true,
+      sortOrder: 0,
     });
 
     const now = Date.now();

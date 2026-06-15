@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
-import { SettingsForm } from "@/src/presentation/components/shop/SettingsForm";
+import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { LineLinkCard } from "@/src/presentation/components/line/LineLinkCard";
@@ -14,18 +14,16 @@ export default async function ShopSettingsPage() {
   const user = await requireRole("shop_owner");
   const shop = await container.shopRepository.findById(user.shopId!);
   if (!shop) return null;
+  const stampTypes = await container.stampTypeRepository.listByShop(shop.id);
 
   return (
     <div className="max-w-lg">
       <Card>
         <CardHeader
-          title="ตั้งค่าร้าน"
-          subtitle={`ลิงก์เช็คแต้มลูกค้า: /s/${shop.slug}`}
+          title="ประเภทแสตมป์"
+          subtitle={`กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง · ลิงก์ลูกค้า: /s/${shop.slug}`}
         />
-        <SettingsForm
-          stampThreshold={shop.stampThreshold}
-          rewardText={shop.rewardText}
-        />
+        <StampTypesManager types={stampTypes} />
         <Link
           href="/shop/qr"
           className="mt-4 inline-block text-sm text-brand-700 hover:underline"

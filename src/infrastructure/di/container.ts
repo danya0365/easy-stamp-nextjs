@@ -9,6 +9,8 @@ import { DrizzleCustomerRepository } from "@/src/infrastructure/repositories/dri
 import { DrizzleCustomerDeviceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleCustomerDeviceRepository";
 import { DrizzleBindCodeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleBindCodeRepository";
 import { DrizzleStampCardRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleStampCardRepository";
+import { DrizzleStampTypeRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleStampTypeRepository";
+import { DrizzleStampBalanceRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleStampBalanceRepository";
 import { DrizzleStampTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleStampTransactionRepository";
 import { DrizzleRewardRedemptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleRewardRedemptionRepository";
 import { DrizzleSubscriptionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleSubscriptionRepository";
@@ -40,6 +42,8 @@ import type { ICustomerRepository } from "@/src/application/repositories/ICustom
 import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
 import type { IBindCodeRepository } from "@/src/application/repositories/IBindCodeRepository";
 import type { IStampCardRepository } from "@/src/application/repositories/IStampCardRepository";
+import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
+import type { IStampBalanceRepository } from "@/src/application/repositories/IStampBalanceRepository";
 import type { IStampTransactionRepository } from "@/src/application/repositories/IStampTransactionRepository";
 import type { IRewardRedemptionRepository } from "@/src/application/repositories/IRewardRedemptionRepository";
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
@@ -85,6 +89,10 @@ class Container {
     new DrizzleBindCodeRepository();
   readonly stampCardRepository: IStampCardRepository =
     new DrizzleStampCardRepository();
+  readonly stampTypeRepository: IStampTypeRepository =
+    new DrizzleStampTypeRepository();
+  readonly stampBalanceRepository: IStampBalanceRepository =
+    new DrizzleStampBalanceRepository();
   readonly stampTransactionRepository: IStampTransactionRepository =
     new DrizzleStampTransactionRepository();
   readonly rewardRedemptionRepository: IRewardRedemptionRepository =

@@ -19,17 +19,28 @@ export default async function ShopCustomersPage({
   const shopId = user.shopId!;
   const { phone } = await searchParams;
 
-  const shop = await container.shopRepository.findById(shopId);
-  const customers = (
-    await container.customerRepository.listByShop(shopId, phone)
-  ).slice(0, 50);
+  const [types, customers] = await Promise.all([
+    container.stampTypeRepository.listByShop(shopId, { activeOnly: true }),
+    container.customerRepository
+      .listByShop(shopId, phone)
+      .then((cs) => cs.slice(0, 50)),
+  ]);
 
-  const cards = await Promise.all(
-    customers.map((c) =>
-      container.stampCardRepository.findByCustomer(shopId, c.id),
-    ),
+  // How many stamp types each customer has completed (eligible to redeem).
+  const eligibleCounts = await Promise.all(
+    customers.map(async (c) => {
+      const card = await container.stampCardRepository.findByCustomer(
+        shopId,
+        c.id,
+      );
+      if (!card) return 0;
+      const balances = await container.stampBalanceRepository.listByCard(
+        card.id,
+      );
+      const byType = new Map(balances.map((b) => [b.stampTypeId, b.currentStamps]));
+      return types.filter((t) => (byType.get(t.id) ?? 0) >= t.threshold).length;
+    }),
   );
-  const threshold = shop?.stampThreshold ?? 10;
 
   return (
     <div className="flex max-w-lg flex-col gap-4">
@@ -49,8 +60,7 @@ export default async function ShopCustomersPage({
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {customers.map((c, i) => {
-              const stamps = cards[i]?.currentStamps ?? 0;
-              const eligible = stamps >= threshold;
+              const eligible = eligibleCounts[i];
               return (
                 <li
                   key={c.id}
@@ -59,11 +69,9 @@ export default async function ShopCustomersPage({
                   <span className="text-foreground">
                     {c.displayName || formatPhone(c.phone)}
                   </span>
-                  {eligible ? (
-                    <Badge tone="success">ครบ แลกได้</Badge>
-                  ) : (
-                    <Badge tone="brand">
-                      {stamps}/{threshold}
+                  {eligible > 0 && (
+                    <Badge tone="success">
+                      ครบ แลกได้{eligible > 1 ? ` ${eligible} ประเภท` : ""}
                     </Badge>
                   )}
                 </li>

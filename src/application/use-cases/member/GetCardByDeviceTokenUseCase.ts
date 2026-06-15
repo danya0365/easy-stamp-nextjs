@@ -1,8 +1,10 @@
 import type { CustomerCardView } from "@/src/domain/entities";
-import { buildCardView } from "@/src/domain/services/card-view";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
 import type { IStampCardRepository } from "@/src/application/repositories/IStampCardRepository";
+import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
+import type { IStampBalanceRepository } from "@/src/application/repositories/IStampBalanceRepository";
+import { loadCardView } from "@/src/application/use-cases/stamp/loadCardView";
 
 /** Resolve a bound device's token → the customer's card (shop-scoped). */
 export class GetCardByDeviceTokenUseCase {
@@ -10,6 +12,8 @@ export class GetCardByDeviceTokenUseCase {
     private readonly shops: IShopRepository,
     private readonly devices: ICustomerDeviceRepository,
     private readonly cards: IStampCardRepository,
+    private readonly stampTypes: IStampTypeRepository,
+    private readonly balances: IStampBalanceRepository,
   ) {}
 
   async execute(
@@ -23,7 +27,10 @@ export class GetCardByDeviceTokenUseCase {
     const shop = await this.shops.findById(shopId);
     if (!shop) return null;
 
-    const card = await this.cards.findOrCreate(shopId, found.customer.id);
-    return buildCardView(shop, found.customer, card);
+    return loadCardView(
+      { stampTypes: this.stampTypes, cards: this.cards, balances: this.balances },
+      shopId,
+      found.customer,
+    );
   }
 }

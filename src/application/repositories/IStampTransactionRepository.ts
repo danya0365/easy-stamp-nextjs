@@ -5,6 +5,7 @@ export interface CreateStampTransactionInput {
   branchId?: string | null;
   customerId: string;
   cardId: string;
+  stampTypeId?: string | null;
   type: StampTxType;
   quantity: number;
   performedBy: string;

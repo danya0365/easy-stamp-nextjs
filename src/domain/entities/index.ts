@@ -97,12 +97,39 @@ export interface StampCard {
   updatedAt: string;
 }
 
+export interface StampType {
+  id: string;
+  shopId: string;
+  name: string;
+  threshold: number;
+  rewardText: string;
+  /** Optional baht price (label/metadata), in satang; null = not priced. */
+  priceSatang: number | null;
+  isActive: boolean;
+  /** Exactly one per shop — the migrated legacy single-stamp track. */
+  isDefault: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StampBalance {
+  id: string;
+  cardId: string;
+  stampTypeId: string;
+  currentStamps: number;
+  lifetimeStamps: number;
+  rewardsEarned: number;
+  updatedAt: string;
+}
+
 export interface StampTransaction {
   id: string;
   shopId: string;
   branchId: string | null;
   customerId: string;
   cardId: string;
+  stampTypeId: string | null;
   type: StampTxType;
   quantity: number;
   performedBy: string;
@@ -116,6 +143,7 @@ export interface RewardRedemption {
   branchId: string | null;
   customerId: string;
   cardId: string;
+  stampTypeId: string | null;
   rewardTextSnapshot: string;
   stampsSpent: number;
   performedBy: string;
@@ -175,16 +203,22 @@ export interface TopupTransaction {
   createdAt: string;
 }
 
-/** A customer's card enriched with the shop's threshold + derived eligibility. */
+/** A customer's progress on ONE stamp type (derived; not stored). */
+export interface StampTypeProgress {
+  type: StampType;
+  currentStamps: number;
+  lifetimeStamps: number;
+  rewardsEarned: number;
+  /** currentStamps >= type.threshold */
+  eligibleToRedeem: boolean;
+  /** Stamps still needed for the next reward of this type (0 when eligible). */
+  remaining: number;
+}
+
+/** A customer's card = their progress across all active stamp types of a shop. */
 export interface CustomerCardView {
   customer: Customer;
-  card: StampCard;
-  threshold: number;
-  rewardText: string;
-  /** currentStamps >= threshold */
-  eligibleToRedeem: boolean;
-  /** Stamps still needed for the next reward (0 when eligible). */
-  remaining: number;
+  types: StampTypeProgress[];
 }
 
 export interface Notification {
