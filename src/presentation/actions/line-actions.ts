@@ -19,7 +19,7 @@ export async function generateLineLinkCodeAction(): Promise<{ code: string }> {
 export async function unlinkLineAction(): Promise<void> {
   const user = await requireRole("shop_owner", "platform_admin");
   await container.userRepository.setLineUserId(user.id, null);
-  await container.userRepository.setLineLinkCode(user.id, null);
+  await container.userRepository.setLineLinkCode(user.id, null, null);
   revalidatePath("/shop/settings");
   revalidatePath("/admin");
 }

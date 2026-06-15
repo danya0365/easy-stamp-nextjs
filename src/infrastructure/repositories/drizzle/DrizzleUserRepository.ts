@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { User, UserWithSecret } from "@/src/domain/entities";
 import type { Role } from "@/src/domain/types/roles";
@@ -96,18 +96,26 @@ export class DrizzleUserRepository implements IUserRepository {
     return toUser(row);
   }
 
-  async setLineLinkCode(id: string, code: string | null): Promise<User> {
+  async setLineLinkCode(
+    id: string,
+    code: string | null,
+    expiresAt: string | null,
+  ): Promise<User> {
     const [row] = await db
       .update(schema.users)
-      .set({ lineLinkCode: code })
+      .set({ lineLinkCode: code, lineLinkCodeExpiresAt: expiresAt })
       .where(eq(schema.users.id, id))
       .returning();
     return toUser(row);
   }
 
   async findByLineLinkCode(code: string): Promise<User | null> {
+    // Only an unexpired code matches (null expiry never matches via gt()).
     const row = await db.query.users.findFirst({
-      where: eq(schema.users.lineLinkCode, code),
+      where: and(
+        eq(schema.users.lineLinkCode, code),
+        gt(schema.users.lineLinkCodeExpiresAt, new Date().toISOString()),
+      ),
     });
     return row ? toUser(row) : null;
   }

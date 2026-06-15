@@ -9,7 +9,7 @@ export class LinkLineAccountUseCase {
     const user = await this.users.findByLineLinkCode(code);
     if (!user) return null;
     await this.users.setLineUserId(user.id, lineUserId);
-    await this.users.setLineLinkCode(user.id, null);
+    await this.users.setLineLinkCode(user.id, null, null);
     return user.email;
   }
 }

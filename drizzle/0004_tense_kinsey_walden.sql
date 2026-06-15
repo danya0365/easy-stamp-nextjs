@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `line_link_code_expires_at` text;

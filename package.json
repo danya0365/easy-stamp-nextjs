@@ -11,7 +11,11 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
-    "db:seed:prod": "tsx scripts/seed.ts production"
+    "db:seed:prod": "tsx scripts/seed.ts production",
+    "release:patch": "npm version patch -m \"chore(release): v%s\"",
+    "release:minor": "npm version minor -m \"chore(release): v%s\"",
+    "release:major": "npm version major -m \"chore(release): v%s\"",
+    "version": "git add CHANGELOG.md"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",

@@ -13,5 +13,4 @@ export interface INotificationRepository {
   listByUser(userId: string, limit?: number): Promise<Notification[]>;
   countUnread(userId: string): Promise<number>;
   markAllRead(userId: string): Promise<void>;
-  markRead(id: string, userId: string): Promise<void>;
 }

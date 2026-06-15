@@ -70,16 +70,4 @@ export class DrizzleNotificationRepository implements INotificationRepository {
         ),
       );
   }
-
-  async markRead(id: string, userId: string): Promise<void> {
-    await db
-      .update(schema.notifications)
-      .set({ isRead: true, readAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(schema.notifications.id, id),
-          eq(schema.notifications.userId, userId),
-        ),
-      );
-  }
 }
