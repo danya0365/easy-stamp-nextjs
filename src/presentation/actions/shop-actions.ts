@@ -14,10 +14,32 @@ import { CreateStampTypeUseCase } from "@/src/application/use-cases/stamp/Create
 import { UpdateStampTypeUseCase } from "@/src/application/use-cases/stamp/UpdateStampTypeUseCase";
 import { SetStampTypeActiveUseCase } from "@/src/application/use-cases/stamp/SetStampTypeActiveUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
+import type { Page } from "@/src/application/repositories/pagination";
+import {
+  buildCustomerRows,
+  type CustomerRow,
+} from "@/src/presentation/components/shop/customer-rows";
 
 export interface FormState {
   error?: string;
   success?: string;
+}
+
+/** Next page of the shop's customer list (optionally filtered by search). */
+export async function loadMoreCustomersAction(
+  search: string,
+  cursor: string,
+): Promise<Page<CustomerRow>> {
+  const user = await requireRole("shop_owner");
+  const shopId = user.shopId!;
+  const page = await container.customerRepository.pageByShop(shopId, {
+    cursor,
+    search: search || undefined,
+  });
+  return {
+    items: await buildCustomerRows(shopId, page.items),
+    nextCursor: page.nextCursor,
+  };
 }
 
 /** Parse an optional baht price field → satang or null. */

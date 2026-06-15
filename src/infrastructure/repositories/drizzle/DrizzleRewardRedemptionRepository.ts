@@ -5,6 +5,9 @@ import type {
   CreateRedemptionInput,
   IRewardRedemptionRepository,
 } from "@/src/application/repositories/IRewardRedemptionRepository";
+import type { Page, PageOpts } from "@/src/application/repositories/pagination";
+import { decodeCursor } from "@/src/application/repositories/pagination";
+import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.rewardRedemptions.$inferSelect;
 
@@ -66,5 +69,55 @@ export class DrizzleRewardRedemptionRepository
       limit,
     });
     return rows.map(toRedemption);
+  }
+
+  async pageByShop(
+    shopId: string,
+    opts: PageOpts = {},
+  ): Promise<Page<RewardRedemption>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.rewardRedemptions.findMany({
+      where: and(
+        eq(schema.rewardRedemptions.shopId, shopId),
+        cursorWhere(
+          schema.rewardRedemptions.createdAt,
+          schema.rewardRedemptions.id,
+          cur,
+        ),
+      ),
+      orderBy: [
+        desc(schema.rewardRedemptions.createdAt),
+        desc(schema.rewardRedemptions.id),
+      ],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toRedemption), limit);
+  }
+
+  async pageByCustomer(
+    shopId: string,
+    customerId: string,
+    opts: PageOpts = {},
+  ): Promise<Page<RewardRedemption>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.rewardRedemptions.findMany({
+      where: and(
+        eq(schema.rewardRedemptions.shopId, shopId),
+        eq(schema.rewardRedemptions.customerId, customerId),
+        cursorWhere(
+          schema.rewardRedemptions.createdAt,
+          schema.rewardRedemptions.id,
+          cur,
+        ),
+      ),
+      orderBy: [
+        desc(schema.rewardRedemptions.createdAt),
+        desc(schema.rewardRedemptions.id),
+      ],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toRedemption), limit);
   }
 }

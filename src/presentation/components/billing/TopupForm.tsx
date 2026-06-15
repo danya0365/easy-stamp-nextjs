@@ -72,7 +72,7 @@ export function TopupForm({
       return;
     }
     setCompressing(true);
-    setSlipNote("กำลังย่อรูป...");
+    setSlipNote("กำลังย่อรูป…");
     try {
       const { default: imageCompression } = await import(
         "browser-image-compression"
@@ -301,7 +301,7 @@ export function TopupForm({
             </span>
             {qrPending || !qr ? (
               <div className="flex h-52 w-52 items-center justify-center rounded-xl bg-card text-sm text-muted">
-                {qrError ?? "กำลังสร้าง QR..."}
+                {qrError ?? "กำลังสร้าง QR…"}
               </div>
             ) : (
               <>
@@ -355,9 +355,9 @@ export function TopupForm({
               className="mt-3 w-full"
             >
               {pending
-                ? "กำลังส่ง..."
+                ? "กำลังส่ง…"
                 : compressing
-                  ? "กำลังย่อรูป..."
+                  ? "กำลังย่อรูป…"
                   : "ส่งสลิปการชำระเงิน"}
             </Button>
           </div>

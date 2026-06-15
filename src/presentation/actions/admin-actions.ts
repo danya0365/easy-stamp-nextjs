@@ -8,10 +8,31 @@ import { VerifyPaymentUseCase } from "@/src/application/use-cases/billing/Verify
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { bahtToSatang, satangToBaht } from "@/src/presentation/lib/money";
+import type { Page } from "@/src/application/repositories/pagination";
+import type { PendingPaymentRow } from "@/src/presentation/components/admin/AdminPaymentQueue";
 
 export interface AdminFormState {
   error?: string;
   success?: string;
+}
+
+/** Next page of the pending-payment review queue (admin "load more"). */
+export async function loadMorePendingPaymentsAction(
+  cursor: string,
+): Promise<Page<PendingPaymentRow>> {
+  await requireRole("platform_admin");
+  const page = await container.paymentRepository.pageByStatus("pending", {
+    cursor,
+  });
+  const shops = await container.shopRepository.list();
+  const shopName = new Map(shops.map((s) => [s.id, s.name]));
+  return {
+    items: page.items.map((payment) => ({
+      payment,
+      shopName: shopName.get(payment.shopId) ?? payment.shopId,
+    })),
+    nextCursor: page.nextCursor,
+  };
 }
 
 export async function createShopAction(

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Payment, PaymentStatus } from "@/src/domain/entities";
 import type {
@@ -6,6 +6,9 @@ import type {
   IPaymentRepository,
   ResolvePaymentInput,
 } from "@/src/application/repositories/IPaymentRepository";
+import type { Page, PageOpts } from "@/src/application/repositories/pagination";
+import { decodeCursor } from "@/src/application/repositories/pagination";
+import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.payments.$inferSelect;
 
@@ -73,6 +76,37 @@ export class DrizzlePaymentRepository implements IPaymentRepository {
       orderBy: desc(schema.payments.createdAt),
     });
     return rows.map(toPayment);
+  }
+
+  async pageByShop(shopId: string, opts: PageOpts = {}): Promise<Page<Payment>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.payments.findMany({
+      where: and(
+        eq(schema.payments.shopId, shopId),
+        cursorWhere(schema.payments.createdAt, schema.payments.id, cur),
+      ),
+      orderBy: [desc(schema.payments.createdAt), desc(schema.payments.id)],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toPayment), limit);
+  }
+
+  async pageByStatus(
+    status: PaymentStatus,
+    opts: PageOpts = {},
+  ): Promise<Page<Payment>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.payments.findMany({
+      where: and(
+        eq(schema.payments.status, status),
+        cursorWhere(schema.payments.createdAt, schema.payments.id, cur),
+      ),
+      orderBy: [desc(schema.payments.createdAt), desc(schema.payments.id)],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toPayment), limit);
   }
 
   async resolve(id: string, input: ResolvePaymentInput): Promise<Payment> {

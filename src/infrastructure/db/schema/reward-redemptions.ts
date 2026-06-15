@@ -37,5 +37,7 @@ export const rewardRedemptions = sqliteTable(
   (t) => [
     index("redemptions_shop_customer_idx").on(t.shopId, t.customerId),
     index("redemptions_shop_created_idx").on(t.shopId, t.createdAt),
+    // Cross-shop (platform analytics) range scans filter on createdAt only.
+    index("redemptions_created_idx").on(t.createdAt),
   ],
 );

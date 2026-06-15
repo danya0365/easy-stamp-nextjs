@@ -28,5 +28,7 @@ export const customers = sqliteTable(
   (t) => [
     unique("customers_shop_phone_unique").on(t.shopId, t.phone),
     index("customers_shop_idx").on(t.shopId),
+    // (shopId, createdAt) backs the customer list's keyset pagination.
+    index("customers_shop_created_idx").on(t.shopId, t.createdAt),
   ],
 );

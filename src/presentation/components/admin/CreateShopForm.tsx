@@ -82,7 +82,7 @@ export function CreateShopForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังสร้าง..." : "สร้างร้านค้า"}
+        {pending ? "กำลังสร้าง…" : "สร้างร้านค้า"}
       </Button>
     </form>
   );

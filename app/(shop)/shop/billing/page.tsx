@@ -7,34 +7,19 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { TopupForm } from "@/src/presentation/components/billing/TopupForm";
+import { PaymentHistoryList } from "@/src/presentation/components/billing/PaymentHistoryList";
+import { TopupHistoryList } from "@/src/presentation/components/billing/TopupHistoryList";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
-import { satangToBaht } from "@/src/presentation/lib/money";
-import type { PaymentStatus } from "@/src/domain/entities";
+import { formatDate } from "@/src/presentation/lib/format-date";
 
 export const dynamic = "force-dynamic";
-
-const PAYMENT_BADGE: Record<
-  PaymentStatus,
-  { tone: "warning" | "success" | "danger"; label: string }
-> = {
-  pending: { tone: "warning", label: "รอตรวจสอบ" },
-  approved: { tone: "success", label: "อนุมัติแล้ว" },
-  rejected: { tone: "danger", label: "ปฏิเสธ" },
-};
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("th-TH", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export default async function ShopBillingPage() {
   const user = await requireRole("shop_owner");
   const shopId = user.shopId!;
   const { subscription, status } = await getBillingState(shopId);
-  const payments = await container.paymentRepository.listByShop(shopId, 10);
+  const paymentsPage = await container.paymentRepository.pageByShop(shopId);
+  const topupsPage = await container.topupTransactionRepository.pageByShop(shopId);
   const customers = await container.customerRepository.listByShop(shopId);
 
   return (
@@ -88,7 +73,7 @@ export default async function ShopBillingPage() {
               <span className="text-muted">ใช้งานได้ถึง</span>
               <span className="inline-flex items-center gap-1.5 text-foreground">
                 <CalendarClock className="size-4 text-muted" />
-                {fmtDate(subscription.currentPeriodDueAt)}
+                {formatDate(subscription.currentPeriodDueAt)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -116,41 +101,30 @@ export default async function ShopBillingPage() {
         </Card>
       )}
 
-      {/* History */}
+      {/* Days credited (ledger) */}
+      {topupsPage.items.length > 0 && (
+        <Card>
+          <CardHeader
+            title="ประวัติวันใช้งานที่ได้รับ"
+            subtitle="วันที่ถูกเติมเข้าระบบ (รวมที่แอดมินปรับให้)"
+          />
+          <TopupHistoryList
+            initialItems={topupsPage.items}
+            initialCursor={topupsPage.nextCursor}
+          />
+        </Card>
+      )}
+
+      {/* Slip submission history */}
       <Card>
-        <CardHeader title="ประวัติการเติมวัน" />
-        {payments.length === 0 ? (
+        <CardHeader title="ประวัติการแจ้งชำระเงิน" />
+        {paymentsPage.items.length === 0 ? (
           <EmptyState icon={<Receipt />} title="ยังไม่มีประวัติ" />
         ) : (
-          <ul className="flex flex-col divide-y divide-border">
-            {payments.map((p) => {
-              const badge = PAYMENT_BADGE[p.status];
-              const totalDays = p.daysToAdd + p.bonusDays;
-              return (
-                <li
-                  key={p.id}
-                  className="flex items-center justify-between gap-3 py-2.5 text-sm"
-                >
-                  <div>
-                    <p className="text-foreground">
-                      ฿{satangToBaht(p.amountSatang)} ·{" "}
-                      <span className="text-muted">
-                        {totalDays} วัน
-                        {p.bonusDays > 0 ? ` (แถม ${p.bonusDays})` : ""}
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted">{fmtDate(p.createdAt)}</p>
-                    {p.status === "rejected" && p.rejectReason && (
-                      <p className="text-xs text-error">
-                        เหตุผล: {p.rejectReason}
-                      </p>
-                    )}
-                  </div>
-                  <Badge tone={badge.tone}>{badge.label}</Badge>
-                </li>
-              );
-            })}
-          </ul>
+          <PaymentHistoryList
+            initialItems={paymentsPage.items}
+            initialCursor={paymentsPage.nextCursor}
+          />
         )}
       </Card>
 

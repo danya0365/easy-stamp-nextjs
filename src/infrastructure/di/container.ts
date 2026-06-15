@@ -18,6 +18,8 @@ import { DrizzlePaymentRepository } from "@/src/infrastructure/repositories/driz
 import { DrizzleTopupTransactionRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleTopupTransactionRepository";
 import { DrizzleNotificationRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleNotificationRepository";
 import { DrizzleContactRequestRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleContactRequestRepository";
+import { DrizzleAnalyticsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAnalyticsRepository";
+import { DrizzlePlatformAnalyticsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePlatformAnalyticsRepository";
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import { ManualSlipPaymentVerifier } from "@/src/infrastructure/services/ManualSlipPaymentVerifier";
@@ -51,6 +53,8 @@ import type { IPaymentRepository } from "@/src/application/repositories/IPayment
 import type { ITopupTransactionRepository } from "@/src/application/repositories/ITopupTransactionRepository";
 import type { INotificationRepository } from "@/src/application/repositories/INotificationRepository";
 import type { IContactRequestRepository } from "@/src/application/repositories/IContactRequestRepository";
+import type { IAnalyticsRepository } from "@/src/application/repositories/IAnalyticsRepository";
+import type { IPlatformAnalyticsRepository } from "@/src/application/repositories/IPlatformAnalyticsRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
@@ -107,6 +111,10 @@ class Container {
     new DrizzleNotificationRepository();
   readonly contactRequestRepository: IContactRequestRepository =
     new DrizzleContactRequestRepository();
+  readonly analyticsRepository: IAnalyticsRepository =
+    new DrizzleAnalyticsRepository();
+  readonly platformAnalyticsRepository: IPlatformAnalyticsRepository =
+    new DrizzlePlatformAnalyticsRepository();
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();

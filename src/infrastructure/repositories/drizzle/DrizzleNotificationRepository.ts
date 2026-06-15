@@ -5,6 +5,9 @@ import type {
   CreateNotificationInput,
   INotificationRepository,
 } from "@/src/application/repositories/INotificationRepository";
+import type { Page, PageOpts } from "@/src/application/repositories/pagination";
+import { decodeCursor } from "@/src/application/repositories/pagination";
+import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.notifications.$inferSelect;
 
@@ -44,6 +47,30 @@ export class DrizzleNotificationRepository implements INotificationRepository {
       limit,
     });
     return rows.map(toNotification);
+  }
+
+  async pageByUser(
+    userId: string,
+    opts: PageOpts = {},
+  ): Promise<Page<Notification>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.notifications.findMany({
+      where: and(
+        eq(schema.notifications.userId, userId),
+        cursorWhere(
+          schema.notifications.createdAt,
+          schema.notifications.id,
+          cur,
+        ),
+      ),
+      orderBy: [
+        desc(schema.notifications.createdAt),
+        desc(schema.notifications.id),
+      ],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toNotification), limit);
   }
 
   async countUnread(userId: string): Promise<number> {

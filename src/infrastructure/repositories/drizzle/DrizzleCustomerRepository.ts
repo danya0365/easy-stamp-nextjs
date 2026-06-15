@@ -2,6 +2,9 @@ import { and, desc, eq, like, or } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Customer } from "@/src/domain/entities";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
+import type { Page, PageOpts } from "@/src/application/repositories/pagination";
+import { decodeCursor } from "@/src/application/repositories/pagination";
+import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.customers.$inferSelect;
 
@@ -72,5 +75,30 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
       limit: 200,
     });
     return rows.map(toCustomer);
+  }
+
+  async pageByShop(
+    shopId: string,
+    opts: PageOpts & { search?: string } = {},
+  ): Promise<Page<Customer>> {
+    const limit = opts.limit ?? 30;
+    const cur = decodeCursor(opts.cursor);
+    const term = opts.search?.trim();
+    const search = term
+      ? or(
+          like(schema.customers.phone, `%${term}%`),
+          like(schema.customers.displayName, `%${term}%`),
+        )
+      : undefined;
+    const rows = await db.query.customers.findMany({
+      where: and(
+        eq(schema.customers.shopId, shopId),
+        search,
+        cursorWhere(schema.customers.createdAt, schema.customers.id, cur),
+      ),
+      orderBy: [desc(schema.customers.createdAt), desc(schema.customers.id)],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toCustomer), limit);
   }
 }

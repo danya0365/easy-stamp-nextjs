@@ -1,4 +1,4 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { User, UserWithSecret } from "@/src/domain/entities";
 import type { Role } from "@/src/domain/types/roles";
@@ -118,5 +118,48 @@ export class DrizzleUserRepository implements IUserRepository {
       ),
     });
     return row ? toUser(row) : null;
+  }
+
+  async setLoginOtp(
+    id: string,
+    otpHash: string,
+    expiresAt: string,
+  ): Promise<void> {
+    await db
+      .update(schema.users)
+      .set({
+        loginOtpHash: otpHash,
+        loginOtpExpiresAt: expiresAt,
+        loginOtpAttempts: 0,
+      })
+      .where(eq(schema.users.id, id));
+  }
+
+  async getLoginOtp(
+    id: string,
+  ): Promise<{ hash: string | null; expiresAt: string | null; attempts: number } | null> {
+    const row = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
+    if (!row) return null;
+    return {
+      hash: row.loginOtpHash,
+      expiresAt: row.loginOtpExpiresAt,
+      attempts: row.loginOtpAttempts,
+    };
+  }
+
+  async bumpLoginOtpAttempts(id: string): Promise<number> {
+    const [row] = await db
+      .update(schema.users)
+      .set({ loginOtpAttempts: sql`${schema.users.loginOtpAttempts} + 1` })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return row?.loginOtpAttempts ?? 0;
+  }
+
+  async clearLoginOtp(id: string): Promise<void> {
+    await db
+      .update(schema.users)
+      .set({ loginOtpHash: null, loginOtpExpiresAt: null, loginOtpAttempts: 0 })
+      .where(eq(schema.users.id, id));
   }
 }

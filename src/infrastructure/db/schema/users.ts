@@ -34,6 +34,13 @@ export const users = sqliteTable(
     lineUserId: text().unique(),
     lineLinkCode: text(),
     lineLinkCodeExpiresAt: text(),
+    // Passwordless login OTP (sent to LINE). loginOtpHash is a bcrypt hash of the
+    // 6-digit code (never plaintext); loginOtpExpiresAt bounds validity;
+    // loginOtpAttempts counts wrong tries so we can lock after too many. All
+    // transient — cleared on successful verify.
+    loginOtpHash: text(),
+    loginOtpExpiresAt: text(),
+    loginOtpAttempts: integer().notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

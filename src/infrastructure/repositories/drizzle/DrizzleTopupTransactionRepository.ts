@@ -1,10 +1,13 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { TopupTransaction } from "@/src/domain/entities";
 import type {
   CreateTopupTransactionInput,
   ITopupTransactionRepository,
 } from "@/src/application/repositories/ITopupTransactionRepository";
+import type { Page, PageOpts } from "@/src/application/repositories/pagination";
+import { decodeCursor } from "@/src/application/repositories/pagination";
+import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.topupTransactions.$inferSelect;
 
@@ -54,5 +57,29 @@ export class DrizzleTopupTransactionRepository
       limit,
     });
     return rows.map(toTx);
+  }
+
+  async pageByShop(
+    shopId: string,
+    opts: PageOpts = {},
+  ): Promise<Page<TopupTransaction>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.topupTransactions.findMany({
+      where: and(
+        eq(schema.topupTransactions.shopId, shopId),
+        cursorWhere(
+          schema.topupTransactions.createdAt,
+          schema.topupTransactions.id,
+          cur,
+        ),
+      ),
+      orderBy: [
+        desc(schema.topupTransactions.createdAt),
+        desc(schema.topupTransactions.id),
+      ],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toTx), limit);
   }
 }

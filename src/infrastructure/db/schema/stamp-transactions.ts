@@ -43,5 +43,7 @@ export const stampTransactions = sqliteTable(
     index("stamp_tx_shop_customer_idx").on(t.shopId, t.customerId),
     index("stamp_tx_card_idx").on(t.cardId),
     index("stamp_tx_shop_created_idx").on(t.shopId, t.createdAt),
+    // Cross-shop (platform analytics) range scans filter on createdAt only.
+    index("stamp_tx_created_idx").on(t.createdAt),
   ],
 );

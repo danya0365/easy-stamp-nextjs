@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   Bell,
   Building2,
   CreditCard,
@@ -39,6 +40,7 @@ const NAVS = {
     { href: "/shop/stamps", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },
     { href: "/shop/customers", label: "ลูกค้า", icon: Users },
     { href: "/shop/redemptions", label: "ประวัติแลกรางวัล", icon: History },
+    { href: "/shop/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/shop/notifications", label: "แจ้งเตือน", icon: Bell },
     { href: "/shop/branches", label: "สาขา", icon: Building2 },
     { href: "/shop/staff", label: "พนักงาน", icon: UserCog },
@@ -51,6 +53,7 @@ const NAVS = {
     { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },
     { href: "/admin/shops", label: "ร้านค้า", icon: Store },
     { href: "/admin/payments", label: "การชำระเงิน", icon: CreditCard },
+    { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },
     { href: "/admin/contacts", label: "ติดต่อ", icon: MessageSquare },
   ],

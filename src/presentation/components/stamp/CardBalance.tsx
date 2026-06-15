@@ -29,7 +29,7 @@ function TypeProgress({
         {p.eligibleToRedeem ? (
           <Badge tone="success">
             <PartyPopper className="size-3.5" />
-            ครบแล้ว
+            ครบ แลกได้
           </Badge>
         ) : (
           <Badge tone="brand">
