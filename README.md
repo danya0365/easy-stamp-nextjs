@@ -1,6 +1,6 @@
 # Easy Stamp
 
-A multi-tenant **stamp-card loyalty SaaS** for merchants running several shops and branches. Customers earn stamps on each purchase, reach a per-shop threshold (default 10), and redeem a free reward — **no app install and no customer login required**. Each shop pays a monthly subscription via PromptPay; the platform admin verifies payments manually. The UI is in Thai.
+A multi-tenant **stamp-card loyalty SaaS** for merchants running several shops and branches. Customers earn stamps on each purchase, reach a per-stamp-type threshold (default 10), and redeem a free reward — **no app install and no customer login required**. Each shop pays as it goes by **topping up usage days** via PromptPay; the platform admin verifies slips manually. The UI is in Thai.
 
 > There is an in-app, human-readable overview of the product at **`/info`** (for both shop owners and customers).
 
@@ -18,8 +18,8 @@ A multi-tenant **stamp-card loyalty SaaS** for merchants running several shops a
 - **Three roles**: `platform_admin`, `shop_owner`, `branch_staff` (custom session auth, scoped access).
 
 **Billing**
-- Per-shop **monthly subscription** paid via **PromptPay QR + slip upload**; admin verifies and activates.
-- Escalating in-app reminder (days 1–7), then **automatic suspension** — derived from the due date, no cron.
+- Per-shop **prepaid "day top-up"**: the shop buys usage days (preset packages priced from its per-day rate, or a custom number of days) and pays via **PromptPay QR + slip upload**; admin verifies and credits the days. Every credit is recorded in a `topup_transactions` ledger.
+- Validity is tracked as a **paid-through date**; once it passes the shop is **automatically suspended** — derived from the due date, no cron.
 - Payment verification sits behind an `IPaymentVerifier` interface (`ManualSlipPaymentVerifier` today) so an auto-verify provider can be swapped in later.
 
 ## Tech stack

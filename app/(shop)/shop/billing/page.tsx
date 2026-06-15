@@ -8,6 +8,7 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { TopupForm } from "@/src/presentation/components/billing/TopupForm";
 import { PaymentHistoryList } from "@/src/presentation/components/billing/PaymentHistoryList";
+import { TopupHistoryList } from "@/src/presentation/components/billing/TopupHistoryList";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { formatDate } from "@/src/presentation/lib/format-date";
 
@@ -18,6 +19,7 @@ export default async function ShopBillingPage() {
   const shopId = user.shopId!;
   const { subscription, status } = await getBillingState(shopId);
   const paymentsPage = await container.paymentRepository.pageByShop(shopId);
+  const topupsPage = await container.topupTransactionRepository.pageByShop(shopId);
   const customers = await container.customerRepository.listByShop(shopId);
 
   return (
@@ -99,9 +101,23 @@ export default async function ShopBillingPage() {
         </Card>
       )}
 
-      {/* History */}
+      {/* Days credited (ledger) */}
+      {topupsPage.items.length > 0 && (
+        <Card>
+          <CardHeader
+            title="ประวัติวันใช้งานที่ได้รับ"
+            subtitle="วันที่ถูกเติมเข้าระบบ (รวมที่แอดมินปรับให้)"
+          />
+          <TopupHistoryList
+            initialItems={topupsPage.items}
+            initialCursor={topupsPage.nextCursor}
+          />
+        </Card>
+      )}
+
+      {/* Slip submission history */}
       <Card>
-        <CardHeader title="ประวัติการเติมวัน" />
+        <CardHeader title="ประวัติการแจ้งชำระเงิน" />
         {paymentsPage.items.length === 0 ? (
           <EmptyState icon={<Receipt />} title="ยังไม่มีประวัติ" />
         ) : (
