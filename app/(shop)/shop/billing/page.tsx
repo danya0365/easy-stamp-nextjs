@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { TopupForm } from "@/src/presentation/components/billing/TopupForm";
+import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { satangToBaht } from "@/src/presentation/lib/money";
 import type { PaymentStatus } from "@/src/domain/entities";
 
@@ -151,6 +152,15 @@ export default async function ShopBillingPage() {
             })}
           </ul>
         )}
+      </Card>
+
+      {/* Help: contacting the admin is most useful here (rejected / suspended). */}
+      <Card>
+        <CardHeader
+          title="มีปัญหาการชำระเงิน?"
+          subtitle="ถูกปฏิเสธ โอนแล้วยังไม่ได้รับวัน หรือสอบถามอื่น ๆ ติดต่อผู้ดูแลได้เลย"
+        />
+        <ContactAdminButton />
       </Card>
     </div>
   );
