@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { container } from "@/src/infrastructure/di/container";
 import { lineConfigFromEnv } from "@/src/infrastructure/services/LineMessagingPusher";
 import { LinkLineAccountUseCase } from "@/src/application/use-cases/line/LinkLineAccountUseCase";
+import { isLineLinkCodeShape } from "@/src/application/use-cases/line/GenerateLineLinkCodeUseCase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,16 +74,20 @@ export async function POST(req: Request) {
     try {
       const lineUserId = event.source?.userId;
       if (event.type === "message" && event.message?.type === "text" && lineUserId) {
-        const code = (event.message.text ?? "").trim().toUpperCase();
-        const linkedEmail = await linkUseCase.execute(code, lineUserId);
-        if (event.replyToken) {
-          await reply(
-            config.channelAccessToken,
-            event.replyToken,
-            linkedEmail
-              ? `เชื่อมต่อสำเร็จ ✅ (${linkedEmail})\nคุณจะได้รับการแจ้งเตือนผ่าน LINE นี้`
-              : "ไม่พบโค้ดนี้ กรุณาสร้างโค้ดใหม่ในแอปแล้วลองอีกครั้ง",
-          );
+        const text = (event.message.text ?? "").trim().toUpperCase();
+        // Only treat a code-shaped message as a link attempt. Everything else is
+        // ordinary chat — stay silent so the OA can be used for support Q&A
+        // (a human or LINE's own auto-reply can handle it). Reply ONLY on a
+        // successful link, so mistyped/used codes don't spam normal conversation.
+        if (isLineLinkCodeShape(text)) {
+          const linkedEmail = await linkUseCase.execute(text, lineUserId);
+          if (linkedEmail && event.replyToken) {
+            await reply(
+              config.channelAccessToken,
+              event.replyToken,
+              `เชื่อมต่อสำเร็จ ✅ (${linkedEmail})\nคุณจะได้รับการแจ้งเตือนผ่าน LINE นี้`,
+            );
+          }
         }
       } else if (event.type === "follow" && event.replyToken) {
         await reply(
