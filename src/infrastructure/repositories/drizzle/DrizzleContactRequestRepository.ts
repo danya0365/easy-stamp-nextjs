@@ -52,6 +52,23 @@ export class DrizzleContactRequestRepository
     return rows.map(toContactRequest);
   }
 
+  async listByShop(shopId: string, limit = 20): Promise<ContactRequest[]> {
+    const rows = await db.query.contactRequests.findMany({
+      where: eq(schema.contactRequests.shopId, shopId),
+      orderBy: desc(schema.contactRequests.createdAt),
+      limit,
+    });
+    return rows.map(toContactRequest);
+  }
+
+  async findLatestByShop(shopId: string): Promise<ContactRequest | null> {
+    const row = await db.query.contactRequests.findFirst({
+      where: eq(schema.contactRequests.shopId, shopId),
+      orderBy: desc(schema.contactRequests.createdAt),
+    });
+    return row ? toContactRequest(row) : null;
+  }
+
   async countByStatus(status: ContactRequestStatus): Promise<number> {
     const [r] = await db
       .select({ value: count() })
@@ -60,10 +77,12 @@ export class DrizzleContactRequestRepository
     return r?.value ?? 0;
   }
 
-  async resolve(id: string, resolvedBy: string): Promise<void> {
-    await db
+  async resolve(id: string, resolvedBy: string): Promise<ContactRequest | null> {
+    const [row] = await db
       .update(schema.contactRequests)
       .set({ status: "resolved", resolvedBy, resolvedAt: new Date().toISOString() })
-      .where(eq(schema.contactRequests.id, id));
+      .where(eq(schema.contactRequests.id, id))
+      .returning();
+    return row ? toContactRequest(row) : null;
   }
 }

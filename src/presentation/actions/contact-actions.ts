@@ -10,6 +10,9 @@ export interface ContactFormState {
   success?: string;
 }
 
+/** Anti-spam: must wait this long after the previous request before sending again. */
+const CONTACT_COOLDOWN_MS = 5 * 60_000; // 5 นาที
+
 /** Shop owner sends a contact request to the platform admin. */
 export async function contactAdminAction(
   _prev: ContactFormState,
@@ -24,6 +27,23 @@ export async function contactAdminAction(
     const contactChannel = String(formData.get("contactChannel") ?? "").trim();
     if (!subject || !message || !contactChannel) {
       throw new Error("กรุณากรอกหัวข้อ ข้อความ และช่องทางติดต่อกลับให้ครบ");
+    }
+
+    // Anti-spam (server-side, covers every entry point): one open request per
+    // shop, plus a short cooldown between submissions.
+    const latest =
+      await container.contactRequestRepository.findLatestByShop(user.shopId);
+    if (latest?.status === "open") {
+      throw new Error(
+        "คุณมีคำขอที่รอผู้ดูแลตอบกลับอยู่แล้ว กรุณารอการติดต่อกลับก่อนส่งใหม่",
+      );
+    }
+    if (latest) {
+      const elapsed = Date.now() - new Date(latest.createdAt).getTime();
+      if (elapsed < CONTACT_COOLDOWN_MS) {
+        const mins = Math.ceil((CONTACT_COOLDOWN_MS - elapsed) / 60_000);
+        throw new Error(`กรุณารออีกประมาณ ${mins} นาที ก่อนส่งคำขอใหม่`);
+      }
     }
 
     await container.contactRequestRepository.create({
@@ -48,9 +68,20 @@ export async function contactAdminAction(
   }
 }
 
-/** Admin marks a contact request as resolved. */
+/** Admin marks a contact request as resolved (and tells the shop owner). */
 export async function resolveContactAction(id: string): Promise<void> {
   const admin = await requireRole("platform_admin");
-  await container.contactRequestRepository.resolve(id, admin.id);
+  const resolved = await container.contactRequestRepository.resolve(id, admin.id);
+
+  // Close the loop: notify the owner who raised it (in-app + LINE).
+  if (resolved) {
+    await container.notificationService.notify(resolved.createdBy, {
+      type: "contact_resolved",
+      title: "ผู้ดูแลรับเรื่องของคุณแล้ว",
+      body: `คำขอ "${resolved.subject}" ได้รับการดำเนินการแล้ว`,
+      linkUrl: "/shop/contact",
+    });
+  }
+
   revalidatePath("/admin/contacts");
 }

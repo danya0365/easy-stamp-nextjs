@@ -13,7 +13,8 @@ export type NotificationType =
   | "payment_submitted"
   | "payment_approved"
   | "payment_rejected"
-  | "contact_request";
+  | "contact_request"
+  | "contact_resolved";
 export type ContactRequestStatus = "open" | "resolved";
 
 export interface ShopCategory {
