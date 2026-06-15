@@ -16,7 +16,7 @@ function TypeProgress({
   dotSize: "sm" | "md" | "lg";
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-card p-3 ring-1 ring-brand-100">
+    <div className="flex flex-col gap-3 rounded-xl bg-card p-3 ring-1 ring-border">
       <div className="flex items-center gap-2">
         <p className="min-w-0 flex-1 truncate font-medium text-foreground">
           {p.type.name}
