@@ -1,10 +1,13 @@
-import { asc, desc, eq, count } from "drizzle-orm";
+import { and, asc, desc, eq, count } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { ContactRequest, ContactRequestStatus } from "@/src/domain/entities";
 import type {
   CreateContactRequestInput,
   IContactRequestRepository,
 } from "@/src/application/repositories/IContactRequestRepository";
+import type { Page, PageOpts } from "@/src/application/repositories/pagination";
+import { decodeCursor } from "@/src/application/repositories/pagination";
+import { cursorWhere, toPage } from "./_cursor";
 
 type Row = typeof schema.contactRequests.$inferSelect;
 
@@ -50,6 +53,35 @@ export class DrizzleContactRequestRepository
       limit,
     });
     return rows.map(toContactRequest);
+  }
+
+  async listOpen(): Promise<ContactRequest[]> {
+    const rows = await db.query.contactRequests.findMany({
+      where: eq(schema.contactRequests.status, "open"),
+      orderBy: desc(schema.contactRequests.createdAt),
+    });
+    return rows.map(toContactRequest);
+  }
+
+  async pageResolved(opts: PageOpts = {}): Promise<Page<ContactRequest>> {
+    const limit = opts.limit ?? 20;
+    const cur = decodeCursor(opts.cursor);
+    const rows = await db.query.contactRequests.findMany({
+      where: and(
+        eq(schema.contactRequests.status, "resolved"),
+        cursorWhere(
+          schema.contactRequests.createdAt,
+          schema.contactRequests.id,
+          cur,
+        ),
+      ),
+      orderBy: [
+        desc(schema.contactRequests.createdAt),
+        desc(schema.contactRequests.id),
+      ],
+      limit: limit + 1,
+    });
+    return toPage(rows.map(toContactRequest), limit);
   }
 
   async listByShop(shopId: string, limit = 20): Promise<ContactRequest[]> {

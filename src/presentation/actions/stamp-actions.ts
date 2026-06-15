@@ -10,10 +10,18 @@ import { GetCardByPublicCodeUseCase } from "@/src/application/use-cases/stamp/Ge
 import { AddStampsUseCase } from "@/src/application/use-cases/stamp/AddStampsUseCase";
 import { RedeemRewardUseCase } from "@/src/application/use-cases/stamp/RedeemRewardUseCase";
 import { GenerateBindCodeUseCase } from "@/src/application/use-cases/member/GenerateBindCodeUseCase";
+import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
+import { getMemberToken } from "@/src/infrastructure/auth/member";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import type { CustomerCardView } from "@/src/domain/entities";
+import type { Page } from "@/src/application/repositories/pagination";
 import { normalizePhone } from "@/src/domain/services/phone";
+import type { RedemptionItem } from "@/src/presentation/components/stamp/RedemptionHistory";
+import {
+  buildShopRedemptionItems,
+  buildCustomerRedemptionItems,
+} from "@/src/presentation/components/stamp/redemption-items";
 
 export interface StampActionState {
   phone?: string;
@@ -163,4 +171,49 @@ export async function redeemRewardAction(
   } catch (e) {
     return { phone, error: (e as Error).message, searched: true };
   }
+}
+
+/** Next page of the shop's reward-redemption history (history page "load more"). */
+export async function loadMoreShopRedemptionsAction(
+  cursor: string,
+): Promise<Page<RedemptionItem>> {
+  const user = await requireRole("shop_owner");
+  const shopId = user.shopId!;
+  const page = await container.rewardRedemptionRepository.pageByShop(shopId, {
+    cursor,
+  });
+  return {
+    items: await buildShopRedemptionItems(shopId, page.items),
+    nextCursor: page.nextCursor,
+  };
+}
+
+/** Next page of the customer's own redemption history for one shop (by slug). */
+export async function loadMoreMyRedemptionsAction(
+  slug: string,
+  cursor: string,
+): Promise<Page<RedemptionItem>> {
+  const shop = await container.shopRepository.findBySlug(slug);
+  const token = shop ? await getMemberToken(slug) : null;
+  const view =
+    shop && token
+      ? await new GetCardByDeviceTokenUseCase(
+          container.shopRepository,
+          container.customerDeviceRepository,
+          container.stampCardRepository,
+          container.stampTypeRepository,
+          container.stampBalanceRepository,
+        ).execute(shop.id, token)
+      : null;
+  if (!shop || !view) return { items: [], nextCursor: null };
+
+  const page = await container.rewardRedemptionRepository.pageByCustomer(
+    shop.id,
+    view.customer.id,
+    { cursor },
+  );
+  return {
+    items: await buildCustomerRedemptionItems(shop.id, page.items),
+    nextCursor: page.nextCursor,
+  };
 }

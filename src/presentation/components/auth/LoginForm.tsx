@@ -80,7 +80,7 @@ export function LoginForm() {
         disabled={isPending}
         className="mt-2 rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:opacity-60"
       >
-        {isPending ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+        {isPending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
       </button>
     </form>
   );

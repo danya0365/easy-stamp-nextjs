@@ -9,6 +9,7 @@ import {
 } from "@/src/presentation/actions/contact-actions";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Input } from "@/src/presentation/components/ui/Input";
+import { Textarea } from "@/src/presentation/components/ui/Textarea";
 
 /**
  * The contact-admin form itself (fields + submit). Rendered inline on the
@@ -40,13 +41,12 @@ export function ContactAdminForm({ onCancel }: { onCancel?: () => void }) {
   return (
     <form action={action} className="flex flex-col gap-3">
       <Input name="subject" placeholder="หัวข้อ" maxLength={120} required />
-      <textarea
+      <Textarea
         name="message"
         placeholder="รายละเอียดที่ต้องการแจ้ง"
         rows={4}
         maxLength={1000}
         required
-        className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none transition placeholder:text-muted focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
       />
       <Input
         name="contactChannel"

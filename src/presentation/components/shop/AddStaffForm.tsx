@@ -55,7 +55,7 @@ export function AddStaffForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังเพิ่ม..." : "เพิ่มพนักงาน"}
+        {pending ? "กำลังเพิ่ม…" : "เพิ่มพนักงาน"}
       </Button>
     </form>
   );

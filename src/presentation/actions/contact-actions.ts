@@ -4,10 +4,29 @@ import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
 import { requireRole } from "@/src/infrastructure/auth/session";
+import type { Page } from "@/src/application/repositories/pagination";
+import type { ContactRow } from "@/src/presentation/components/admin/ContactInbox";
 
 export interface ContactFormState {
   error?: string;
   success?: string;
+}
+
+/** Next page of resolved contact requests (admin inbox "load more"). */
+export async function loadMoreResolvedContactsAction(
+  cursor: string,
+): Promise<Page<ContactRow>> {
+  await requireRole("platform_admin");
+  const page = await container.contactRequestRepository.pageResolved({ cursor });
+  const shops = await container.shopRepository.list();
+  const shopName = new Map(shops.map((s) => [s.id, s.name]));
+  return {
+    items: page.items.map((request) => ({
+      request,
+      shopName: shopName.get(request.shopId) ?? "-",
+    })),
+    nextCursor: page.nextCursor,
+  };
 }
 
 /** Anti-spam: must wait this long after the previous request before sending again. */

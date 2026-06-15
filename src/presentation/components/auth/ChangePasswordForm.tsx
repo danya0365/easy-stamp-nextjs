@@ -52,7 +52,7 @@ export function ChangePasswordForm() {
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังบันทึก..." : "เปลี่ยนรหัสผ่าน"}
+        {pending ? "กำลังบันทึก…" : "เปลี่ยนรหัสผ่าน"}
       </Button>
     </form>
   );

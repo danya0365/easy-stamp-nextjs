@@ -22,7 +22,8 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   contact_resolved: MailCheck,
 };
 
-function Row({ n }: { n: Notification }) {
+/** A single notification, ready to drop inside an `<li>`. */
+export function NotificationRow({ n }: { n: Notification }) {
   const Icon = ICONS[n.type] ?? Bell;
   const inner = (
     <div
@@ -65,7 +66,7 @@ export function NotificationList({ items }: { items: Notification[] }) {
     <ul className="flex flex-col divide-y divide-border">
       {items.map((n) => (
         <li key={n.id}>
-          <Row n={n} />
+          <NotificationRow n={n} />
         </li>
       ))}
     </ul>

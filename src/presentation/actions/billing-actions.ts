@@ -8,10 +8,20 @@ import { SubmitPaymentSlipUseCase } from "@/src/application/use-cases/billing/Su
 import { resolveTopupQuote } from "@/src/domain/services/topup-pricing";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
 import { satangToBaht } from "@/src/presentation/lib/money";
+import type { Payment } from "@/src/domain/entities";
+import type { Page } from "@/src/application/repositories/pagination";
 
 export interface BillingFormState {
   error?: string;
   success?: string;
+}
+
+/** Next page of the shop's top-up/payment history (billing "load more"). */
+export async function loadMorePaymentsAction(
+  cursor: string,
+): Promise<Page<Payment>> {
+  const user = await requireRole("shop_owner");
+  return container.paymentRepository.pageByShop(user.shopId!, { cursor });
 }
 
 export type TopupQuoteResult =

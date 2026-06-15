@@ -1,4 +1,5 @@
 import type { Customer } from "@/src/domain/entities";
+import type { Page, PageOpts } from "./pagination";
 
 export interface ICustomerRepository {
   findByPhone(shopId: string, phone: string): Promise<Customer | null>;
@@ -11,4 +12,9 @@ export interface ICustomerRepository {
     displayName?: string | null,
   ): Promise<Customer>;
   listByShop(shopId: string, search?: string): Promise<Customer[]>;
+  /** Cursor-paginated, newest first; optional phone/name search. */
+  pageByShop(
+    shopId: string,
+    opts?: PageOpts & { search?: string },
+  ): Promise<Page<Customer>>;
 }

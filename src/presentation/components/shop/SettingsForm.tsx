@@ -7,6 +7,7 @@ import {
   type FormState,
 } from "@/src/presentation/actions/shop-actions";
 import { Input } from "@/src/presentation/components/ui/Input";
+import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
 
@@ -42,13 +43,12 @@ export function SettingsForm({
         htmlFor="rewardText"
         hint="เช่น เลือกเครื่องดื่มในร้านฟรี 1 แก้ว"
       >
-        <textarea
+        <Textarea
           id="rewardText"
           name="rewardText"
           rows={2}
           maxLength={200}
           defaultValue={rewardText}
-          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
         />
       </FormField>
 
@@ -56,7 +56,7 @@ export function SettingsForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังบันทึก..." : "บันทึก"}
+        {pending ? "กำลังบันทึก…" : "บันทึก"}
       </Button>
     </form>
   );

@@ -42,6 +42,7 @@ export const payments = sqliteTable(
   },
   (t) => [
     index("payments_shop_created_idx").on(t.shopId, t.createdAt),
-    index("payments_status_idx").on(t.status),
+    // (status, createdAt) backs the admin review queue's keyset pagination.
+    index("payments_status_created_idx").on(t.status, t.createdAt),
   ],
 );
