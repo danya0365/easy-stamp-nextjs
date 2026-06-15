@@ -134,7 +134,7 @@ export default function InfoPage() {
           บัตรสะสมแสตมป์ออนไลน์สำหรับร้านค้าหลายสาขา — ลูกค้าสะสมแต้มไม่ต้องพกบัตร
           ร้านค้าจัดการง่ายในที่เดียว
         </p>
-        <div className="mt-2 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-brand-100">
+        <div className="mt-2 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
           <p className="mb-2 text-sm font-medium text-brand-700">ตัวอย่างบัตร</p>
           <StampDots current={7} threshold={10} size="md" />
           <p className="mt-2 text-xs text-muted">สะสม 7/10 · อีก 3 ดวงครบรางวัล</p>
