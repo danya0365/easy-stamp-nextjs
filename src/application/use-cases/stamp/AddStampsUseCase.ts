@@ -1,15 +1,18 @@
 import type { CustomerCardView } from "@/src/domain/entities";
-import { buildCardView } from "@/src/domain/services/card-view";
 import { normalizePhone, isValidThaiPhone } from "@/src/domain/services/phone";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { ICustomerRepository } from "@/src/application/repositories/ICustomerRepository";
 import type { IStampCardRepository } from "@/src/application/repositories/IStampCardRepository";
+import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
+import type { IStampBalanceRepository } from "@/src/application/repositories/IStampBalanceRepository";
 import type { IStampTransactionRepository } from "@/src/application/repositories/IStampTransactionRepository";
+import { loadCardView } from "./loadCardView";
 
 export interface AddStampsInput {
   shopId: string;
   branchId?: string | null;
   phone: string;
+  stampTypeId: string;
   quantity: number;
   performedBy: string;
   displayName?: string | null;
@@ -18,12 +21,14 @@ export interface AddStampsInput {
 
 const MAX_PER_TX = 50;
 
-/** Add N stamps to a customer's card (creating customer/card on first visit). */
+/** Add N stamps of a given type to a customer (creating customer/card/balance on first visit). */
 export class AddStampsUseCase {
   constructor(
     private readonly shops: IShopRepository,
     private readonly customers: ICustomerRepository,
     private readonly cards: IStampCardRepository,
+    private readonly stampTypes: IStampTypeRepository,
+    private readonly balances: IStampBalanceRepository,
     private readonly transactions: IStampTransactionRepository,
   ) {}
 
@@ -40,25 +45,40 @@ export class AddStampsUseCase {
     const shop = await this.shops.findById(input.shopId);
     if (!shop) throw new Error("ไม่พบร้านค้า");
 
+    const type = await this.stampTypes.findById(input.stampTypeId);
+    if (!type || type.shopId !== input.shopId || !type.isActive) {
+      throw new Error("ไม่พบประเภทแสตมป์ หรือถูกปิดใช้งาน");
+    }
+
     const customer = await this.customers.findOrCreate(
       input.shopId,
       phone,
       input.displayName,
     );
     const card = await this.cards.findOrCreate(input.shopId, customer.id);
-    const updated = await this.cards.addStamps(card.id, quantity);
+    const balance = await this.balances.findOrCreate(card.id, type.id);
+    await this.balances.addStamps(balance.id, quantity);
 
     await this.transactions.create({
       shopId: input.shopId,
       branchId: input.branchId ?? null,
       customerId: customer.id,
       cardId: card.id,
+      stampTypeId: type.id,
       type: "earn",
       quantity,
       performedBy: input.performedBy,
       note: input.note ?? null,
     });
 
-    return buildCardView(shop, customer, updated);
+    return loadCardView(
+      {
+        stampTypes: this.stampTypes,
+        cards: this.cards,
+        balances: this.balances,
+      },
+      input.shopId,
+      customer,
+    );
   }
 }

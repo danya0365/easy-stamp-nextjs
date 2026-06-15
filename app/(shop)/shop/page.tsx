@@ -19,13 +19,15 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 export default async function ShopDashboardPage() {
   const user = await requireRole("shop_owner");
   const shopId = user.shopId!;
-  const [shop, branches, users, customers, redemptions] = await Promise.all([
-    container.shopRepository.findById(shopId),
-    container.branchRepository.listByShop(shopId),
-    container.userRepository.listByShop(shopId),
-    container.customerRepository.listByShop(shopId),
-    container.rewardRedemptionRepository.listByShop(shopId, 100),
-  ]);
+  const [shop, branches, users, customers, redemptions, stampTypes] =
+    await Promise.all([
+      container.shopRepository.findById(shopId),
+      container.branchRepository.listByShop(shopId),
+      container.userRepository.listByShop(shopId),
+      container.customerRepository.listByShop(shopId),
+      container.rewardRedemptionRepository.listByShop(shopId, 100),
+      container.stampTypeRepository.listByShop(shopId, { activeOnly: true }),
+    ]);
   const staffCount = users.filter((u) => u.role === "branch_staff").length;
 
   return (
@@ -33,11 +35,14 @@ export default async function ShopDashboardPage() {
       <div>
         <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
         <p className="mt-1 text-sm text-muted">
-          ครบ {shop?.stampThreshold} ดวง = {shop?.rewardText || "ของรางวัล"}
+          {stampTypes.length === 1
+            ? `ครบ ${stampTypes[0].threshold} ดวง = ${stampTypes[0].rewardText || "ของรางวัล"}`
+            : `${stampTypes.length} ประเภทแสตมป์`}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="ประเภทแสตมป์" value={stampTypes.length} />
         <Stat label="สาขา" value={branches.length} />
         <Stat label="พนักงาน" value={staffCount} />
         <Stat label="ลูกค้า" value={customers.length} />

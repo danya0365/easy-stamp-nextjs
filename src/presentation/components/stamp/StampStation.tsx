@@ -12,6 +12,7 @@ import {
   type StampActionState,
 } from "@/src/presentation/actions/stamp-actions";
 import { extractCustomerCode } from "@/src/presentation/lib/scan";
+import type { StampType } from "@/src/domain/entities";
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -23,21 +24,23 @@ import { QrScanModal } from "@/src/presentation/components/stamp/QrScanModal";
 
 type Action = (s: StampActionState, fd: FormData) => Promise<StampActionState>;
 
-export function StampStation() {
+export function StampStation({ stampTypes }: { stampTypes: StampType[] }) {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [typeId, setTypeId] = useState(stampTypes[0]?.id ?? "");
   const [result, setResult] = useState<StampActionState | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
   const [bindImg, setBindImg] = useState<string | null>(null);
   const [bindError, setBindError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function run(action: Action) {
+  function run(action: Action, opts?: { stampTypeId?: string }) {
     const fd = new FormData();
     fd.set("phone", phone);
     fd.set("quantity", quantity);
     fd.set("displayName", name);
+    fd.set("stampTypeId", opts?.stampTypeId ?? typeId);
     startTransition(async () => {
       const next = await action(result ?? {}, fd);
       setResult(next);
@@ -68,7 +71,7 @@ export function StampStation() {
   }
 
   const view = result?.view;
-  const eligible = view?.eligibleToRedeem ?? false;
+  const redeemable = view?.types.filter((t) => t.eligibleToRedeem) ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -113,6 +116,26 @@ export function StampStation() {
             เก็บเบอร์และชื่อเพื่อใช้ในระบบสะสมแต้มเท่านั้น
           </p>
 
+          {/* Stamp type picker (shown when the shop has more than one type) */}
+          {stampTypes.length > 1 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-foreground">
+                ประเภทแสตมป์
+              </label>
+              <select
+                value={typeId}
+                onChange={(e) => setTypeId(e.target.value)}
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+              >
+                {stampTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
             <div className="w-28">
               <label className="text-sm font-medium text-foreground">
@@ -128,7 +151,7 @@ export function StampStation() {
             </div>
             <Button
               onClick={() => run(addStampsAction)}
-              disabled={pending || !phone}
+              disabled={pending || !phone || !typeId}
             >
               {pending ? <Spinner /> : <Plus className="size-4" />} เพิ่มแสตมป์
             </Button>
@@ -152,17 +175,20 @@ export function StampStation() {
           <Card className="flex flex-col gap-4">
             <CardBalance view={view} />
             <div className="flex flex-col gap-2">
-              {eligible && (
+              {redeemable.map((p) => (
                 <Button
+                  key={p.type.id}
                   variant="accent"
                   fullWidth
-                  onClick={() => run(redeemRewardAction)}
+                  onClick={() =>
+                    run(redeemRewardAction, { stampTypeId: p.type.id })
+                  }
                   disabled={pending}
                 >
                   <Gift className="size-4" />
-                  แลกรางวัล (ใช้ {view.threshold} ดวง)
+                  แลกรางวัล: {p.type.name} (ใช้ {p.type.threshold} ดวง)
                 </Button>
-              )}
+              ))}
               <Button
                 variant="outline"
                 fullWidth

@@ -42,6 +42,8 @@ export async function lookupCardAction(
       container.shopRepository,
       container.customerRepository,
       container.stampCardRepository,
+      container.stampTypeRepository,
+      container.stampBalanceRepository,
     ).execute(shopId, phone);
     return { phone, view, searched: true };
   } catch (e) {
@@ -60,6 +62,8 @@ export async function lookupByCodeAction(
       container.shopRepository,
       container.customerRepository,
       container.stampCardRepository,
+      container.stampTypeRepository,
+      container.stampBalanceRepository,
     ).execute(shopId, code);
     if (!view) {
       return { error: "ไม่พบลูกค้าจาก QR นี้ (อาจเป็น QR ของร้านอื่น)", searched: true };
@@ -77,6 +81,7 @@ export async function addStampsAction(
 ): Promise<StampActionState> {
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const quantity = Number(formData.get("quantity") ?? 1);
+  const stampTypeId = String(formData.get("stampTypeId") ?? "");
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
   try {
     const { shopId, branchId, user } = await operatorContext();
@@ -85,11 +90,14 @@ export async function addStampsAction(
       container.shopRepository,
       container.customerRepository,
       container.stampCardRepository,
+      container.stampTypeRepository,
+      container.stampBalanceRepository,
       container.stampTransactionRepository,
     ).execute({
       shopId,
       branchId,
       phone,
+      stampTypeId,
       quantity,
       displayName,
       performedBy: user.id,
@@ -136,6 +144,7 @@ export async function redeemRewardAction(
   formData: FormData,
 ): Promise<StampActionState> {
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  const stampTypeId = String(formData.get("stampTypeId") ?? "");
   try {
     const { shopId, branchId, user } = await operatorContext();
     await assertShopActive(shopId);
@@ -143,9 +152,11 @@ export async function redeemRewardAction(
       container.shopRepository,
       container.customerRepository,
       container.stampCardRepository,
+      container.stampTypeRepository,
+      container.stampBalanceRepository,
       container.stampTransactionRepository,
       container.rewardRedemptionRepository,
-    ).execute({ shopId, branchId, phone, performedBy: user.id });
+    ).execute({ shopId, branchId, phone, stampTypeId, performedBy: user.id });
     revalidatePath("/staff");
     revalidatePath("/shop/customers");
     return { phone, view, searched: true, success: "แลกรางวัลสำเร็จ" };

@@ -7,6 +7,8 @@ export * from "./customers";
 export * from "./customer-devices";
 export * from "./bind-codes";
 export * from "./stamp-cards";
+export * from "./stamp-types";
+export * from "./stamp-balances";
 export * from "./stamp-transactions";
 export * from "./reward-redemptions";
 export * from "./subscriptions";

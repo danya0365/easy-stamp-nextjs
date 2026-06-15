@@ -5,6 +5,7 @@ export interface CreateRedemptionInput {
   branchId?: string | null;
   customerId: string;
   cardId: string;
+  stampTypeId?: string | null;
   rewardTextSnapshot: string;
   stampsSpent: number;
   performedBy: string;

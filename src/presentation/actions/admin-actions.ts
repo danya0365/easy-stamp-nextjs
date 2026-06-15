@@ -26,6 +26,7 @@ export async function createShopAction(
       container.subscriptionRepository,
       container.passwordHasher,
       container.shopCategoryRepository,
+      container.stampTypeRepository,
     ).execute({
       name: String(formData.get("name") ?? ""),
       slug: String(formData.get("slug") ?? ""),

@@ -1,8 +1,10 @@
 import type { CustomerCardView } from "@/src/domain/entities";
-import { buildCardView } from "@/src/domain/services/card-view";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { ICustomerDeviceRepository } from "@/src/application/repositories/ICustomerDeviceRepository";
 import type { IStampCardRepository } from "@/src/application/repositories/IStampCardRepository";
+import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
+import type { IStampBalanceRepository } from "@/src/application/repositories/IStampBalanceRepository";
+import { loadCardView } from "@/src/application/use-cases/stamp/loadCardView";
 
 export interface BoundCard {
   shopName: string;
@@ -16,6 +18,8 @@ export class GetBoundCardsUseCase {
     private readonly shops: IShopRepository,
     private readonly devices: ICustomerDeviceRepository,
     private readonly cards: IStampCardRepository,
+    private readonly stampTypes: IStampTypeRepository,
+    private readonly balances: IStampBalanceRepository,
   ) {}
 
   async execute(tokens: string[]): Promise<BoundCard[]> {
@@ -32,12 +36,16 @@ export class GetBoundCardsUseCase {
       if (!shop) continue;
       seenShops.add(customer.shopId);
 
-      const card = await this.cards.findOrCreate(shop.id, customer.id);
-      out.push({
-        shopName: shop.name,
-        slug: shop.slug,
-        view: buildCardView(shop, customer, card),
-      });
+      const view = await loadCardView(
+        {
+          stampTypes: this.stampTypes,
+          cards: this.cards,
+          balances: this.balances,
+        },
+        shop.id,
+        customer,
+      );
+      out.push({ shopName: shop.name, slug: shop.slug, view });
     }
 
     return out;

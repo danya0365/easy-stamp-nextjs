@@ -10,10 +10,23 @@ import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBran
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
 import { CreateStaffUseCase } from "@/src/application/use-cases/shop/CreateStaffUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
+import { CreateStampTypeUseCase } from "@/src/application/use-cases/stamp/CreateStampTypeUseCase";
+import { UpdateStampTypeUseCase } from "@/src/application/use-cases/stamp/UpdateStampTypeUseCase";
+import { SetStampTypeActiveUseCase } from "@/src/application/use-cases/stamp/SetStampTypeActiveUseCase";
+import { bahtToSatang } from "@/src/presentation/lib/money";
 
 export interface FormState {
   error?: string;
   success?: string;
+}
+
+/** Parse an optional baht price field → satang or null. */
+function parsePriceSatang(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const baht = Number(trimmed);
+  if (!Number.isFinite(baht) || baht < 0) throw new Error("ราคาไม่ถูกต้อง");
+  return bahtToSatang(baht);
 }
 
 async function ownerShopId(): Promise<string> {
@@ -38,6 +51,62 @@ export async function updateSettingsAction(
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+export async function createStampTypeAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const shopId = await ownerShopId();
+    await new CreateStampTypeUseCase(container.stampTypeRepository).execute({
+      shopId,
+      name: String(formData.get("name") ?? ""),
+      threshold: Number(formData.get("threshold") ?? 10),
+      rewardText: String(formData.get("rewardText") ?? ""),
+      priceSatang: parsePriceSatang(String(formData.get("priceBaht") ?? "")),
+    });
+    revalidatePath("/shop/settings");
+    return { success: "เพิ่มประเภทแสตมป์แล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function updateStampTypeAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const shopId = await ownerShopId();
+    await new UpdateStampTypeUseCase(container.stampTypeRepository).execute(
+      shopId,
+      String(formData.get("typeId") ?? ""),
+      {
+        name: String(formData.get("name") ?? ""),
+        threshold: Number(formData.get("threshold") ?? 10),
+        rewardText: String(formData.get("rewardText") ?? ""),
+        priceSatang: parsePriceSatang(String(formData.get("priceBaht") ?? "")),
+      },
+    );
+    revalidatePath("/shop/settings");
+    return { success: "บันทึกประเภทแสตมป์แล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function toggleStampTypeAction(
+  typeId: string,
+  isActive: boolean,
+): Promise<void> {
+  const shopId = await ownerShopId();
+  await new SetStampTypeActiveUseCase(container.stampTypeRepository).execute(
+    shopId,
+    typeId,
+    isActive,
+  );
+  revalidatePath("/shop/settings");
 }
 
 export async function createBranchAction(

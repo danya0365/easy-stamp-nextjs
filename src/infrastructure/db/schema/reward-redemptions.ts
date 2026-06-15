@@ -4,6 +4,7 @@ import { shops } from "./shops";
 import { branches } from "./branches";
 import { customers } from "./customers";
 import { stampCards } from "./stamp-cards";
+import { stampTypes } from "./stamp-types";
 import { users } from "./users";
 
 /** History of every reward redemption. */
@@ -21,7 +22,10 @@ export const rewardRedemptions = sqliteTable(
     cardId: text()
       .notNull()
       .references(() => stampCards.id, { onDelete: "cascade" }),
-    // Snapshot of shop.rewardText at redemption time (reward text can change).
+    // Which stamp type was redeemed. Nullable for migration safety (backfilled
+    // to each shop's default type); the app always sets it.
+    stampTypeId: text().references(() => stampTypes.id, { onDelete: "set null" }),
+    // Snapshot of the type's rewardText at redemption time (reward can change).
     rewardTextSnapshot: text().notNull(),
     // Stamps consumed — equals the shop threshold at redemption time.
     stampsSpent: integer().notNull(),

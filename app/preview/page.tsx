@@ -35,19 +35,28 @@ function mockView(currentStamps: number): CustomerCardView {
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     },
-    card: {
-      id: "card1",
-      shopId: "s1",
-      customerId: "c1",
-      currentStamps,
-      lifetimeStamps: currentStamps,
-      rewardsEarned: 0,
-      updatedAt: now.toISOString(),
-    },
-    threshold,
-    rewardText: "เลือกเครื่องดื่มในร้านฟรี 1 แก้ว",
-    eligibleToRedeem: currentStamps >= threshold,
-    remaining: Math.max(0, threshold - currentStamps),
+    types: [
+      {
+        type: {
+          id: "t1",
+          shopId: "s1",
+          name: "แสตมป์",
+          threshold,
+          rewardText: "เลือกเครื่องดื่มในร้านฟรี 1 แก้ว",
+          priceSatang: null,
+          isActive: true,
+          isDefault: true,
+          sortOrder: 0,
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        },
+        currentStamps,
+        lifetimeStamps: currentStamps,
+        rewardsEarned: 0,
+        eligibleToRedeem: currentStamps >= threshold,
+        remaining: Math.max(0, threshold - currentStamps),
+      },
+    ],
   };
 }
 

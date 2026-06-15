@@ -8,9 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function StaffHomePage() {
   const user = await requireRole("branch_staff");
-  const branch = user.branchId
-    ? await container.branchRepository.findById(user.branchId)
-    : null;
+  const [branch, stampTypes] = await Promise.all([
+    user.branchId
+      ? container.branchRepository.findById(user.branchId)
+      : Promise.resolve(null),
+    container.stampTypeRepository.listByShop(user.shopId!, { activeOnly: true }),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -20,7 +23,7 @@ export default async function StaffHomePage() {
           {branch ? `สาขา: ${branch.name}` : "พนักงานสาขา"}
         </p>
       </div>
-      <StampStation />
+      <StampStation stampTypes={stampTypes} />
 
       <Card className="max-w-lg">
         <CardHeader title="เปลี่ยนรหัสผ่าน" />
