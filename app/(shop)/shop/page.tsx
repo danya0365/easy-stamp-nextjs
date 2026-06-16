@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StatCard } from "@/src/presentation/components/ui/StatCard";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
+import { OnboardingSuggestions } from "@/src/presentation/components/shop/OnboardingSuggestions";
+import { FeatureGrid } from "@/src/presentation/components/shop/FeatureGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -42,25 +41,14 @@ export default async function ShopDashboardPage() {
         <StatCard label="แลกรางวัลแล้ว" value={redemptions.length} />
       </div>
 
-      <Card>
-        <p className="mb-2 font-medium text-foreground">ทางลัด</p>
-        <div className="flex flex-wrap gap-2 text-sm">
-          <Link
-            href="/shop/stamps"
-            className="inline-flex items-center gap-1 text-brand-700 hover:underline"
-          >
-            เพิ่ม/แลกแสตมป์
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href="/shop/settings"
-            className="inline-flex items-center gap-1 text-brand-700 hover:underline"
-          >
-            ตั้งค่าร้าน
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
-      </Card>
+      <OnboardingSuggestions
+        lineLinked={!!user.lineUserId}
+        customerCount={customers.length}
+        staffCount={staffCount}
+        stampTypes={stampTypes}
+      />
+
+      <FeatureGrid />
 
       <Card>
         <CardHeader
