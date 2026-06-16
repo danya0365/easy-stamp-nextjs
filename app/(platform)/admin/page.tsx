@@ -4,7 +4,7 @@ import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
-import { LineLinkCard } from "@/src/presentation/components/line/LineLinkCard";
+import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -48,10 +48,10 @@ export default async function AdminDashboardPage() {
 
       <Card className="max-w-lg">
         <CardHeader
-          title="แจ้งเตือนผ่าน LINE"
-          subtitle="เชื่อมต่อ LINE เพื่อรับแจ้งเตือนเมื่อมีการแจ้งชำระเงิน/คำขอติดต่อ"
+          title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
+          subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือน (แจ้งชำระเงิน/คำขอติดต่อ) และเข้าสู่ระบบด้วยรหัส OTP"
         />
-        <LineLinkCard
+        <ConnectionsSection
           linked={!!user.lineUserId}
           addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
         />

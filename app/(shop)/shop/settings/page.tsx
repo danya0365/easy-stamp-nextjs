@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -6,7 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
-import { LineLinkCard } from "@/src/presentation/components/line/LineLinkCard";
+import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +27,10 @@ export default async function ShopSettingsPage() {
         <StampTypesManager types={stampTypes} />
         <Link
           href="/shop/qr"
-          className="mt-4 inline-block text-sm text-brand-700 hover:underline"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-brand-700 hover:underline"
         >
-          → เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
+          <ArrowRight className="size-4" />
+          เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
         </Link>
       </Card>
 
@@ -39,10 +41,10 @@ export default async function ShopSettingsPage() {
 
       <Card className="mt-4">
         <CardHeader
-          title="แจ้งเตือนผ่าน LINE"
-          subtitle="เชื่อมต่อ LINE เพื่อรับแจ้งเตือนการอนุมัติ/ปฏิเสธการชำระเงิน"
+          title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
+          subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP"
         />
-        <LineLinkCard
+        <ConnectionsSection
           linked={!!user.lineUserId}
           addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
         />

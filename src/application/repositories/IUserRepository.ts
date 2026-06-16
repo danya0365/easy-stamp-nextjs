@@ -18,6 +18,8 @@ export interface IUserRepository {
   findByIdWithSecret(id: string): Promise<UserWithSecret | null>;
   listByShop(shopId: string): Promise<User[]>;
   listByRole(role: Role): Promise<User[]>;
+  /** All users, oldest first. Used by the dev-only login switcher. */
+  list(): Promise<User[]>;
   setActive(id: string, isActive: boolean): Promise<User>;
   updatePassword(id: string, passwordHash: string): Promise<User>;
   /** LINE account linking. */

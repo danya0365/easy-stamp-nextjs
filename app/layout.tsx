@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_Thai } from "next/font/google";
+import { Noto_Sans_Thai, Noto_Serif_Thai } from "next/font/google";
 import "@/public/styles/index.css";
 
 import {
@@ -9,6 +9,14 @@ import {
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
+  subsets: ["thai", "latin"],
+  display: "swap",
+});
+
+// Serif Thai display face — used for headings in the "retro" theme (magazine
+// vibe). Loaded once globally; other themes keep Noto Sans Thai for headings.
+const notoSerifThai = Noto_Serif_Thai({
+  variable: "--font-noto-serif-thai",
   subsets: ["thai", "latin"],
   display: "swap",
 });
@@ -61,7 +69,7 @@ export default function RootLayout({
     <html
       lang="th"
       data-theme="cafe"
-      className={`${notoSansThai.variable} h-full antialiased`}
+      className={`${notoSansThai.variable} ${notoSerifThai.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { getSession } from "@/src/infrastructure/auth/session";
+import { getSession, getKnownAccounts } from "@/src/infrastructure/auth/session";
+import { container } from "@/src/infrastructure/di/container";
+import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import { ROLE_HOME } from "@/src/domain/types/roles";
 import { LoginForm } from "@/src/presentation/components/auth/LoginForm";
+import { DevLoginPanel } from "@/src/presentation/components/auth/DevLoginPanel";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 
 export const metadata: Metadata = {
@@ -16,6 +19,18 @@ export default async function LoginPage() {
   const user = await getSession();
   if (user) redirect(ROLE_HOME[user.role]);
 
+  // Accounts previously used on this device — offered as one-tap picks.
+  const knownAccounts = await getKnownAccounts();
+
+  // DEV ONLY — fetch the user list for the quick-login switcher (local only).
+  const devUsers = isDevLoginEnabled
+    ? (await container.userRepository.list()).map((u) => ({
+        id: u.id,
+        email: u.email,
+        role: u.role,
+      }))
+    : [];
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-sm ring-1 ring-border">
@@ -23,7 +38,9 @@ export default async function LoginPage() {
           <h1 className="text-2xl font-bold text-foreground">Easy Stamp</h1>
           <p className="mt-1 text-sm text-muted">เข้าสู่ระบบผู้ดูแล</p>
         </div>
-        <LoginForm />
+        <LoginForm knownAccounts={knownAccounts} />
+
+        {isDevLoginEnabled && <DevLoginPanel users={devUsers} />}
 
         {/* Placeholder for future social login (Google / LINE) — not wired yet. */}
         <div className="mt-6">

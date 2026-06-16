@@ -1,4 +1,4 @@
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, sql } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { User, UserWithSecret } from "@/src/domain/entities";
 import type { Role } from "@/src/domain/types/roles";
@@ -65,6 +65,13 @@ export class DrizzleUserRepository implements IUserRepository {
   async listByRole(role: Role): Promise<User[]> {
     const rows = await db.query.users.findMany({
       where: eq(schema.users.role, role),
+    });
+    return rows.map(toUser);
+  }
+
+  async list(): Promise<User[]> {
+    const rows = await db.query.users.findMany({
+      orderBy: asc(schema.users.createdAt),
     });
     return rows.map(toUser);
   }

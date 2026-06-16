@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { Card } from "@/src/presentation/components/ui/Card";
 
@@ -76,9 +76,10 @@ export default function PrivacyPage() {
       <footer className="text-center">
         <Link
           href="/info"
-          className="text-sm font-medium text-brand-700 hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
         >
-          ← กลับไปหน้าเกี่ยวกับระบบ
+          <ArrowLeft className="size-4" />
+          กลับไปหน้าเกี่ยวกับระบบ
         </Link>
       </footer>
     </main>

@@ -8,7 +8,7 @@ import { GenerateLineLinkCodeUseCase } from "@/src/application/use-cases/line/Ge
 
 /** Operator requests a one-time code to link their LINE account. */
 export async function generateLineLinkCodeAction(): Promise<{ code: string }> {
-  const user = await requireRole("shop_owner", "platform_admin");
+  const user = await requireRole("shop_owner", "platform_admin", "branch_staff");
   const code = await new GenerateLineLinkCodeUseCase(
     container.userRepository,
   ).execute(user.id);
@@ -17,9 +17,10 @@ export async function generateLineLinkCodeAction(): Promise<{ code: string }> {
 
 /** Operator unlinks their LINE account (stops LINE push). */
 export async function unlinkLineAction(): Promise<void> {
-  const user = await requireRole("shop_owner", "platform_admin");
+  const user = await requireRole("shop_owner", "platform_admin", "branch_staff");
   await container.userRepository.setLineUserId(user.id, null);
   await container.userRepository.setLineLinkCode(user.id, null, null);
   revalidatePath("/shop/settings");
   revalidatePath("/admin");
+  revalidatePath("/staff/settings");
 }

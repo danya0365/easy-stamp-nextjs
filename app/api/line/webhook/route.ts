@@ -85,7 +85,7 @@ export async function POST(req: Request) {
             await reply(
               config.channelAccessToken,
               event.replyToken,
-              `เชื่อมต่อสำเร็จ ✅ (${linkedEmail})\nคุณจะได้รับการแจ้งเตือนผ่าน LINE นี้`,
+              `เชื่อมต่อสำเร็จ ✅ (${linkedEmail})\nจากนี้จะใช้ LINE นี้รับการแจ้งเตือนและรับรหัส OTP เข้าสู่ระบบ`,
             );
           }
         }
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         await reply(
           config.channelAccessToken,
           event.replyToken,
-          "ขอบคุณที่เพิ่มเพื่อน 🎉\nพิมพ์โค้ดเชื่อมต่อจากแอป Easy Stamp เพื่อรับการแจ้งเตือน",
+          "ขอบคุณที่เพิ่มเพื่อน 🎉\nพิมพ์โค้ดเชื่อมต่อจากแอป Easy Stamp เพื่อเชื่อมบัญชี (รับการแจ้งเตือน + เข้าสู่ระบบด้วย OTP)",
         );
       }
     } catch (e) {

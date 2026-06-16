@@ -4,10 +4,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { container } from "@/src/infrastructure/di/container";
+import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import {
   createSession,
   destroySession,
+  forgetAccount,
   getSession,
+  rememberAccount,
 } from "@/src/infrastructure/auth/session";
 import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
 import { ChangePasswordUseCase } from "@/src/application/use-cases/auth/ChangePasswordUseCase";
@@ -79,6 +82,7 @@ export async function verifyLoginOtpAction(
   }
   if (!user) return { error: "รหัส OTP ไม่ถูกต้องหรือหมดอายุ" };
 
+  await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   redirect(ROLE_HOME[user.role]);
 }
@@ -104,6 +108,7 @@ export async function loginAction(
     return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
   }
 
+  await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   // redirect throws — must run outside the validation path above.
   redirect(ROLE_HOME[user.role]);
@@ -114,9 +119,33 @@ export async function logoutAction(): Promise<void> {
   redirect("/login");
 }
 
+/** Remove a remembered account from this device's login switcher. */
+export async function forgetAccountAction(email: string): Promise<void> {
+  await forgetAccount(email);
+}
+
 export interface PasswordFormState {
   error?: string;
   success?: string;
+}
+
+/**
+ * DEV ONLY — log in as any user without a password, for fast local testing.
+ * Double-gated: this server action refuses to run unless `isDevLoginEnabled`
+ * (local dev, never on Vercel), so it can never create a session in
+ * preview/production even if called directly. Same flag gates the UI switcher.
+ */
+export async function devLoginAsAction(userId: string): Promise<void> {
+  if (!isDevLoginEnabled) {
+    throw new Error("Not available");
+  }
+  const user = await container.userRepository.findById(userId);
+  if (!user || !user.isActive) {
+    throw new Error("ผู้ใช้ไม่พร้อมใช้งาน");
+  }
+  await rememberAccount({ email: user.email, role: user.role });
+  await createSession(user.id);
+  redirect(ROLE_HOME[user.role]);
 }
 
 /** Any logged-in user changes their own password (verifies the current one). */
