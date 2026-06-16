@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, Wallet, Info, type LucideIcon } from "lucide-react";
+import { Map, Wallet, BookOpen, Info, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
@@ -21,6 +21,12 @@ const TABS: Tab[] = [
     label: "บัตรของฉัน",
     icon: Wallet,
     active: (p) => p === "/me" || p.startsWith("/me/"),
+  },
+  {
+    href: "/tutorial",
+    label: "วิธีใช้",
+    icon: BookOpen,
+    active: (p) => p.startsWith("/tutorial"),
   },
   {
     href: "/info",

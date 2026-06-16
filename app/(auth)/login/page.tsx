@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getSession, getKnownAccounts } from "@/src/infrastructure/auth/session";
@@ -75,6 +76,12 @@ export default async function LoginPage() {
 
         <div className="mt-6 border-t border-border pt-4 text-center">
           <PublicContactButton label="มีปัญหาในการเข้าสู่ระบบ? ติดต่อผู้ดูแล" />
+          <Link
+            href="/tutorial"
+            className="mt-3 block text-sm font-medium text-brand-700 hover:underline"
+          >
+            ดูวิธีใช้งาน
+          </Link>
         </div>
       </div>
       <AppVersion />
