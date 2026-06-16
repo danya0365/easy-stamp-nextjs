@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  CheckCircle2,
-  Mail,
-  MessageCircle,
-  Send,
-  ShieldCheck,
-  Smartphone,
-  type LucideIcon,
-} from "lucide-react";
+import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
 
 import {
   generateLineLinkCodeAction,
@@ -18,25 +10,10 @@ import {
 import { Button } from "@/src/presentation/components/ui/Button";
 import { ChannelRow } from "./ChannelRow";
 
-/** Channels not wired yet — shown as a "coming soon" teaser (UI only). */
-const COMING_SOON: { name: string; description: string; icon: LucideIcon }[] = [
-  { name: "Telegram", description: "รับการแจ้งเตือน + เข้าสู่ระบบด้วย OTP ผ่าน Telegram", icon: Send },
-  { name: "อีเมล (Email OTP)", description: "รับรหัส OTP เข้าสู่ระบบทางอีเมล", icon: Mail },
-  { name: "WhatsApp", description: "รับการแจ้งเตือน + OTP ผ่าน WhatsApp", icon: MessageCircle },
-  { name: "SMS", description: "รับรหัส OTP เข้าสู่ระบบทาง SMS", icon: Smartphone },
-];
-
-function SoonBadge() {
-  return (
-    <span className="rounded-full bg-muted-surface px-2 py-0.5 text-[11px] text-muted">
-      เร็วๆ นี้
-    </span>
-  );
-}
-
 /**
- * Connections & security section: the channels an operator can link to receive
- * notifications and sign in via OTP. LINE is live; the rest are teasers.
+ * Connections & security section: the channel an operator links to receive
+ * notifications and sign in via OTP. LINE only for now (structured so more
+ * channels can be added later).
  */
 export function ConnectionsSection({
   linked,
@@ -141,18 +118,6 @@ export function ConnectionsSection({
             )}
           </ChannelRow>
         </li>
-
-        {COMING_SOON.map((c) => (
-          <li key={c.name}>
-            <ChannelRow
-              icon={c.icon}
-              name={c.name}
-              description={c.description}
-              muted
-              trailing={<SoonBadge />}
-            />
-          </li>
-        ))}
       </ul>
     </div>
   );

@@ -57,6 +57,11 @@ const NAVS = {
     { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },
     { href: "/admin/contacts", label: "ติดต่อ", icon: MessageSquare },
   ],
+  staff: [
+    { href: "/staff", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },
+    { href: "/staff/notifications", label: "แจ้งเตือน", icon: Bell },
+    { href: "/staff/settings", label: "ตั้งค่า", icon: Settings },
+  ],
 } satisfies Record<string, NavItem[]>;
 
 /** Up to this many links render as plain tabs; beyond it, the overflow folds into "เพิ่มเติม". */

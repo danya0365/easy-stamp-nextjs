@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/src/presentation/components/ui/cn";
 
 /**
- * One connection-channel row (LINE, Telegram, …) inside the connections &
+ * One connection-channel row (e.g. LINE) inside the connections &
  * security section. Presentational: the icon + name + description + an optional
  * trailing slot (status/action) and optional `children` rendered full-width
  * below (e.g. the LINE link instructions).

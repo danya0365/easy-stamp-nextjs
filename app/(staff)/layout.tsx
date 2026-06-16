@@ -1,11 +1,12 @@
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
+import { container } from "@/src/infrastructure/di/container";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
+import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 
-// Staff has a single page, so no bottom tab bar — just the top header.
 export default async function StaffLayout({
   children,
 }: {
@@ -13,13 +14,18 @@ export default async function StaffLayout({
 }) {
   const user = await requireRole("branch_staff");
   const { status } = await getBillingState(user.shopId!);
+  const unread = await container.notificationRepository.countUnread(user.id);
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader brand="Easy Stamp · พนักงาน" userEmail={user.email} />
+      <AppHeader
+        brand="Easy Stamp · พนักงาน"
+        userEmail={user.email}
+        notifications={{ href: "/staff/notifications", unread }}
+      />
       <SuspensionBanner status={status} />
       <PreExpiryBanner status={status} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {status.isSuspended ? (
           <div className="rounded-2xl bg-error-surface p-6 text-center">
             <p className="text-lg font-semibold text-error">ร้านถูกระงับการใช้งาน</p>
@@ -32,6 +38,7 @@ export default async function StaffLayout({
         )}
         <AppVersion />
       </main>
+      <AppTabBar nav="staff" />
     </div>
   );
 }
