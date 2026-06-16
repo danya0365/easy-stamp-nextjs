@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [1.8.3] - 2026-06-16
+
+### Added
+- แสดงโลโก้แบรนด์ Easy Stamp ใน UI (เดิมมีแค่ favicon) — มาร์กโลโก้ที่แถบหัวทุกหน้า, โลโก้เต็ม (wordmark) บนหน้าเข้าสู่ระบบ และมาร์กบนหน้าแรก (แผนที่ร้าน)
+
 ## [1.8.2] - 2026-06-16
 
 ### Fixed
@@ -112,6 +117,7 @@
 - เพิ่ม loading skeleton ทุกหน้าให้รู้สึกลื่นขึ้นระหว่างโหลด
 
 [Unreleased]: https://github.com/
+[1.8.3]: https://github.com/
 [1.8.2]: https://github.com/
 [1.8.1]: https://github.com/
 [1.8.0]: https://github.com/

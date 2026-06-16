@@ -3,6 +3,7 @@ import { Bell, LogOut } from "lucide-react";
 
 import { logoutAction } from "@/src/presentation/actions/auth-actions";
 import { ThemeSwitcher } from "@/src/presentation/components/theme-switcher";
+import { Logo } from "@/src/presentation/components/layout/Logo";
 
 interface AppHeaderProps {
   /** App name, always shown (e.g. "Easy Stamp"). */
@@ -28,7 +29,8 @@ export function AppHeader({
   return (
     <header className="border-b border-border bg-card print:hidden">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-        <span className="flex min-w-0 items-baseline gap-1">
+        <span className="flex min-w-0 items-center gap-2">
+          <Logo className="size-8 shrink-0 rounded-lg" />
           <span className="shrink-0 whitespace-nowrap font-bold text-brand-700">
             {brand}
           </span>
