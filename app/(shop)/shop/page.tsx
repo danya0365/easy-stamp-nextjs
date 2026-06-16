@@ -5,6 +5,7 @@ import { StatCard } from "@/src/presentation/components/ui/StatCard";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OnboardingSuggestions } from "@/src/presentation/components/shop/OnboardingSuggestions";
 import { FeatureGrid } from "@/src/presentation/components/shop/FeatureGrid";
+import { FeatureCarousel } from "@/src/presentation/components/shop/FeatureCarousel";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,8 @@ export default async function ShopDashboardPage() {
             : `${stampTypes.length} ประเภทแสตมป์`}
         </p>
       </div>
+
+      <FeatureCarousel />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="ประเภทแสตมป์" value={stampTypes.length} />
