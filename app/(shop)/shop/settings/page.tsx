@@ -7,7 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
-import { LineLinkCard } from "@/src/presentation/components/line/LineLinkCard";
+import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -41,10 +41,10 @@ export default async function ShopSettingsPage() {
 
       <Card className="mt-4">
         <CardHeader
-          title="เชื่อมต่อบัญชี LINE"
-          subtitle="เชื่อมเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP ผ่าน LINE"
+          title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
+          subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP"
         />
-        <LineLinkCard
+        <ConnectionsSection
           linked={!!user.lineUserId}
           addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
         />
