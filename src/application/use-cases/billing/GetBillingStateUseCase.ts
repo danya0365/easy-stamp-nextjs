@@ -31,6 +31,7 @@ export class GetBillingStateUseCase {
             currentPeriodDueAt: subscription.currentPeriodDueAt,
             status: subscription.status,
             shopStatus: shop.status,
+            pausedAt: subscription.pausedAt,
           },
           now,
         )
@@ -39,6 +40,7 @@ export class GetBillingStateUseCase {
           daysOverdue: 0,
           daysUntilDue: 0,
           isSuspended: shop.status === "suspended_by_admin",
+          isPaused: false,
           bannerLevel: 0,
           preExpiryBannerLevel: 0,
           graceDaysLeft: 7,

@@ -6,6 +6,8 @@ import { container } from "@/src/infrastructure/di/container";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { VerifyPaymentUseCase } from "@/src/application/use-cases/billing/VerifyPaymentUseCase";
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
+import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopUseCase";
+import { ResumeShopUseCase } from "@/src/application/use-cases/billing/ResumeShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { bahtToSatang, satangToBaht } from "@/src/presentation/lib/money";
 import type { Page } from "@/src/application/repositories/pagination";
@@ -110,6 +112,23 @@ export async function setShopStatusAction(
 ): Promise<void> {
   await requireRole("platform_admin");
   await container.shopRepository.setStatus(shopId, status);
+  revalidatePath("/admin/shops");
+}
+
+/** Admin pauses a shop (freeze billing days). */
+export async function pauseShopAction(shopId: string): Promise<void> {
+  await requireRole("platform_admin");
+  await new PauseShopUseCase(
+    container.shopRepository,
+    container.subscriptionRepository,
+  ).execute(shopId);
+  revalidatePath("/admin/shops");
+}
+
+/** Admin resumes a paused shop. */
+export async function resumeShopAction(shopId: string): Promise<void> {
+  await requireRole("platform_admin");
+  await new ResumeShopUseCase(container.subscriptionRepository).execute(shopId);
   revalidatePath("/admin/shops");
 }
 

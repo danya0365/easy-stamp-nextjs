@@ -1,4 +1,4 @@
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Branch } from "@/src/domain/entities";
 import type {
@@ -87,10 +87,16 @@ export class DrizzleBranchRepository implements IBranchRepository {
       })
       .from(schema.branches)
       .innerJoin(schema.shops, eq(schema.branches.shopId, schema.shops.id))
+      // Hide temporarily-paused shops from the public map.
+      .leftJoin(
+        schema.subscriptions,
+        eq(schema.subscriptions.shopId, schema.shops.id),
+      )
       .where(
         and(
           eq(schema.branches.isActive, true),
           eq(schema.shops.status, "active"),
+          isNull(schema.subscriptions.pausedAt),
           isNotNull(schema.branches.latitude),
           isNotNull(schema.branches.longitude),
         ),

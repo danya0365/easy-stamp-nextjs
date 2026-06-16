@@ -161,6 +161,8 @@ export interface Subscription {
   currentPeriodStartAt: string;
   /** Expiry / paid-through date. */
   currentPeriodDueAt: string;
+  /** Set when the shop is temporarily paused (billing clock frozen); else null. */
+  pausedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
