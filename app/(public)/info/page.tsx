@@ -184,7 +184,7 @@ export default function InfoPage() {
             return (
               <li key={s.title}>
                 <Card className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-bold text-white shadow-sm">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-bold text-on-brand shadow-sm">
                     {i + 1}
                   </div>
                   <div className="flex flex-col gap-0.5">
@@ -205,7 +205,7 @@ export default function InfoPage() {
       <footer className="flex flex-col items-center gap-3 pb-4">
         <Link
           href="/login"
-          className="w-full max-w-xs rounded-full bg-brand-500 px-6 py-3 text-center font-medium text-white shadow-sm transition hover:bg-brand-600"
+          className="w-full max-w-xs rounded-full bg-brand-500 px-6 py-3 text-center font-medium text-on-brand shadow-sm transition hover:bg-brand-600"
         >
           เข้าสู่ระบบผู้ดูแล
         </Link>

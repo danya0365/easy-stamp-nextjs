@@ -16,7 +16,7 @@ import { PublicContactButton } from "./PublicContactButton";
 const inputCls =
   "rounded-lg border border-border px-3 py-2 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200";
 const btnCls =
-  "mt-2 rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:opacity-60";
+  "mt-2 rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-on-brand transition hover:bg-brand-700 disabled:opacity-60";
 const linkCls = "text-sm text-brand-700 hover:underline";
 
 type Step = "email" | "otp" | "password" | "unavailable";

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-06-16
+
+### Fixed
+- แก้ dark mode อ่านยาก/สีเพี้ยนทุกธีม (minimal, retro, cafe) — เดิม dark override สีแบรนด์ไม่ครบ ทำให้ตัวอักษร (ลิงก์/ปุ่ม), ขอบปุ่ม และกล่องสถานะว่าง (EmptyState) แสดงผลผิด; เพิ่มสีแบรนด์ครบทุกเฉดใน dark + แยกสีตัวอักษรบนปุ่ม (`--on-brand`) ให้คอนทราสต์อ่านออกทุกธีม
+
 ## [1.4.0] - 2026-06-16
 
 ### Added
@@ -70,6 +75,7 @@
 - เพิ่ม loading skeleton ทุกหน้าให้รู้สึกลื่นขึ้นระหว่างโหลด
 
 [Unreleased]: https://github.com/
+[1.4.1]: https://github.com/
 [1.4.0]: https://github.com/
 [1.3.0]: https://github.com/
 [1.2.1]: https://github.com/

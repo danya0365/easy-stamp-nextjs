@@ -35,7 +35,7 @@ export function ThemeSwitcher() {
             className={cn(
               "inline-flex items-center rounded-full px-2.5 py-1 text-sm transition",
               template === t.value
-                ? "bg-brand-500 text-white"
+                ? "bg-brand-500 text-on-brand"
                 : "text-muted hover:text-foreground",
             )}
           >
