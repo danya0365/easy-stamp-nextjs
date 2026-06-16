@@ -15,6 +15,7 @@ import {
   Wallet,
   Coffee,
   Ticket,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -139,6 +140,13 @@ export default function InfoPage() {
           <StampDots current={7} threshold={10} size="md" />
           <p className="mt-2 text-xs text-muted">สะสม 7/10 · อีก 3 ดวงครบรางวัล</p>
         </div>
+        <Link
+          href="/tutorial"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium text-brand-700 transition hover:bg-muted-surface"
+        >
+          <BookOpen className="size-4" />
+          ดูคู่มือการใช้งานแบบละเอียด
+        </Link>
       </header>
 
       {/* Section A — for shops */}

@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { BookOpen } from "lucide-react";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -62,7 +65,16 @@ export default async function ShopDashboardPage() {
           title="ต้องการความช่วยเหลือ?"
           subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ติดต่อผู้ดูแลได้เลย"
         />
-        <ContactAdminButton />
+        <div className="flex flex-wrap items-center gap-3">
+          <ContactAdminButton />
+          <Link
+            href="/tutorial"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+          >
+            <BookOpen className="size-4" />
+            วิธีใช้งาน
+          </Link>
+        </div>
       </Card>
     </div>
   );
