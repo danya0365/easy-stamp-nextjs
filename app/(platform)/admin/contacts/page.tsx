@@ -25,7 +25,7 @@ export default async function AdminContactsPage() {
   }));
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader title="คำขอติดต่อ" />
         {rows.length === 0 ? (

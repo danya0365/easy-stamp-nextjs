@@ -12,7 +12,7 @@ export default async function StaffNotificationsPage() {
   const page = await container.notificationRepository.pageByUser(user.id);
 
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <MarkAllReadOnView />
       <Card>
         <CardHeader title="การแจ้งเตือน" />

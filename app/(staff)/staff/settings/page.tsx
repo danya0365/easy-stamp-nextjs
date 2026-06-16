@@ -9,9 +9,10 @@ export default async function StaffSettingsPage() {
   const user = await requireRole("branch_staff");
 
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <h1 className="text-xl font-bold text-foreground">ตั้งค่า</h1>
 
+      <div className="grid items-start gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader
           title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
@@ -27,6 +28,7 @@ export default async function StaffSettingsPage() {
         <CardHeader title="เปลี่ยนรหัสผ่าน" />
         <ChangePasswordForm />
       </Card>
+      </div>
     </div>
   );
 }

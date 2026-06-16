@@ -26,7 +26,7 @@ export default async function ShopCustomersPage({
   const rows = await buildCustomerRows(shopId, page.items);
 
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader title="ค้นหาลูกค้า" />
         <PhoneLookupForm

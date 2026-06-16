@@ -16,7 +16,7 @@ export default async function ShopQrPage() {
   const qrImageUrl = await renderQrDataUrl(url);
 
   return (
-    <div className="max-w-lg">
+    <div>
       <Card>
         <CardHeader
           title="ป้าย QR ร้าน"

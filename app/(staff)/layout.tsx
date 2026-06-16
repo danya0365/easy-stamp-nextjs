@@ -19,13 +19,14 @@ export default async function StaffLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader
-        brand="Easy Stamp · พนักงาน"
+        brand="Easy Stamp"
+        role="พนักงาน"
         userEmail={user.email}
         notifications={{ href: "/staff/notifications", unread }}
       />
       <SuspensionBanner status={status} />
       <PreExpiryBanner status={status} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {status.isPaused ? (
           <div className="rounded-2xl bg-amber-50 p-6 text-center">
             <p className="text-lg font-semibold text-amber-800">ร้านปิดชั่วคราว</p>

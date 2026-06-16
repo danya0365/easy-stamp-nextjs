@@ -4,7 +4,7 @@ import { FormCardSkeleton } from "@/src/presentation/components/ui/skeletons";
 
 export default function Loading() {
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <FormCardSkeleton fields={1} />
       <Card className="flex flex-col gap-3">
         <Skeleton className="h-6 w-40" />

@@ -29,7 +29,8 @@ export default async function ShopLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader
-        brand="Easy Stamp · ร้านค้า"
+        brand="Easy Stamp"
+        role="ร้านค้า"
         userEmail={user.email}
         notifications={{ href: "/shop/notifications", unread }}
       />

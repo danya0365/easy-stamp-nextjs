@@ -38,7 +38,7 @@ export default async function ShopAnalyticsPage({
   const hasActivity = summary.stampsIssued > 0 || summary.redemptions > 0;
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-bold text-foreground">สถิติร้าน</h1>
         {/* Range selector — plain links re-render the server page */}

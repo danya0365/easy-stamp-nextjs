@@ -9,6 +9,7 @@ import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePas
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
+import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -22,53 +23,73 @@ export default async function ShopSettingsPage() {
   ]);
 
   return (
-    <div className="max-w-lg">
-      <Card>
-        <CardHeader
-          title="ประเภทแสตมป์"
-          subtitle={`กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง · ลิงก์ลูกค้า: /s/${shop.slug}`}
-        />
-        <StampTypesManager types={stampTypes} />
-        <Link
-          href="/shop/qr"
-          className="mt-4 inline-flex items-center gap-1 text-sm text-brand-700 hover:underline"
-        >
-          <ArrowRight className="size-4" />
-          เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
-        </Link>
-      </Card>
+    <SettingsTabs
+      tabs={[
+        {
+          id: "shop",
+          label: "แสตมป์ & ร้านค้า",
+          icon: "stamp",
+          content: (
+            <>
+              <Card>
+                <CardHeader
+                  title="ประเภทแสตมป์"
+                  subtitle={`กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง · ลิงก์ลูกค้า: /s/${shop.slug}`}
+                />
+                <StampTypesManager types={stampTypes} />
+                <Link
+                  href="/shop/qr"
+                  className="mt-4 inline-flex items-center gap-1 text-sm text-brand-700 hover:underline"
+                >
+                  <ArrowRight className="size-4" />
+                  เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
+                </Link>
+              </Card>
 
-      <Card className="mt-4">
-        <CardHeader title="เปลี่ยนรหัสผ่าน" />
-        <ChangePasswordForm />
-      </Card>
+              <Card>
+                <CardHeader
+                  title="ปิดร้านชั่วคราว"
+                  subtitle="หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ"
+                />
+                <PauseShopControl paused={!!subscription?.pausedAt} />
+              </Card>
+            </>
+          ),
+        },
+        {
+          id: "security",
+          label: "บัญชี & ความปลอดภัย",
+          icon: "shield",
+          content: (
+            <>
+              <Card>
+                <CardHeader title="เปลี่ยนรหัสผ่าน" />
+                <ChangePasswordForm />
+              </Card>
 
-      <Card className="mt-4">
-        <CardHeader
-          title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
-          subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP"
-        />
-        <ConnectionsSection
-          linked={!!user.lineUserId}
-          addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
-        />
-      </Card>
-
-      <Card className="mt-4">
-        <CardHeader
-          title="ปิดร้านชั่วคราว"
-          subtitle="หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ"
-        />
-        <PauseShopControl paused={!!subscription?.pausedAt} />
-      </Card>
-
-      <Card className="mt-4">
-        <CardHeader
-          title="ติดต่อผู้ดูแลระบบ"
-          subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแลได้ที่นี่"
-        />
-        <ContactAdminButton />
-      </Card>
-    </div>
+              <Card>
+                <CardHeader
+                  title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
+                  subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP"
+                />
+                <ConnectionsSection
+                  linked={!!user.lineUserId}
+                  addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
+                />
+              </Card>
+            </>
+          ),
+        },
+      ]}
+      footer={
+        <Card>
+          <CardHeader
+            title="ติดต่อผู้ดูแลระบบ"
+            subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแลได้ที่นี่"
+          />
+          <ContactAdminButton />
+        </Card>
+      }
+    />
   );
 }

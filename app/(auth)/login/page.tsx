@@ -9,6 +9,7 @@ import { LoginForm } from "@/src/presentation/components/auth/LoginForm";
 import { DevLoginPanel } from "@/src/presentation/components/auth/DevLoginPanel";
 import { PublicContactButton } from "@/src/presentation/components/auth/PublicContactButton";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
+import { Logo } from "@/src/presentation/components/layout/Logo";
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | Easy Stamp",
@@ -38,8 +39,10 @@ export default async function LoginPage() {
     <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-sm ring-1 ring-border">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Easy Stamp</h1>
-          <p className="mt-1 text-sm text-muted">เข้าสู่ระบบผู้ดูแล</p>
+          <span className="mx-auto mb-3 inline-flex rounded-xl bg-white p-3 shadow-sm ring-1 ring-border">
+            <Logo variant="wordmark" className="h-10 w-auto" />
+          </span>
+          <p className="text-sm text-muted">เข้าสู่ระบบผู้ดูแล</p>
         </div>
         <LoginForm knownAccounts={knownAccounts} />
 
