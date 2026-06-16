@@ -41,8 +41,8 @@ export default async function ShopSettingsPage() {
 
       <Card className="mt-4">
         <CardHeader
-          title="แจ้งเตือนผ่าน LINE"
-          subtitle="เชื่อมต่อ LINE เพื่อรับแจ้งเตือนการอนุมัติ/ปฏิเสธการชำระเงิน"
+          title="เชื่อมต่อบัญชี LINE"
+          subtitle="เชื่อมเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP ผ่าน LINE"
         />
         <LineLinkCard
           linked={!!user.lineUserId}
