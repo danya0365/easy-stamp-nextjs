@@ -18,6 +18,7 @@ function toSub(r: Row): Subscription {
     amountSatang: r.amountSatang,
     currentPeriodStartAt: r.currentPeriodStartAt,
     currentPeriodDueAt: r.currentPeriodDueAt,
+    pausedAt: r.pausedAt,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -75,6 +76,24 @@ export class DrizzleSubscriptionRepository implements ISubscriptionRepository {
     const [r] = await db
       .update(schema.subscriptions)
       .set({ status })
+      .where(eq(schema.subscriptions.id, id))
+      .returning();
+    return toSub(r);
+  }
+
+  async pause(id: string, pausedAt: string): Promise<Subscription> {
+    const [r] = await db
+      .update(schema.subscriptions)
+      .set({ pausedAt })
+      .where(eq(schema.subscriptions.id, id))
+      .returning();
+    return toSub(r);
+  }
+
+  async resume(id: string, currentPeriodDueAt: string): Promise<Subscription> {
+    const [r] = await db
+      .update(schema.subscriptions)
+      .set({ currentPeriodDueAt, pausedAt: null })
       .where(eq(schema.subscriptions.id, id))
       .returning();
     return toSub(r);

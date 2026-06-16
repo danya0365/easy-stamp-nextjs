@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Camera, Smartphone, TriangleAlert } from "lucide-react";
+import { Camera, PauseCircle, Smartphone, TriangleAlert } from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
@@ -45,6 +45,10 @@ export default async function PublicShopCheckPage({
   const shop = await container.shopRepository.findBySlug(slug);
   if (!shop) notFound();
 
+  // Temporarily-closed shops: show a notice but keep the card viewable.
+  const subscription = await container.subscriptionRepository.findByShop(shop.id);
+  const isPaused = !!subscription?.pausedAt;
+
   // Card view comes ONLY from a bound device (secret token cookie).
   const token = await getMemberToken(slug);
   const view = token
@@ -76,6 +80,12 @@ export default async function PublicShopCheckPage({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
+      {isPaused && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-800">
+          <PauseCircle className="mr-1 inline size-4 align-text-bottom" />
+          ร้านนี้ปิดให้บริการชั่วคราว — ดูแต้มสะสมได้ แต่ยังสะสม/แลกไม่ได้จนกว่าจะเปิดอีกครั้ง
+        </p>
+      )}
       {view ? (
         <>
           <Card>

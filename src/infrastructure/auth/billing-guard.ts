@@ -13,9 +13,12 @@ export function getBillingState(shopId: string): Promise<BillingState> {
   ).execute(shopId);
 }
 
-/** Throw if the shop is suspended (overdue > grace or admin-suspended). */
+/** Throw if the shop can't operate (suspended/overdue-past-grace, or paused). */
 export async function assertShopActive(shopId: string): Promise<void> {
   const { status } = await getBillingState(shopId);
+  if (status.isPaused) {
+    throw new Error("ร้านปิดชั่วคราวอยู่ กรุณาเปิดร้านอีกครั้งก่อนใช้งาน");
+  }
   if (status.isSuspended) {
     throw new Error("ร้านถูกระงับเนื่องจากค้างชำระ กรุณาชำระเงินก่อนใช้งาน");
   }

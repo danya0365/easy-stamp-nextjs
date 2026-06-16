@@ -33,6 +33,10 @@ export const subscriptions = sqliteTable("subscriptions", {
   currentPeriodStartAt: text().notNull(),
   // The expiry date that dunning/suspension is computed from.
   currentPeriodDueAt: text().notNull(),
+  // When set, the shop is temporarily paused (closed): the billing clock is
+  // frozen — no day is consumed. On resume, currentPeriodDueAt is pushed forward
+  // by the paused duration. Null = running normally.
+  pausedAt: text(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

@@ -9,6 +9,8 @@ import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/Upda
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
 import { CreateStaffUseCase } from "@/src/application/use-cases/shop/CreateStaffUseCase";
+import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopUseCase";
+import { ResumeShopUseCase } from "@/src/application/use-cases/billing/ResumeShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { CreateStampTypeUseCase } from "@/src/application/use-cases/stamp/CreateStampTypeUseCase";
 import { UpdateStampTypeUseCase } from "@/src/application/use-cases/stamp/UpdateStampTypeUseCase";
@@ -23,6 +25,27 @@ import {
 export interface FormState {
   error?: string;
   success?: string;
+}
+
+/** Owner temporarily closes their shop (freezes billing days). */
+export async function pauseMyShopAction(): Promise<void> {
+  const user = await requireRole("shop_owner");
+  await new PauseShopUseCase(
+    container.shopRepository,
+    container.subscriptionRepository,
+  ).execute(user.shopId!);
+  revalidatePath("/shop");
+  revalidatePath("/shop/settings");
+}
+
+/** Owner reopens their shop (resumes billing; remaining days unchanged). */
+export async function resumeMyShopAction(): Promise<void> {
+  const user = await requireRole("shop_owner");
+  await new ResumeShopUseCase(container.subscriptionRepository).execute(
+    user.shopId!,
+  );
+  revalidatePath("/shop");
+  revalidatePath("/shop/settings");
 }
 
 /** Next page of the shop's customer list (optionally filtered by search). */

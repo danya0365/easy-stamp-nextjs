@@ -9,6 +9,7 @@ import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
+import { PausedBanner } from "@/src/presentation/components/billing/PausedBanner";
 
 export default async function ShopLayout({
   children,
@@ -34,6 +35,7 @@ export default async function ShopLayout({
       />
       <SuspensionBanner status={status} />
       <PreExpiryBanner status={status} />
+      <PausedBanner status={status} resumable />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         {children}
         <AppVersion />

@@ -9,6 +9,7 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopForm";
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
+import { PauseShopToggle } from "@/src/presentation/components/admin/PauseShopToggle";
 import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
@@ -80,12 +81,20 @@ export default async function AdminShopsPage() {
                   <div className="flex items-start gap-2">
                     {adminSuspended ? (
                       <Badge tone="danger">ระงับโดยแอดมิน</Badge>
+                    ) : status.isPaused ? (
+                      <Badge tone="warning">ปิดชั่วคราว</Badge>
                     ) : status.isSuspended ? (
                       <Badge tone="danger">ค้างชำระ (ระงับ)</Badge>
                     ) : status.state === "overdue" ? (
                       <Badge tone="warning">ค้าง {status.daysOverdue} วัน</Badge>
                     ) : (
                       <Badge tone="success">ปกติ</Badge>
+                    )}
+                    {!adminSuspended && (
+                      <PauseShopToggle
+                        shopId={shop.id}
+                        paused={status.isPaused}
+                      />
                     )}
                     <ShopStatusToggle
                       shopId={shop.id}

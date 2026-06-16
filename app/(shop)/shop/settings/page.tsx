@@ -8,6 +8,7 @@ import { StampTypesManager } from "@/src/presentation/components/shop/StampTypes
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
+import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,10 @@ export default async function ShopSettingsPage() {
   const user = await requireRole("shop_owner");
   const shop = await container.shopRepository.findById(user.shopId!);
   if (!shop) return null;
-  const stampTypes = await container.stampTypeRepository.listByShop(shop.id);
+  const [stampTypes, subscription] = await Promise.all([
+    container.stampTypeRepository.listByShop(shop.id),
+    container.subscriptionRepository.findByShop(shop.id),
+  ]);
 
   return (
     <div className="max-w-lg">
@@ -48,6 +52,14 @@ export default async function ShopSettingsPage() {
           linked={!!user.lineUserId}
           addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
         />
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader
+          title="ปิดร้านชั่วคราว"
+          subtitle="หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ"
+        />
+        <PauseShopControl paused={!!subscription?.pausedAt} />
       </Card>
 
       <Card className="mt-4">

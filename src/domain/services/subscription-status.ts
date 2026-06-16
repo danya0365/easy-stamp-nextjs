@@ -1,6 +1,6 @@
 import type { ShopStatus, SubscriptionStatus } from "../entities";
 
-export type BillingState = "active" | "overdue" | "suspended";
+export type BillingState = "active" | "overdue" | "suspended" | "paused";
 
 export interface BillingStatus {
   state: BillingState;
@@ -10,6 +10,8 @@ export interface BillingStatus {
   daysUntilDue: number;
   /** True when access should be blocked (overdue > grace, or admin-suspended). */
   isSuspended: boolean;
+  /** True when the shop is temporarily paused (closed; billing frozen). */
+  isPaused: boolean;
   /** 0 = no banner; 1–7 = escalating dunning banner (after expiry). */
   bannerLevel: number;
   /** 0 = none; 1–7 = escalating "expiring soon" nudge (before expiry). */
@@ -35,6 +37,22 @@ export interface BillingInput {
   status?: SubscriptionStatus;
   /** Manual platform suspension overrides everything. */
   shopStatus?: ShopStatus;
+  /** When set, the shop is paused: billing is frozen at this instant. */
+  pausedAt?: string | null;
+}
+
+/**
+ * New due date after resuming from a pause: push the original due date forward
+ * by however long the shop was paused, so no paid day is consumed.
+ */
+export function resumeDueDate(
+  dueISO: string,
+  pausedAtISO: string,
+  now: Date,
+): string {
+  const pausedMs = now.getTime() - new Date(pausedAtISO).getTime();
+  const span = pausedMs > 0 ? pausedMs : 0;
+  return new Date(new Date(dueISO).getTime() + span).toISOString();
 }
 
 /**
@@ -48,10 +66,29 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       daysOverdue: 0,
       daysUntilDue: 0,
       isSuspended: true,
+      isPaused: false,
       bannerLevel: 0,
       preExpiryBannerLevel: 0,
       graceDaysLeft: 0,
       suspendReason: "admin",
+    };
+  }
+
+  // Paused: clock frozen at pausedAt — no day consumed, no dunning/suspension.
+  if (input.pausedAt) {
+    const dueMs = new Date(input.currentPeriodDueAt).getTime();
+    const pausedMs = new Date(input.pausedAt).getTime();
+    const daysUntilDue = Math.max(0, Math.ceil((dueMs - pausedMs) / DAY_MS));
+    return {
+      state: "paused",
+      daysOverdue: 0,
+      daysUntilDue,
+      isSuspended: false,
+      isPaused: true,
+      bannerLevel: 0,
+      preExpiryBannerLevel: 0,
+      graceDaysLeft: GRACE_DAYS,
+      suspendReason: "none",
     };
   }
 
@@ -72,6 +109,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       daysOverdue: 0,
       daysUntilDue,
       isSuspended: false,
+      isPaused: false,
       bannerLevel: 0,
       preExpiryBannerLevel,
       graceDaysLeft: GRACE_DAYS,
@@ -85,6 +123,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       daysOverdue,
       daysUntilDue: 0,
       isSuspended: true,
+      isPaused: false,
       bannerLevel: GRACE_DAYS,
       preExpiryBannerLevel: 0,
       graceDaysLeft: 0,
@@ -97,6 +136,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
     daysOverdue,
     daysUntilDue: 0,
     isSuspended: false,
+    isPaused: false,
     bannerLevel: daysOverdue,
     preExpiryBannerLevel: 0,
     graceDaysLeft: GRACE_DAYS - daysOverdue,

@@ -71,6 +71,13 @@
       "when": 1781589613013,
       "tag": "0009_fine_sersi",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1781597197743,
+      "tag": "0010_hesitant_skin",
+      "breakpoints": true
     }
   ]
 }
