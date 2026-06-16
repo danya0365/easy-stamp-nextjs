@@ -119,6 +119,24 @@ export interface PasswordFormState {
   success?: string;
 }
 
+/**
+ * DEV ONLY — log in as any user without a password, for fast local testing.
+ * Double-gated: this server action refuses to run unless NODE_ENV is
+ * "development", so it can never create a session in preview/production even if
+ * called directly. Mirrors the same guard used to render the dev switcher.
+ */
+export async function devLoginAsAction(userId: string): Promise<void> {
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("Not available");
+  }
+  const user = await container.userRepository.findById(userId);
+  if (!user || !user.isActive) {
+    throw new Error("ผู้ใช้ไม่พร้อมใช้งาน");
+  }
+  await createSession(user.id);
+  redirect(ROLE_HOME[user.role]);
+}
+
 /** Any logged-in user changes their own password (verifies the current one). */
 export async function changeMyPasswordAction(
   _prev: PasswordFormState,
