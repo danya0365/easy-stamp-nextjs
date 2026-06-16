@@ -23,7 +23,7 @@ export default async function ShopBillingPage() {
   const customers = await container.customerRepository.listByShop(shopId);
 
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       {/* Loss-aversion lock notice */}
       {status.isSuspended && (
         <Card className="bg-error-surface ring-1 ring-red-200">

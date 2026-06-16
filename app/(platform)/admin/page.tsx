@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
-      <Card className="max-w-3xl">
+      <Card>
         <CardHeader
           title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
           subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือน (แจ้งชำระเงิน/คำขอติดต่อ) และเข้าสู่ระบบด้วยรหัส OTP"
@@ -57,7 +57,7 @@ export default async function AdminDashboardPage() {
         />
       </Card>
 
-      <Card className="max-w-3xl">
+      <Card>
         <CardHeader title="เปลี่ยนรหัสผ่าน" />
         <ChangePasswordForm />
       </Card>

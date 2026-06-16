@@ -15,7 +15,7 @@ export default async function ShopBranchesPage() {
   const branches = await container.branchRepository.listByShop(user.shopId!);
 
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader title="เพิ่มสาขา" />
         <AddBranchForm />
