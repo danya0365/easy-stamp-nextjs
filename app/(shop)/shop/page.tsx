@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -44,11 +45,19 @@ export default async function ShopDashboardPage() {
       <Card>
         <p className="mb-2 font-medium text-foreground">ทางลัด</p>
         <div className="flex flex-wrap gap-2 text-sm">
-          <Link href="/shop/stamps" className="text-brand-700 hover:underline">
-            เพิ่ม/แลกแสตมป์ →
+          <Link
+            href="/shop/stamps"
+            className="inline-flex items-center gap-1 text-brand-700 hover:underline"
+          >
+            เพิ่ม/แลกแสตมป์
+            <ArrowRight className="size-4" />
           </Link>
-          <Link href="/shop/settings" className="text-brand-700 hover:underline">
-            ตั้งค่าร้าน →
+          <Link
+            href="/shop/settings"
+            className="inline-flex items-center gap-1 text-brand-700 hover:underline"
+          >
+            ตั้งค่าร้าน
+            <ArrowRight className="size-4" />
           </Link>
         </div>
       </Card>

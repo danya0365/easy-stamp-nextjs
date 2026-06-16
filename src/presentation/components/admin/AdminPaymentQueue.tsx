@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import type { Payment } from "@/src/domain/entities";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
@@ -25,16 +26,21 @@ function Row({ payment: p, shopName }: PendingPaymentRow) {
         <p className="text-xs text-brand-700">
           เติม {p.daysToAdd} วัน
           {p.bonusDays > 0 ? ` + โบนัส ${p.bonusDays} วัน` : ""}
-          {p.coversPeriodDueAt
-            ? ` → ใช้ได้ถึง ${formatDateTime(p.coversPeriodDueAt)}`
-            : ""}
+          {p.coversPeriodDueAt && (
+            <>
+              {" "}
+              <ArrowRight className="inline size-3 align-text-bottom" /> ใช้ได้ถึง{" "}
+              {formatDateTime(p.coversPeriodDueAt)}
+            </>
+          )}
         </p>
         <Link
           href={`/api/slips/${p.id}`}
           target="_blank"
-          className="text-xs text-brand-600 hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-brand-600 hover:underline"
         >
-          ดูสลิป →
+          ดูสลิป
+          <ArrowRight className="size-3.5" />
         </Link>
       </div>
       <PaymentReview paymentId={p.id} />

@@ -7,7 +7,7 @@ import Map, {
   NavigationControl,
   GeolocateControl,
 } from "react-map-gl/maplibre";
-import { MapPin } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
@@ -78,9 +78,10 @@ export default function StoreMapView({
             )}
             <a
               href={`/s/${active.shopSlug}`}
-              className="mt-1 text-xs font-medium text-brand-600 hover:underline"
+              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
             >
-              ดูบัตรสะสมแสตมป์ →
+              ดูบัตรสะสมแสตมป์
+              <ArrowRight className="size-3.5" />
             </a>
           </div>
         </Popup>

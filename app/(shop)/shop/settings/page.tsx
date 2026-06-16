@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -26,9 +27,10 @@ export default async function ShopSettingsPage() {
         <StampTypesManager types={stampTypes} />
         <Link
           href="/shop/qr"
-          className="mt-4 inline-block text-sm text-brand-700 hover:underline"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-brand-700 hover:underline"
         >
-          → เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
+          <ArrowRight className="size-4" />
+          เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
         </Link>
       </Card>
 
