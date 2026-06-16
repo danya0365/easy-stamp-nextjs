@@ -49,8 +49,18 @@
 
 [data-theme="cafe"].dark,
 .dark[data-theme="cafe"] {
+  /* Full ramp: 50–300 = warm dark surfaces/borders (e.g. EmptyState bg/border),
+     700–900 = light peach text. Keeps on-brand=white (inherited) so the orange
+     primary button is unchanged. */
+  --brand-50: #3a322c;
+  --brand-100: #44382f;
+  --brand-200: #5a4a3a;
+  --brand-300: #6e5a44;
   --brand-500: #fb923c;
   --brand-600: #f97316;
+  --brand-700: #fdba74;
+  --brand-800: #fed7aa;
+  --brand-900: #ffedd5;
 
   --background: #1c1917;
   --foreground: #fafaf9;
