@@ -12,3 +12,10 @@ export const ROLE_HOME: Record<Role, string> = {
   shop_owner: "/shop",
   branch_staff: "/staff",
 };
+
+/** Thai display label per role (for UI: account pickers, badges). */
+export const ROLE_LABEL: Record<Role, string> = {
+  platform_admin: "ผู้ดูแลระบบ",
+  shop_owner: "เจ้าของร้าน",
+  branch_staff: "พนักงานสาขา",
+};

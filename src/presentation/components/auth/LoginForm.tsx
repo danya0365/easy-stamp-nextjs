@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { ArrowLeft, X } from "lucide-react";
 
 import {
   loginAction,
   requestLoginOtpAction,
   verifyLoginOtpAction,
+  forgetAccountAction,
 } from "@/src/presentation/actions/auth-actions";
+import { ROLE_LABEL } from "@/src/domain/types/roles";
+import type { KnownAccount } from "@/src/domain/entities";
 
 const inputCls =
   "rounded-lg border border-border px-3 py-2 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200";
@@ -16,12 +20,21 @@ const linkCls = "text-sm text-brand-700 hover:underline";
 
 type Step = "email" | "otp" | "password";
 
-export function LoginForm() {
+export function LoginForm({
+  knownAccounts = [],
+}: {
+  knownAccounts?: KnownAccount[];
+}) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [resendIn, setResendIn] = useState(0);
+  // Device-remembered accounts (FB-style). Local copy so "forget" updates instantly.
+  const [accounts, setAccounts] = useState<KnownAccount[]>(knownAccounts);
+  // When there are remembered accounts, show the picker first; this flips to the
+  // plain email input ("use another email").
+  const [manual, setManual] = useState(false);
 
   // Resend cooldown countdown.
   useEffect(() => {
@@ -30,10 +43,13 @@ export function LoginForm() {
     return () => clearInterval(t);
   }, [resendIn]);
 
-  function requestOtp(isResend: boolean) {
+  // Email step: ask the server whether this email gets a LINE OTP or the
+  // password fallback. Shared by typing an email and picking a known account.
+  function submitEmail(targetEmail: string) {
+    setEmail(targetEmail);
     setError(null);
     const fd = new FormData();
-    fd.set("email", email);
+    fd.set("email", targetEmail);
     startTransition(async () => {
       const res = await requestLoginOtpAction({}, fd);
       if (res.next === "otp") {
@@ -45,13 +61,23 @@ export function LoginForm() {
       } else if (res.error) {
         setError(res.error);
       }
-      void isResend;
+    });
+  }
+
+  function forget(targetEmail: string) {
+    startTransition(async () => {
+      await forgetAccountAction(targetEmail);
+    });
+    setAccounts((prev) => {
+      const next = prev.filter((a) => a.email !== targetEmail);
+      if (next.length === 0) setManual(true);
+      return next;
     });
   }
 
   function onSubmitEmail(e: React.FormEvent) {
     e.preventDefault();
-    requestOtp(false);
+    submitEmail(email);
   }
 
   function onSubmitOtp(e: React.FormEvent<HTMLFormElement>) {
@@ -86,6 +112,61 @@ export function LoginForm() {
 
   // --- Step 1: email ---
   if (step === "email") {
+    // 1a. Account picker — accounts used before on this device.
+    if (accounts.length > 0 && !manual) {
+      return (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-muted">เลือกบัญชีเพื่อเข้าสู่ระบบ</p>
+          <ul className="flex flex-col gap-2">
+            {accounts.map((acc) => (
+              <li key={acc.email} className="relative">
+                <button
+                  type="button"
+                  onClick={() => submitEmail(acc.email)}
+                  disabled={pending}
+                  className="flex w-full items-center gap-3 rounded-xl bg-card py-2.5 pl-3 pr-10 text-left ring-1 ring-border transition hover:ring-brand-300 disabled:opacity-60"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                    {acc.email.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {acc.email}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {ROLE_LABEL[acc.role]}
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => forget(acc.email)}
+                  disabled={pending}
+                  aria-label={`ลบ ${acc.email} ออกจากเครื่องนี้`}
+                  title="ลบบัญชีนี้ออกจากเครื่อง"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted transition hover:bg-muted-surface hover:text-foreground disabled:opacity-60"
+                >
+                  <X className="size-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setEmail("");
+              setManual(true);
+            }}
+            className={`${linkCls} text-left`}
+          >
+            เข้าด้วยอีเมลอื่น
+          </button>
+        </div>
+      );
+    }
+
+    // 1b. Manual email entry.
     return (
       <form onSubmit={onSubmitEmail} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-1">
@@ -97,6 +178,7 @@ export function LoginForm() {
             type="email"
             autoComplete="email"
             required
+            autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={inputCls}
@@ -106,6 +188,19 @@ export function LoginForm() {
         <button type="submit" disabled={pending} className={btnCls}>
           {pending ? "กำลังดำเนินการ…" : "ดำเนินการต่อ"}
         </button>
+        {knownAccounts.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setManual(false);
+            }}
+            className={`${linkCls} inline-flex items-center gap-1 text-left`}
+          >
+            <ArrowLeft className="size-4" />
+            เลือกจากบัญชีที่เคยใช้
+          </button>
+        )}
       </form>
     );
   }
@@ -141,7 +236,7 @@ export function LoginForm() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <button
             type="button"
-            onClick={() => requestOtp(true)}
+            onClick={() => submitEmail(email)}
             disabled={pending || resendIn > 0}
             className={`${linkCls} disabled:text-muted disabled:no-underline`}
           >
@@ -158,8 +253,13 @@ export function LoginForm() {
             ใช้รหัสผ่านแทน
           </button>
         </div>
-        <button type="button" onClick={backToEmail} className={`${linkCls} text-left`}>
-          ← เปลี่ยนอีเมล
+        <button
+          type="button"
+          onClick={backToEmail}
+          className={`${linkCls} inline-flex items-center gap-1 text-left`}
+        >
+          <ArrowLeft className="size-4" />
+          เปลี่ยนอีเมล
         </button>
       </form>
     );
@@ -193,8 +293,13 @@ export function LoginForm() {
       <button type="submit" disabled={pending} className={btnCls}>
         {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
       </button>
-      <button type="button" onClick={backToEmail} className={`${linkCls} text-left`}>
-        ← กลับ
+      <button
+        type="button"
+        onClick={backToEmail}
+        className={`${linkCls} inline-flex items-center gap-1 text-left`}
+      >
+        <ArrowLeft className="size-4" />
+        กลับ
       </button>
     </form>
   );

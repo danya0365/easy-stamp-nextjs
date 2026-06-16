@@ -307,6 +307,15 @@ export interface DailyBucket {
   value: number;
 }
 
+/**
+ * An account previously used to sign in on this device (FB-style account
+ * switcher). Stored device-side; never includes credentials or a session.
+ */
+export interface KnownAccount {
+  email: string;
+  role: Role;
+}
+
 // --- Platform analytics (cross-shop read models) ---
 
 export interface PlatformAnalyticsSummary {

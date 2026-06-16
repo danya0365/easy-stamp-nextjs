@@ -4,12 +4,21 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { container } from "@/src/infrastructure/di/container";
-import type { User } from "@/src/domain/entities";
+import { isProd } from "@/src/infrastructure/config/env";
+import type { KnownAccount, User } from "@/src/domain/entities";
 import type { Role } from "@/src/domain/types/roles";
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "es_session";
 const SESSION_TTL_DAYS = 7;
 const SESSION_TTL_MS = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
+
+// FB-style "accounts used on this device" — remembered emails (+role) so the
+// login page can offer one-tap account selection. Holds NO credentials/session;
+// httpOnly so the list isn't readable by client JS. Picking one still requires
+// full OTP/password auth.
+const ACCOUNTS_COOKIE = "es_accounts";
+const ACCOUNTS_MAX = 5;
+const ACCOUNTS_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 /**
  * Read and validate the current session. Returns the authenticated user, or
@@ -77,6 +86,67 @@ export async function destroySession(): Promise<void> {
     await container.sessionRepository.delete(token);
     store.delete(COOKIE_NAME);
   }
+}
+
+function parseAccounts(raw: string | undefined): KnownAccount[] {
+  if (!raw) return [];
+  try {
+    const v: unknown = JSON.parse(raw);
+    if (!Array.isArray(v)) return [];
+    return v
+      .filter(
+        (a): a is KnownAccount =>
+          !!a &&
+          typeof (a as KnownAccount).email === "string" &&
+          typeof (a as KnownAccount).role === "string",
+      )
+      .slice(0, ACCOUNTS_MAX);
+  } catch {
+    return [];
+  }
+}
+
+function writeAccounts(
+  store: Awaited<ReturnType<typeof cookies>>,
+  accounts: KnownAccount[],
+): void {
+  if (accounts.length === 0) {
+    store.delete(ACCOUNTS_COOKIE);
+    return;
+  }
+  store.set(ACCOUNTS_COOKIE, JSON.stringify(accounts), {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(Date.now() + ACCOUNTS_TTL_MS),
+  });
+}
+
+/** Accounts previously used to sign in on this device, most-recent first. */
+export async function getKnownAccounts(): Promise<KnownAccount[]> {
+  const store = await cookies();
+  return parseAccounts(store.get(ACCOUNTS_COOKIE)?.value);
+}
+
+/** Record a successful sign-in so it can be offered next time (most-recent first). */
+export async function rememberAccount(account: KnownAccount): Promise<void> {
+  const store = await cookies();
+  const existing = parseAccounts(store.get(ACCOUNTS_COOKIE)?.value);
+  const next = [
+    account,
+    ...existing.filter((a) => a.email !== account.email),
+  ].slice(0, ACCOUNTS_MAX);
+  writeAccounts(store, next);
+}
+
+/** Remove one remembered account from this device. */
+export async function forgetAccount(email: string): Promise<void> {
+  const store = await cookies();
+  const next = parseAccounts(store.get(ACCOUNTS_COOKIE)?.value).filter(
+    (a) => a.email !== email,
+  );
+  writeAccounts(store, next);
 }
 
 export { COOKIE_NAME };

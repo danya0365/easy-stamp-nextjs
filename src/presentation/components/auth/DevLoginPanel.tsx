@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Wrench } from "lucide-react";
 
 import type { Role } from "@/src/domain/types/roles";
+import { ROLE_LABEL } from "@/src/domain/types/roles";
 import { devLoginAsAction } from "@/src/presentation/actions/auth-actions";
 
 export interface DevUser {
@@ -11,12 +12,6 @@ export interface DevUser {
   email: string;
   role: Role;
 }
-
-const ROLE_LABEL: Record<Role, string> = {
-  platform_admin: "ผู้ดูแลระบบ",
-  shop_owner: "เจ้าของร้าน",
-  branch_staff: "พนักงานสาขา",
-};
 
 /**
  * DEV ONLY switcher — one-click login as any seeded user (no password). Rendered

@@ -8,7 +8,9 @@ import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import {
   createSession,
   destroySession,
+  forgetAccount,
   getSession,
+  rememberAccount,
 } from "@/src/infrastructure/auth/session";
 import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
 import { ChangePasswordUseCase } from "@/src/application/use-cases/auth/ChangePasswordUseCase";
@@ -80,6 +82,7 @@ export async function verifyLoginOtpAction(
   }
   if (!user) return { error: "รหัส OTP ไม่ถูกต้องหรือหมดอายุ" };
 
+  await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   redirect(ROLE_HOME[user.role]);
 }
@@ -105,6 +108,7 @@ export async function loginAction(
     return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
   }
 
+  await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   // redirect throws — must run outside the validation path above.
   redirect(ROLE_HOME[user.role]);
@@ -113,6 +117,11 @@ export async function loginAction(
 export async function logoutAction(): Promise<void> {
   await destroySession();
   redirect("/login");
+}
+
+/** Remove a remembered account from this device's login switcher. */
+export async function forgetAccountAction(email: string): Promise<void> {
+  await forgetAccount(email);
 }
 
 export interface PasswordFormState {
@@ -134,6 +143,7 @@ export async function devLoginAsAction(userId: string): Promise<void> {
   if (!user || !user.isActive) {
     throw new Error("ผู้ใช้ไม่พร้อมใช้งาน");
   }
+  await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
   redirect(ROLE_HOME[user.role]);
 }
