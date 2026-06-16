@@ -21,7 +21,7 @@ export default async function AdminContactsPage() {
   // Open requests (all) first, then the first page of resolved ones.
   const rows: ContactRow[] = [...open, ...resolvedPage.items].map((r) => ({
     request: r,
-    shopName: shopName.get(r.shopId) ?? "-",
+    shopName: (r.shopId ? shopName.get(r.shopId) : null) ?? "-",
   }));
 
   return (

@@ -7,10 +7,13 @@ import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import { ROLE_HOME } from "@/src/domain/types/roles";
 import { LoginForm } from "@/src/presentation/components/auth/LoginForm";
 import { DevLoginPanel } from "@/src/presentation/components/auth/DevLoginPanel";
+import { PublicContactButton } from "@/src/presentation/components/auth/PublicContactButton";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | Easy Stamp",
+  // Auth page — keep it out of search indexes.
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";
@@ -65,6 +68,10 @@ export default async function LoginPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mt-6 border-t border-border pt-4 text-center">
+          <PublicContactButton label="มีปัญหาในการเข้าสู่ระบบ? ติดต่อผู้ดูแล" />
         </div>
       </div>
       <AppVersion />

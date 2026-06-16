@@ -1,15 +1,92 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { container } from "@/src/infrastructure/di/container";
 import { requireRole } from "@/src/infrastructure/auth/session";
+import { getClientIp } from "@/src/presentation/lib/request-ip";
 import type { Page } from "@/src/application/repositories/pagination";
 import type { ContactRow } from "@/src/presentation/components/admin/ContactInbox";
 
 export interface ContactFormState {
   error?: string;
   success?: string;
+}
+
+// Public (login-page) contact form: no session, so it's heavily abuse-guarded.
+const PUBLIC_CONTACT_LIMIT = 3;
+const PUBLIC_CONTACT_WINDOW_MS = 24 * 60 * 60_000; // 3 ครั้ง/วัน ต่อ IP
+
+const publicContactSchema = z.object({
+  email: z.string().email("อีเมลไม่ถูกต้อง"),
+  subject: z.string().trim().min(1, "กรุณากรอกหัวข้อ").max(120),
+  message: z.string().trim().min(1, "กรุณากรอกข้อความ").max(1000),
+  contactChannel: z.string().trim().min(1, "กรุณากรอกช่องทางติดต่อกลับ").max(200),
+});
+
+/**
+ * PUBLIC contact form on the login page — for users locked out of sign-in.
+ * Unauthenticated, so: honeypot + CAPTCHA (Turnstile) + per-IP rate-limit.
+ */
+export async function contactAdminPublicAction(
+  _prev: ContactFormState,
+  formData: FormData,
+): Promise<ContactFormState> {
+  try {
+    // Honeypot: real users never fill this hidden field.
+    if (String(formData.get("company") ?? "").trim() !== "") {
+      return { success: "ส่งคำขอติดต่อแล้ว ผู้ดูแลจะติดต่อกลับโดยเร็ว" };
+    }
+
+    const parsed = publicContactSchema.safeParse({
+      email: formData.get("email"),
+      subject: formData.get("subject"),
+      message: formData.get("message"),
+      contactChannel: formData.get("contactChannel"),
+    });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+    }
+
+    const ip = await getClientIp();
+
+    // CAPTCHA (no-op pass when Turnstile isn't configured, e.g. local dev).
+    const captchaOk = await container.turnstile.verify(
+      String(formData.get("captchaToken") ?? ""),
+      ip,
+    );
+    if (!captchaOk) return { error: "ยืนยันว่าไม่ใช่บอทไม่สำเร็จ กรุณาลองใหม่" };
+
+    const rl = await container.rateLimitRepository.hit(
+      `contact:ip:${ip}`,
+      PUBLIC_CONTACT_LIMIT,
+      PUBLIC_CONTACT_WINDOW_MS,
+    );
+    if (!rl.allowed) {
+      return { error: "ส่งคำขอบ่อยเกินไป กรุณาลองใหม่ภายหลัง" };
+    }
+
+    await container.contactRequestRepository.create({
+      source: "public",
+      email: parsed.data.email.trim().toLowerCase(),
+      ipAddress: ip,
+      subject: parsed.data.subject,
+      message: parsed.data.message,
+      contactChannel: parsed.data.contactChannel,
+    });
+
+    await container.notificationService.notifyAdmins({
+      type: "contact_request",
+      title: "ติดต่อผู้ดูแลจากหน้าเข้าสู่ระบบ",
+      body: `${parsed.data.subject} — อีเมล: ${parsed.data.email} · ติดต่อกลับ: ${parsed.data.contactChannel}`,
+      linkUrl: "/admin/contacts",
+    });
+
+    return { success: "ส่งคำขอติดต่อแล้ว ผู้ดูแลจะติดต่อกลับโดยเร็วที่สุด" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /** Next page of resolved contact requests (admin inbox "load more"). */
@@ -23,7 +100,7 @@ export async function loadMoreResolvedContactsAction(
   return {
     items: page.items.map((request) => ({
       request,
-      shopName: shopName.get(request.shopId) ?? "-",
+      shopName: (request.shopId ? shopName.get(request.shopId) : null) ?? "-",
     })),
     nextCursor: page.nextCursor,
   };
@@ -98,7 +175,8 @@ export async function resolveContactAction(id: string): Promise<void> {
   const resolved = await container.contactRequestRepository.resolve(id, admin.id);
 
   // Close the loop: notify the owner who raised it (in-app + LINE).
-  if (resolved) {
+  // Public (login-page) requests have no account to notify — skip.
+  if (resolved && resolved.createdBy) {
     await container.notificationService.notify(resolved.createdBy, {
       type: "contact_resolved",
       title: "ผู้ดูแลรับเรื่องของคุณแล้ว",

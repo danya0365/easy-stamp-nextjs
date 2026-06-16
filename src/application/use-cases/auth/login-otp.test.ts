@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { RequestLoginOtpUseCase } from "./RequestLoginOtpUseCase";
 import { VerifyLoginOtpUseCase } from "./VerifyLoginOtpUseCase";
 import { MAX_OTP_ATTEMPTS, OTP_TTL_MS } from "./login-otp";
+import type { Role } from "@/src/domain/types/roles";
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
@@ -29,6 +30,7 @@ type Seed = {
   email: string;
   isActive: boolean;
   lineUserId: string | null;
+  role?: Role;
 };
 
 function makeRepo(seed: Seed) {
@@ -39,7 +41,7 @@ function makeRepo(seed: Seed) {
       return {
         id: seed.id,
         email: seed.email,
-        role: "shop_owner",
+        role: seed.role ?? "shop_owner",
         shopId: "s1",
         branchId: null,
         isActive: seed.isActive,
@@ -53,6 +55,7 @@ function makeRepo(seed: Seed) {
       return id === seed.id ? { ...otp } : null;
     },
     async setLoginOtp(id: string, hash: string, expiresAt: string) {
+      void id;
       otp.hash = hash;
       otp.expiresAt = expiresAt;
       otp.attempts = 0;
@@ -82,11 +85,12 @@ function makePusher() {
 
 const linked: Seed = { id: "u1", email: "owner@x.test", isActive: true, lineUserId: "U_line" };
 
-test("request: linked active user -> otp_sent, hash stored, pushed to LINE", async () => {
+test("request: linked active user -> otp_sent (owner = passwordAllowed false), pushed to LINE", async () => {
   const { repo, otp } = makeRepo(linked);
   const { pusher, pushes } = makePusher();
-  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email);
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, true);
   assert.equal(res.status, "otp_sent");
+  if (res.status === "otp_sent") assert.equal(res.passwordAllowed, false);
   assert.ok(otp.hash?.startsWith("h:"));
   assert.equal(pushes.length, 1);
   assert.equal(pushes[0].to, "U_line");
@@ -94,10 +98,34 @@ test("request: linked active user -> otp_sent, hash stored, pushed to LINE", asy
   assert.match(pushes[0].text, new RegExp(code));
 });
 
+test("request: linked admin -> otp_sent with passwordAllowed true (break-glass)", async () => {
+  const { repo } = makeRepo({ ...linked, role: "platform_admin" });
+  const { pusher } = makePusher();
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, true);
+  assert.equal(res.status, "otp_sent");
+  if (res.status === "otp_sent") assert.equal(res.passwordAllowed, true);
+});
+
+test("request: linked owner but LINE not configured -> otp_unavailable", async () => {
+  const { repo, otp } = makeRepo(linked);
+  const { pusher, pushes } = makePusher();
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, false);
+  assert.equal(res.status, "otp_unavailable");
+  assert.equal(otp.hash, null);
+  assert.equal(pushes.length, 0);
+});
+
+test("request: linked admin + LINE not configured -> use_password (admin fallback)", async () => {
+  const { repo } = makeRepo({ ...linked, role: "platform_admin" });
+  const { pusher } = makePusher();
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, false);
+  assert.equal(res.status, "use_password");
+});
+
 test("request: no linked LINE -> use_password, nothing stored/pushed", async () => {
   const { repo, otp } = makeRepo({ ...linked, lineUserId: null });
   const { pusher, pushes } = makePusher();
-  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email);
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, true);
   assert.equal(res.status, "use_password");
   assert.equal(otp.hash, null);
   assert.equal(pushes.length, 0);
@@ -106,14 +134,14 @@ test("request: no linked LINE -> use_password, nothing stored/pushed", async () 
 test("request: inactive user -> use_password", async () => {
   const { repo } = makeRepo({ ...linked, isActive: false });
   const { pusher } = makePusher();
-  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email);
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, true);
   assert.equal(res.status, "use_password");
 });
 
 test("request: unknown email -> use_password", async () => {
   const { repo } = makeRepo(linked);
   const { pusher } = makePusher();
-  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute("nope@x.test");
+  const res = await new RequestLoginOtpUseCase(repo, hasher, pusher).execute("nope@x.test", true);
   assert.equal(res.status, "use_password");
 });
 
@@ -122,8 +150,8 @@ test("request: second request within cooldown -> cooldown with retryInSec", asyn
   const { pusher } = makePusher();
   const uc = new RequestLoginOtpUseCase(repo, hasher, pusher);
   const t0 = 1_000_000_000_000;
-  assert.equal((await uc.execute(linked.email, t0)).status, "otp_sent");
-  const again = await uc.execute(linked.email, t0 + 5_000);
+  assert.equal((await uc.execute(linked.email, true, t0)).status, "otp_sent");
+  const again = await uc.execute(linked.email, true, t0 + 5_000);
   assert.equal(again.status, "cooldown");
   if (again.status === "cooldown") assert.ok(again.retryInSec > 0 && again.retryInSec <= 60);
 });
@@ -133,15 +161,15 @@ test("request: after cooldown elapses -> otp_sent again", async () => {
   const { pusher } = makePusher();
   const uc = new RequestLoginOtpUseCase(repo, hasher, pusher);
   const t0 = 1_000_000_000_000;
-  await uc.execute(linked.email, t0);
-  const later = await uc.execute(linked.email, t0 + 61_000);
+  await uc.execute(linked.email, true, t0);
+  const later = await uc.execute(linked.email, true, t0 + 61_000);
   assert.equal(later.status, "otp_sent");
 });
 
 test("verify: correct code -> returns user (no passwordHash), OTP cleared", async () => {
   const { repo, otp } = makeRepo(linked);
   const { pusher } = makePusher();
-  await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email);
+  await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, true);
   const code = otp.hash!.slice(2);
   const user = await new VerifyLoginOtpUseCase(repo, hasher).execute(linked.email, code);
   assert.ok(user);
@@ -153,7 +181,7 @@ test("verify: correct code -> returns user (no passwordHash), OTP cleared", asyn
 test("verify: wrong code -> null and bumps attempts", async () => {
   const { repo, otp } = makeRepo(linked);
   const { pusher } = makePusher();
-  await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email);
+  await new RequestLoginOtpUseCase(repo, hasher, pusher).execute(linked.email, true);
   const user = await new VerifyLoginOtpUseCase(repo, hasher).execute(linked.email, "000000");
   assert.equal(user, null);
   assert.equal(otp.attempts, 1);

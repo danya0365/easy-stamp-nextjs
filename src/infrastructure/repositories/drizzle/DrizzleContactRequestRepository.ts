@@ -16,6 +16,9 @@ function toContactRequest(r: Row): ContactRequest {
     id: r.id,
     shopId: r.shopId,
     createdBy: r.createdBy,
+    email: r.email,
+    source: r.source,
+    ipAddress: r.ipAddress,
     subject: r.subject,
     message: r.message,
     contactChannel: r.contactChannel,
@@ -33,8 +36,11 @@ export class DrizzleContactRequestRepository
     const [r] = await db
       .insert(schema.contactRequests)
       .values({
-        shopId: input.shopId,
-        createdBy: input.createdBy,
+        shopId: input.shopId ?? null,
+        createdBy: input.createdBy ?? null,
+        email: input.email ?? null,
+        source: input.source ?? "operator",
+        ipAddress: input.ipAddress ?? null,
         subject: input.subject,
         message: input.message,
         contactChannel: input.contactChannel,
