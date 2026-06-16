@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { container } from "@/src/infrastructure/di/container";
+import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import {
   createSession,
   destroySession,
@@ -121,12 +122,12 @@ export interface PasswordFormState {
 
 /**
  * DEV ONLY — log in as any user without a password, for fast local testing.
- * Double-gated: this server action refuses to run unless NODE_ENV is
- * "development", so it can never create a session in preview/production even if
- * called directly. Mirrors the same guard used to render the dev switcher.
+ * Double-gated: this server action refuses to run unless `isDevLoginEnabled`
+ * (local dev, never on Vercel), so it can never create a session in
+ * preview/production even if called directly. Same flag gates the UI switcher.
  */
 export async function devLoginAsAction(userId: string): Promise<void> {
-  if (process.env.NODE_ENV !== "development") {
+  if (!isDevLoginEnabled) {
     throw new Error("Not available");
   }
   const user = await container.userRepository.findById(userId);

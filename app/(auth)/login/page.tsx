@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getSession } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
+import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
 import { ROLE_HOME } from "@/src/domain/types/roles";
 import { LoginForm } from "@/src/presentation/components/auth/LoginForm";
 import { DevLoginPanel } from "@/src/presentation/components/auth/DevLoginPanel";
@@ -19,8 +20,7 @@ export default async function LoginPage() {
   if (user) redirect(ROLE_HOME[user.role]);
 
   // DEV ONLY — fetch the user list for the quick-login switcher (local only).
-  const isDev = process.env.NODE_ENV === "development";
-  const devUsers = isDev
+  const devUsers = isDevLoginEnabled
     ? (await container.userRepository.list()).map((u) => ({
         id: u.id,
         email: u.email,
@@ -37,7 +37,7 @@ export default async function LoginPage() {
         </div>
         <LoginForm />
 
-        {isDev && <DevLoginPanel users={devUsers} />}
+        {isDevLoginEnabled && <DevLoginPanel users={devUsers} />}
 
         {/* Placeholder for future social login (Google / LINE) — not wired yet. */}
         <div className="mt-6">

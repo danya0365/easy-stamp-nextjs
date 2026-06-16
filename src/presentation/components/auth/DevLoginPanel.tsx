@@ -20,8 +20,8 @@ const ROLE_LABEL: Record<Role, string> = {
 
 /**
  * DEV ONLY switcher — one-click login as any seeded user (no password). Rendered
- * only when NODE_ENV==="development" (see login page); the underlying action is
- * independently gated server-side too.
+ * only when `isDevLoginEnabled` (see login page); the underlying action is
+ * independently gated server-side with the same flag.
  */
 export function DevLoginPanel({ users }: { users: DevUser[] }) {
   const [pending, startTransition] = useTransition();
