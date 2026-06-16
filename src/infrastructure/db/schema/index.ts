@@ -16,3 +16,4 @@ export * from "./payments";
 export * from "./topup-transactions";
 export * from "./notifications";
 export * from "./contact-requests";
+export * from "./rate-limits";

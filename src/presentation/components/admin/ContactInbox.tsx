@@ -20,9 +20,17 @@ export function ContactRequestRow({ request: r, shopName }: ContactRow) {
     <li className="flex flex-col gap-2 py-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-medium text-foreground">{r.subject}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium text-foreground">{r.subject}</p>
+            {r.source === "public" && (
+              <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] text-accent-600">
+                จากหน้าเข้าสู่ระบบ
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted">
-            {shopName} · {formatDateTime(r.createdAt)}
+            {r.source === "public" ? (r.email ?? "ผู้ใช้ทั่วไป") : shopName} ·{" "}
+            {formatDateTime(r.createdAt)}
           </p>
         </div>
         {r.status === "open" ? (

@@ -13,6 +13,9 @@ export class LoginUseCase {
     const normalizedEmail = email.trim().toLowerCase();
     const record = await this.users.findByEmailWithSecret(normalizedEmail);
     if (!record || !record.isActive) return null;
+    // OTP-only enforcement: owner/staff who linked LINE must sign in via OTP.
+    // platform_admin keeps password as a break-glass fallback.
+    if (record.lineUserId && record.role !== "platform_admin") return null;
     const ok = await this.hasher.compare(password, record.passwordHash);
     if (!ok) return null;
     const { passwordHash: _omit, ...user } = record;

@@ -2,8 +2,13 @@ import type { ContactRequest, ContactRequestStatus } from "@/src/domain/entities
 import type { Page, PageOpts } from "./pagination";
 
 export interface CreateContactRequestInput {
-  shopId: string;
-  createdBy: string;
+  /** Set for operator (logged-in) requests; omit for public ones. */
+  shopId?: string | null;
+  createdBy?: string | null;
+  /** Set for public (login-page) requests. */
+  email?: string | null;
+  source?: "operator" | "public";
+  ipAddress?: string | null;
   subject: string;
   message: string;
   contactChannel: string;

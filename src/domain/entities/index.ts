@@ -233,10 +233,17 @@ export interface Notification {
   createdAt: string;
 }
 
+export type ContactRequestSource = "operator" | "public";
+
 export interface ContactRequest {
   id: string;
-  shopId: string;
-  createdBy: string;
+  /** Null for public (login-page) requests. */
+  shopId: string | null;
+  createdBy: string | null;
+  /** Email the reporter typed (public requests) — helps admin find the account. */
+  email: string | null;
+  source: ContactRequestSource;
+  ipAddress: string | null;
   subject: string;
   message: string;
   contactChannel: string;

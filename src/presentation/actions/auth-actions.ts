@@ -17,6 +17,9 @@ import { ChangePasswordUseCase } from "@/src/application/use-cases/auth/ChangePa
 import { RequestLoginOtpUseCase } from "@/src/application/use-cases/auth/RequestLoginOtpUseCase";
 import { VerifyLoginOtpUseCase } from "@/src/application/use-cases/auth/VerifyLoginOtpUseCase";
 import { lineConfigFromEnv } from "@/src/infrastructure/services/LineMessagingPusher";
+import { getClientIp } from "@/src/presentation/lib/request-ip";
+import { formatDateTime } from "@/src/presentation/lib/format-date";
+import type { User } from "@/src/domain/entities";
 import { ROLE_HOME } from "@/src/domain/types/roles";
 
 const loginSchema = z.object({
@@ -24,14 +27,37 @@ const loginSchema = z.object({
   password: z.string().min(1, "กรุณากรอกรหัสผ่าน"),
 });
 
+// IP-based throttles (per fixed window). Generous enough for real users, but
+// stop OTP-bombing / password stuffing. Per-account OTP cooldown/attempts still apply.
+const OTP_IP_LIMIT = 10;
+const OTP_IP_WINDOW_MS = 10 * 60_000;
+const LOGIN_LIMIT = 10;
+const LOGIN_WINDOW_MS = 10 * 60_000;
+
 export interface LoginFormState {
   error?: string;
 }
 
 /** Where the login UI should go next after the email step. */
 export interface OtpRequestState {
-  next?: "otp" | "password";
+  /** "otp" → OTP step · "password" → password step · "unavailable" → must use LINE but can't (offer contact admin). */
+  next?: "otp" | "password" | "unavailable";
+  /** OTP step only: whether to offer the "use password instead" fallback (admin yes; owner/staff no). */
+  passwordAllowed?: boolean;
   error?: string;
+}
+
+/** Security alert pushed to the user's linked LINE after a successful sign-in. */
+async function sendLoginAlert(user: User, method: string): Promise<void> {
+  if (!user.lineUserId) return;
+  try {
+    await container.messagePusher.pushText(
+      user.lineUserId,
+      `🔐 เข้าสู่ระบบสำเร็จ\nเวลา ${formatDateTime(new Date().toISOString())} · วิธี: ${method}\nหากไม่ใช่คุณ โปรดติดต่อผู้ดูแลทันที`,
+    );
+  } catch {
+    // Never block login on a push failure.
+  }
 }
 
 /**
@@ -46,19 +72,35 @@ export async function requestLoginOtpAction(
   if (!z.string().email().safeParse(email).success) {
     return { error: "อีเมลไม่ถูกต้อง" };
   }
-  // No LINE on this server → OTP can't be delivered, so use password for everyone.
-  if (lineConfigFromEnv() === null) return { next: "password" };
+
+  // IP rate-limit (anti OTP-bombing across many emails).
+  const ip = await getClientIp();
+  const rl = await container.rateLimitRepository.hit(
+    `otp:ip:${ip}`,
+    OTP_IP_LIMIT,
+    OTP_IP_WINDOW_MS,
+  );
+  if (!rl.allowed) {
+    return { error: `พยายามหลายครั้งเกินไป ลองใหม่ในอีก ${rl.retryAfterSec} วินาที` };
+  }
 
   const result = await new RequestLoginOtpUseCase(
     container.userRepository,
     container.passwordHasher,
     container.messagePusher,
-  ).execute(email);
+  ).execute(email, lineConfigFromEnv() !== null);
 
-  if (result.status === "otp_sent") return { next: "otp" };
-  if (result.status === "cooldown") {
-    return { next: "otp", error: `ขอรหัสใหม่ได้ในอีก ${result.retryInSec} วินาที` };
+  if (result.status === "otp_sent") {
+    return { next: "otp", passwordAllowed: result.passwordAllowed };
   }
+  if (result.status === "cooldown") {
+    return {
+      next: "otp",
+      passwordAllowed: result.passwordAllowed,
+      error: `ขอรหัสใหม่ได้ในอีก ${result.retryInSec} วินาที`,
+    };
+  }
+  if (result.status === "otp_unavailable") return { next: "unavailable" };
   return { next: "password" };
 }
 
@@ -84,6 +126,7 @@ export async function verifyLoginOtpAction(
 
   await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
+  await sendLoginAlert(user, "LINE OTP");
   redirect(ROLE_HOME[user.role]);
 }
 
@@ -99,6 +142,19 @@ export async function loginAction(
     return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   }
 
+  // IP+email rate-limit (anti password stuffing).
+  const ip = await getClientIp();
+  const rl = await container.rateLimitRepository.hit(
+    `login:${ip}:${parsed.data.email.toLowerCase()}`,
+    LOGIN_LIMIT,
+    LOGIN_WINDOW_MS,
+  );
+  if (!rl.allowed) {
+    return {
+      error: `พยายามเข้าสู่ระบบหลายครั้งเกินไป ลองใหม่ในอีก ${rl.retryAfterSec} วินาที`,
+    };
+  }
+
   const useCase = new LoginUseCase(
     container.userRepository,
     container.passwordHasher,
@@ -110,6 +166,7 @@ export async function loginAction(
 
   await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
+  await sendLoginAlert(user, "รหัสผ่าน");
   // redirect throws — must run outside the validation path above.
   redirect(ROLE_HOME[user.role]);
 }

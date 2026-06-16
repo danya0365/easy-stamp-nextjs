@@ -11,6 +11,7 @@ import {
 } from "@/src/presentation/actions/auth-actions";
 import { ROLE_LABEL } from "@/src/domain/types/roles";
 import type { KnownAccount } from "@/src/domain/entities";
+import { PublicContactButton } from "./PublicContactButton";
 
 const inputCls =
   "rounded-lg border border-border px-3 py-2 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200";
@@ -18,7 +19,7 @@ const btnCls =
   "mt-2 rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:opacity-60";
 const linkCls = "text-sm text-brand-700 hover:underline";
 
-type Step = "email" | "otp" | "password";
+type Step = "email" | "otp" | "password" | "unavailable";
 
 export function LoginForm({
   knownAccounts = [],
@@ -30,6 +31,8 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [resendIn, setResendIn] = useState(0);
+  // OTP step: whether the password fallback is offered (admin yes; linked owner/staff no).
+  const [passwordAllowed, setPasswordAllowed] = useState(false);
   // Device-remembered accounts (FB-style). Local copy so "forget" updates instantly.
   const [accounts, setAccounts] = useState<KnownAccount[]>(knownAccounts);
   // When there are remembered accounts, show the picker first; this flips to the
@@ -53,11 +56,14 @@ export function LoginForm({
     startTransition(async () => {
       const res = await requestLoginOtpAction({}, fd);
       if (res.next === "otp") {
+        setPasswordAllowed(res.passwordAllowed ?? false);
         setStep("otp");
         setResendIn(60);
         if (res.error) setError(res.error);
       } else if (res.next === "password") {
         setStep("password");
+      } else if (res.next === "unavailable") {
+        setStep("unavailable");
       } else if (res.error) {
         setError(res.error);
       }
@@ -242,16 +248,23 @@ export function LoginForm({
           >
             {resendIn > 0 ? `ขอรหัสใหม่ได้ใน ${resendIn} วินาที` : "ขอรหัสใหม่"}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setStep("password");
-            }}
-            className={linkCls}
-          >
-            ใช้รหัสผ่านแทน
-          </button>
+          {passwordAllowed ? (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setStep("password");
+              }}
+              className={linkCls}
+            >
+              ใช้รหัสผ่านแทน
+            </button>
+          ) : (
+            <PublicContactButton
+              label="รับรหัสไม่ได้? ติดต่อผู้ดูแล"
+              className={linkCls}
+            />
+          )}
         </div>
         <button
           type="button"
@@ -262,6 +275,30 @@ export function LoginForm({
           เปลี่ยนอีเมล
         </button>
       </form>
+    );
+  }
+
+  // --- OTP unavailable: linked owner/staff but the server can't send OTP ---
+  if (step === "unavailable") {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-lg bg-warning-surface px-3 py-2 text-sm text-warning">
+          บัญชีนี้ต้องเข้าสู่ระบบผ่านรหัส OTP ทาง LINE แต่ตอนนี้ส่งรหัสไม่ได้
+          กรุณาติดต่อผู้ดูแลเพื่อขอความช่วยเหลือ
+        </div>
+        <PublicContactButton
+          label="ติดต่อผู้ดูแล"
+          className={btnCls + " inline-flex items-center justify-center"}
+        />
+        <button
+          type="button"
+          onClick={backToEmail}
+          className={`${linkCls} inline-flex items-center gap-1 text-left`}
+        >
+          <ArrowLeft className="size-4" />
+          เปลี่ยนอีเมล
+        </button>
+      </div>
     );
   }
 

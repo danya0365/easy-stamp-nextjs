@@ -8,14 +8,20 @@ import {
 } from "./login-otp";
 
 export type RequestOtpResult =
-  | { status: "otp_sent" }
+  // OTP sent / on cooldown. passwordAllowed=false ⇒ linked owner/staff (must use
+  // OTP); true ⇒ admin (keeps password as break-glass).
+  | { status: "otp_sent"; passwordAllowed: boolean }
+  | { status: "cooldown"; retryInSec: number; passwordAllowed: boolean }
+  // Account uses password normally (unknown/inactive/unlinked, or linked admin
+  // when LINE can't send) — caller shows the password step (no info leak).
   | { status: "use_password" }
-  | { status: "cooldown"; retryInSec: number };
+  // Linked owner/staff but the server can't send OTP (LINE not configured) —
+  // they can't use password either, so the caller offers "contact admin".
+  | { status: "otp_unavailable" };
 
 /**
- * Generates a login OTP, stores its hash, and pushes the code to the user's LINE.
- * Returns "use_password" when the account can't use OTP (unknown email, inactive,
- * or no linked LINE) so the caller falls back to password without leaking which.
+ * Decides how an email signs in and (when applicable) sends a LINE OTP.
+ * `lineConfigured` = whether the server can actually deliver OTP (LINE creds set).
  */
 export class RequestLoginOtpUseCase {
   constructor(
@@ -24,11 +30,26 @@ export class RequestLoginOtpUseCase {
     private readonly pusher: IMessagePusher,
   ) {}
 
-  async execute(email: string, now: number = Date.now()): Promise<RequestOtpResult> {
+  async execute(
+    email: string,
+    lineConfigured: boolean,
+    now: number = Date.now(),
+  ): Promise<RequestOtpResult> {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await this.users.findByEmailWithSecret(normalizedEmail);
+    // Unknown/inactive/unlinked → password path (generic, no leak).
     if (!user || !user.isActive || !user.lineUserId) {
       return { status: "use_password" };
+    }
+
+    // Linked. Owner/staff are OTP-only; admin keeps a password fallback.
+    const passwordAllowed = user.role === "platform_admin";
+    if (!lineConfigured) {
+      // Can't deliver OTP. Admin can still use password; owner/staff are stuck
+      // and must contact an admin.
+      return passwordAllowed
+        ? { status: "use_password" }
+        : { status: "otp_unavailable" };
     }
 
     // Resend cooldown: only against a still-valid OTP (sentAt = expiry - TTL).
@@ -41,6 +62,7 @@ export class RequestLoginOtpUseCase {
           return {
             status: "cooldown",
             retryInSec: Math.ceil((nextAllowed - now) / 1000),
+            passwordAllowed,
           };
         }
       }
@@ -56,6 +78,6 @@ export class RequestLoginOtpUseCase {
       user.lineUserId,
       `รหัสเข้าสู่ระบบ Easy Stamp ของคุณคือ ${code} (ใช้ได้ ${minutes} นาที)\nหากคุณไม่ได้พยายามเข้าสู่ระบบ โปรดอย่าบอกรหัสนี้กับผู้ใด`,
     );
-    return { status: "otp_sent" };
+    return { status: "otp_sent", passwordAllowed };
   }
 }
