@@ -19,7 +19,8 @@ export default async function StaffLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader
-        brand="Easy Stamp · พนักงาน"
+        brand="Easy Stamp"
+        role="พนักงาน"
         userEmail={user.email}
         notifications={{ href: "/staff/notifications", unread }}
       />

@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 
 import { logoutAction } from "@/src/presentation/actions/auth-actions";
 import { ThemeSwitcher } from "@/src/presentation/components/theme-switcher";
 
 interface AppHeaderProps {
+  /** App name, always shown (e.g. "Easy Stamp"). */
   brand: string;
+  /** Role suffix shown only on sm+ (e.g. "ร้านค้า"). */
+  role?: string;
   userEmail: string;
   /** Bell link + unread badge; omit to hide the bell (e.g. staff). */
   notifications?: { href: string; unread: number };
@@ -14,13 +17,28 @@ interface AppHeaderProps {
 /**
  * Slim top bar: brand + notifications bell + theme switcher + account controls.
  * Navigation itself lives in the bottom tab bar (see AppTabBar) on every size.
+ * On mobile the role suffix, email, and logout label collapse to save space.
  */
-export function AppHeader({ brand, userEmail, notifications }: AppHeaderProps) {
+export function AppHeader({
+  brand,
+  role,
+  userEmail,
+  notifications,
+}: AppHeaderProps) {
   return (
     <header className="border-b border-border bg-card print:hidden">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-        <span className="font-bold text-brand-700">{brand}</span>
-        <div className="ml-auto flex items-center gap-3 text-sm">
+        <span className="flex min-w-0 items-baseline gap-1">
+          <span className="shrink-0 whitespace-nowrap font-bold text-brand-700">
+            {brand}
+          </span>
+          {role && (
+            <span className="hidden truncate text-muted sm:inline">
+              · {role}
+            </span>
+          )}
+        </span>
+        <div className="ml-auto flex shrink-0 items-center gap-2 text-sm sm:gap-3">
           {notifications && (
             <Link
               href={notifications.href}
@@ -36,13 +54,18 @@ export function AppHeader({ brand, userEmail, notifications }: AppHeaderProps) {
             </Link>
           )}
           <ThemeSwitcher />
-          <span className="hidden text-muted sm:inline">{userEmail}</span>
+          <span className="hidden max-w-56 truncate text-muted lg:inline">
+            {userEmail}
+          </span>
           <form action={logoutAction}>
             <button
               type="submit"
-              className="rounded-lg border border-border px-3 py-1.5 text-foreground transition hover:bg-muted-surface"
+              aria-label="ออกจากระบบ"
+              title="ออกจากระบบ"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-foreground transition hover:bg-muted-surface sm:px-3"
             >
-              ออกจากระบบ
+              <LogOut className="size-4 shrink-0" />
+              <span className="hidden sm:inline">ออกจากระบบ</span>
             </button>
           </form>
         </div>
