@@ -123,7 +123,7 @@ export function AppTabBar({ nav }: { nav: keyof typeof NAVS }) {
       )}
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur print:hidden">
-        <ul className="mx-auto flex max-w-md items-stretch pb-[env(safe-area-inset-bottom)]">
+        <ul className="mx-auto flex max-w-2xl items-stretch pb-[env(safe-area-inset-bottom)]">
           {primary.map((link) => {
             const Icon = link.icon;
             const isActive = link.href === activeHref;

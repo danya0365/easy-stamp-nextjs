@@ -19,7 +19,7 @@ export default async function ShopContactPage() {
   const past = requests.filter((r) => r.status === "resolved");
 
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-4">
       {open ? (
         <Card>
           <CardHeader

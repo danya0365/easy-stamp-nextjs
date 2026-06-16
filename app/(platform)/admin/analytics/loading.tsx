@@ -4,7 +4,7 @@ import { StatsSkeleton } from "@/src/presentation/components/ui/skeletons";
 
 export default function Loading() {
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-4">
       <Skeleton className="h-7 w-32" />
       <StatsSkeleton count={8} />
       <Card className="flex flex-col gap-3">

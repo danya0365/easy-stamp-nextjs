@@ -15,7 +15,7 @@ export default async function ShopRedemptionsPage() {
   const items = await buildShopRedemptionItems(shopId, page.items);
 
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-4">
       <Card>
         <CardHeader title="ประวัติการแลกรางวัล" subtitle="รายการล่าสุดก่อน" />
         {items.length === 0 ? (

@@ -21,7 +21,7 @@ export default async function ShopStaffPage() {
   const branchName = new Map(branches.map((b) => [b.id, b.name]));
 
   return (
-    <div className="flex max-w-lg flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-4">
       <Card>
         <CardHeader title="เพิ่มพนักงานสาขา" />
         <AddStaffForm branches={branches.map((b) => ({ id: b.id, name: b.name }))} />
