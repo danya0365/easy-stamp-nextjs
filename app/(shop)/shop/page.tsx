@@ -45,10 +45,14 @@ export default async function ShopDashboardPage() {
       </div>
 
       <OnboardingSuggestions
+        shopId={shopId}
+        rewardConfigured={
+          stampTypes.length > 0 &&
+          stampTypes.some((t) => t.rewardText.trim() !== "")
+        }
         lineLinked={!!user.lineUserId}
-        customerCount={customers.length}
-        staffCount={staffCount}
-        stampTypes={stampTypes}
+        hasCustomers={customers.length > 0}
+        hasStaff={staffCount > 0}
       />
 
       <FeatureGrid />
