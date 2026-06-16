@@ -30,6 +30,7 @@
   --muted-surface: #e7e5e4;
   --border: #e7e5e4;
   --ring: #ddb37a;
+  --on-brand: #ffffff;
 
   --success: #15803d;
   --success-surface: #dcfce7;
@@ -44,9 +45,19 @@
 
 [data-theme="retro"].dark,
 .dark[data-theme="retro"] {
+  /* Full ramp: 50–300 = warm dark surfaces/borders, 700–900 = light cream text;
+     primary-button text comes from --on-brand (dark on the light-orange brand). */
+  --brand-50: #3a322c;
+  --brand-100: #44382f;
+  --brand-200: #5a4a3a;
+  --brand-300: #6e5a44;
   --brand-400: #f0b97d;
   --brand-500: #fb923c;
   --brand-600: #ea580c;
+  --brand-700: #f0b97d;
+  --brand-800: #e7c9a8;
+  --brand-900: #f5e6d3;
+  --on-brand: #1c1917;
 
   --background: #1c1917;
   --foreground: #fafaf9;

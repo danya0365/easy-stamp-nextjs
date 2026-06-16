@@ -26,7 +26,7 @@ export function StampDots({ current, threshold, size = "md" }: StampDotsProps) {
               "flex items-center justify-center rounded-full leading-none transition",
               SIZES[size],
               isFilled
-                ? "bg-brand-500 text-white shadow-sm ring-1 ring-brand-600/20"
+                ? "bg-brand-500 text-on-brand shadow-sm ring-1 ring-brand-600/20"
                 : "border border-brand-200 bg-brand-50 text-brand-200",
             )}
             aria-label={isFilled ? "ดวงที่สะสมแล้ว" : "ดวงที่ว่าง"}

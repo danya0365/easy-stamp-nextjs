@@ -29,7 +29,7 @@ export function SuspensionBanner({ status }: { status: BillingStatus }) {
         </span>
         <Link
           href="/shop/billing"
-          className="rounded-full bg-brand-500 px-3 py-1 font-medium text-white hover:bg-brand-600"
+          className="rounded-full bg-brand-500 px-3 py-1 font-medium text-on-brand hover:bg-brand-600"
         >
           เติมวันตอนนี้
         </Link>

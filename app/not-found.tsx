@@ -13,7 +13,7 @@ export default function NotFound() {
       </div>
       <Link
         href="/"
-        className="rounded-full bg-brand-500 px-6 py-2.5 font-medium text-white shadow-sm transition hover:bg-brand-600"
+        className="rounded-full bg-brand-500 px-6 py-2.5 font-medium text-on-brand shadow-sm transition hover:bg-brand-600"
       >
         กลับหน้าแรก
       </Link>

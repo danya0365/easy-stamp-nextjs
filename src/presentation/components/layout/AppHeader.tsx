@@ -29,7 +29,7 @@ export function AppHeader({ brand, userEmail, notifications }: AppHeaderProps) {
             >
               <Bell className="size-5" />
               {notifications.unread > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold leading-4 text-white">
+                <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold leading-4 text-on-brand">
                   {notifications.unread > 9 ? "9+" : notifications.unread}
                 </span>
               )}

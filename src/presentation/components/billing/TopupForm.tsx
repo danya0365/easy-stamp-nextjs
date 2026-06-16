@@ -178,7 +178,7 @@ export function TopupForm({
                 </span>
               ) : (
                 p.badge && (
-                  <span className="absolute -top-2 right-2 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-medium text-white">
+                  <span className="absolute -top-2 right-2 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-medium text-on-brand">
                     {BADGE_LABEL[p.badge]}
                   </span>
                 )
