@@ -39,7 +39,7 @@
   --error-surface: #fee2e2;
 
   --font-body: var(--font-noto-thai), system-ui, sans-serif;
-  --font-heading-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-heading-family: var(--font-noto-serif-thai), Georgia, "Times New Roman", serif;
 }
 
 [data-theme="retro"].dark,
