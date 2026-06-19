@@ -10,6 +10,7 @@ import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAd
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
 import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImagesManager";
+import { ShopProfileForm } from "@/src/presentation/components/shop/ShopProfileForm";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,11 @@ export default async function ShopSettingsPage() {
   const user = await requireRole("shop_owner");
   const shop = await container.shopRepository.findById(user.shopId!);
   if (!shop) return null;
-  const [stampTypes, subscription, shopImages] = await Promise.all([
+  const [stampTypes, subscription, shopImages, shopProfile] = await Promise.all([
     container.stampTypeRepository.listByShop(shop.id),
     container.subscriptionRepository.findByShop(shop.id),
     container.shopImageRepository.listByShop(shop.id),
+    container.shopProfileRepository.get(shop.id),
   ]);
 
   return (
@@ -68,6 +70,20 @@ export default async function ShopSettingsPage() {
                 <PauseShopControl paused={!!subscription?.pausedAt} />
               </Card>
             </>
+          ),
+        },
+        {
+          id: "details",
+          label: "รายละเอียดร้าน",
+          icon: "info",
+          content: (
+            <Card>
+              <CardHeader
+                title="รายละเอียดร้าน (แสดงบนหน้าร้านสาธารณะ)"
+                subtitle={`เกี่ยวกับร้าน เวลาทำการ ช่องทางติดต่อ · /s/${shop.slug}`}
+              />
+              <ShopProfileForm profile={shopProfile} />
+            </Card>
           ),
         },
         {

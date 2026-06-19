@@ -17,6 +17,7 @@ import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
 import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
+import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 
 export const dynamic = "force-dynamic";
@@ -86,16 +87,25 @@ export default async function PublicShopCheckPage({
   const coverImage = images.find((i) => i.kind === "cover") ?? null;
   const profileImage = images.find((i) => i.kind === "profile") ?? null;
   const gallery = images.filter((i) => i.kind === "gallery");
-  const [reviewSummary, reviewsPage, myReview, category] = await Promise.all([
-    container.shopReviewRepository.summary(shop.id),
-    container.shopReviewRepository.pageByShop(shop.id),
-    view
-      ? container.shopReviewRepository.findByCustomer(shop.id, view.customer.id)
-      : Promise.resolve(null),
-    shop.categoryId
-      ? container.shopCategoryRepository.findById(shop.categoryId)
-      : Promise.resolve(null),
-  ]);
+  const [reviewSummary, reviewsPage, myReview, category, profile, stampTypes, branches] =
+    await Promise.all([
+      container.shopReviewRepository.summary(shop.id),
+      container.shopReviewRepository.pageByShop(shop.id),
+      view
+        ? container.shopReviewRepository.findByCustomer(shop.id, view.customer.id)
+        : Promise.resolve(null),
+      shop.categoryId
+        ? container.shopCategoryRepository.findById(shop.categoryId)
+        : Promise.resolve(null),
+      container.shopProfileRepository.get(shop.id),
+      container.stampTypeRepository.listByShop(shop.id, { activeOnly: true }),
+      container.branchRepository.listByShop(shop.id),
+    ]);
+  // Prefer a branch that has coordinates (for the navigate button).
+  const primaryBranch =
+    branches.find((b) => b.latitude !== null && b.longitude !== null) ??
+    branches[0] ??
+    null;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
@@ -166,6 +176,12 @@ export default async function PublicShopCheckPage({
           </p>
         </Card>
       )}
+
+      <ShopDetails
+        profile={profile}
+        stampTypes={stampTypes}
+        branch={primaryBranch}
+      />
 
       <ShopReviewsSection
         slug={slug}

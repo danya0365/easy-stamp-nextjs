@@ -17,6 +17,7 @@ import { UpdateStampTypeUseCase } from "@/src/application/use-cases/stamp/Update
 import { SetStampTypeActiveUseCase } from "@/src/application/use-cases/stamp/SetStampTypeActiveUseCase";
 import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopImageUseCase";
 import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
+import { UpdateShopProfileUseCase } from "@/src/application/use-cases/shop/UpdateShopProfileUseCase";
 import { ReplyToReviewUseCase } from "@/src/application/use-cases/review/ReplyToReviewUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
 import type { Page } from "@/src/application/repositories/pagination";
@@ -97,6 +98,34 @@ export async function updateSettingsAction(
     });
     revalidatePath("/shop/settings");
     return { success: "บันทึกการตั้งค่าแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Owner edits the shop's public details (about / hours / contact). */
+export async function updateShopProfileAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const shopId = await ownerShopId();
+    await new UpdateShopProfileUseCase(container.shopProfileRepository).execute(
+      shopId,
+      {
+        description: String(formData.get("description") ?? ""),
+        openingHours: String(formData.get("openingHours") ?? ""),
+        phone: String(formData.get("phone") ?? ""),
+        lineUrl: String(formData.get("lineUrl") ?? ""),
+        facebookUrl: String(formData.get("facebookUrl") ?? ""),
+        instagramUrl: String(formData.get("instagramUrl") ?? ""),
+        websiteUrl: String(formData.get("websiteUrl") ?? ""),
+      },
+    );
+    revalidatePath("/shop/settings");
+    const slug = (await container.shopRepository.findById(shopId))?.slug;
+    if (slug) revalidatePath(`/s/${slug}`);
+    return { success: "บันทึกรายละเอียดร้านแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
   }

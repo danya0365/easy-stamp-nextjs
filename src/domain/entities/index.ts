@@ -49,6 +49,19 @@ export interface ReviewSummary {
   count: number;
 }
 
+/** Owner-managed public details shown on /s/[slug] (all optional). */
+export interface ShopProfile {
+  shopId: string;
+  description: string | null;
+  openingHours: string | null;
+  phone: string | null;
+  lineUrl: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  websiteUrl: string | null;
+  updatedAt: string;
+}
+
 export type LeadStatus = "new" | "visited" | "interested" | "won" | "lost";
 export type LeadLostReason =
   | "not_interested"

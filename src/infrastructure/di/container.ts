@@ -25,6 +25,7 @@ import { DrizzleLeadRepository } from "@/src/infrastructure/repositories/drizzle
 import { DrizzleLeadVisitLogRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLeadVisitLogRepository";
 import { DrizzleShopImageRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopImageRepository";
 import { DrizzleShopReviewRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopReviewRepository";
+import { DrizzleShopProfileRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopProfileRepository";
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import {
@@ -71,6 +72,7 @@ import type { ILeadRepository } from "@/src/application/repositories/ILeadReposi
 import type { ILeadVisitLogRepository } from "@/src/application/repositories/ILeadVisitLogRepository";
 import type { IShopImageRepository } from "@/src/application/repositories/IShopImageRepository";
 import type { IShopReviewRepository } from "@/src/application/repositories/IShopReviewRepository";
+import type { IShopProfileRepository } from "@/src/application/repositories/IShopProfileRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
@@ -156,6 +158,8 @@ class Container {
     new DrizzleShopImageRepository();
   readonly shopReviewRepository: IShopReviewRepository =
     new DrizzleShopReviewRepository();
+  readonly shopProfileRepository: IShopProfileRepository =
+    new DrizzleShopProfileRepository();
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();
