@@ -59,6 +59,7 @@ export function OnboardingSuggestions({
     all.push({
       key: "line",
       icon: MessageCircle,
+      // eslint-disable-next-line no-restricted-syntax -- #06C755 is LINE's official brand color
       iconClassName: "bg-[#06C755]/10 text-[#06C755]",
       title: "เชื่อม LINE",
       description: "รับแจ้งเตือนผลอนุมัติชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP",

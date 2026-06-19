@@ -79,13 +79,13 @@ export default function LeadMapView({
           maxWidth="240px"
         >
           <div className="flex flex-col gap-1 p-1">
-            <p className="font-semibold text-gray-900">{active.name}</p>
-            <p className="text-xs text-gray-500">
+            <p className="font-semibold text-foreground">{active.name}</p>
+            <p className="text-xs text-muted">
               {LEAD_STATUS_LABEL[active.status]}
               {active.phone ? ` · ${active.phone}` : ""}
             </p>
             {active.address && (
-              <p className="text-xs text-gray-600">{active.address}</p>
+              <p className="text-xs text-muted">{active.address}</p>
             )}
             <a
               href={`https://www.google.com/maps/dir/?api=1&destination=${active.latitude},${active.longitude}`}

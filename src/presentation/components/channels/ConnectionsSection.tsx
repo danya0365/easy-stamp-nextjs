@@ -70,6 +70,7 @@ export function ConnectionsSection({
         <li>
           <ChannelRow
             icon={MessageCircle}
+            // eslint-disable-next-line no-restricted-syntax -- #06C755 is LINE's official brand color
             iconClassName="bg-[#06C755]/10 text-[#06C755]"
             name="LINE"
             description="รับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP"
