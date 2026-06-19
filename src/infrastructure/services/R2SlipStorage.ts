@@ -9,6 +9,7 @@ import {
 
 import type {
   ISlipStorage,
+  SaveObjectInput,
   SaveSlipInput,
 } from "@/src/application/services/ISlipStorage";
 import {
@@ -62,17 +63,24 @@ export class R2SlipStorage implements ISlipStorage {
   }
 
   async save(input: SaveSlipInput): Promise<{ url: string }> {
-    const url = slipKey(input.paymentId, extFor(input));
+    // Storage key (same format as local); served via /api/slips/[paymentId].
+    return this.saveObject({
+      key: slipKey(input.paymentId, extFor(input)),
+      contentType: input.contentType,
+      bytes: input.bytes,
+    });
+  }
+
+  async saveObject(input: SaveObjectInput): Promise<{ url: string }> {
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: url,
+        Key: input.key,
         Body: input.bytes,
         ContentType: input.contentType,
       }),
     );
-    // Storage key (same format as local); served via /api/slips/[paymentId].
-    return { url };
+    return { url: input.key };
   }
 
   async read(

@@ -21,6 +21,8 @@ import { DrizzleContactRequestRepository } from "@/src/infrastructure/repositori
 import { DrizzleAnalyticsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAnalyticsRepository";
 import { DrizzlePlatformAnalyticsRepository } from "@/src/infrastructure/repositories/drizzle/DrizzlePlatformAnalyticsRepository";
 import { DrizzleRateLimitRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleRateLimitRepository";
+import { DrizzleLeadRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLeadRepository";
+import { DrizzleLeadVisitLogRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleLeadVisitLogRepository";
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import {
@@ -62,6 +64,8 @@ import type { IContactRequestRepository } from "@/src/application/repositories/I
 import type { IAnalyticsRepository } from "@/src/application/repositories/IAnalyticsRepository";
 import type { IPlatformAnalyticsRepository } from "@/src/application/repositories/IPlatformAnalyticsRepository";
 import type { IRateLimitRepository } from "@/src/application/repositories/IRateLimitRepository";
+import type { ILeadRepository } from "@/src/application/repositories/ILeadRepository";
+import type { ILeadVisitLogRepository } from "@/src/application/repositories/ILeadVisitLogRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
@@ -139,6 +143,9 @@ class Container {
     new DrizzlePlatformAnalyticsRepository();
   readonly rateLimitRepository: IRateLimitRepository =
     new DrizzleRateLimitRepository();
+  readonly leadRepository: ILeadRepository = new DrizzleLeadRepository();
+  readonly leadVisitLogRepository: ILeadVisitLogRepository =
+    new DrizzleLeadVisitLogRepository();
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();

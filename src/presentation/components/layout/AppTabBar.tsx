@@ -11,6 +11,7 @@ import {
   History,
   LayoutDashboard,
   LifeBuoy,
+  MapPinned,
   MessageSquare,
   MoreHorizontal,
   QrCode,
@@ -52,6 +53,7 @@ const NAVS = {
   admin: [
     { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },
     { href: "/admin/shops", label: "ร้านค้า", icon: Store },
+    { href: "/admin/leads", label: "ลีด", icon: MapPinned },
     { href: "/admin/payments", label: "การชำระเงิน", icon: CreditCard },
     { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },

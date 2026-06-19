@@ -1,0 +1,155 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, Phone, Store } from "lucide-react";
+
+import { requireRole } from "@/src/infrastructure/auth/session";
+import { container } from "@/src/infrastructure/di/container";
+import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { Badge } from "@/src/presentation/components/ui/Badge";
+import { Button } from "@/src/presentation/components/ui/Button";
+import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
+import { LeadEditForm } from "@/src/presentation/components/leads/LeadEditForm";
+import { LeadStatusControl } from "@/src/presentation/components/leads/LeadStatusControl";
+import { LeadLocationEditor } from "@/src/presentation/components/leads/LeadLocationEditor";
+import { LeadPhotoUpload } from "@/src/presentation/components/leads/LeadPhotoUpload";
+import { AddVisitLogForm } from "@/src/presentation/components/leads/AddVisitLogForm";
+import { ConvertLeadButton } from "@/src/presentation/components/leads/ConvertLeadButton";
+import {
+  LEAD_REACTION_LABEL,
+  LEAD_STATUS_LABEL,
+  LEAD_STATUS_TONE,
+} from "@/src/presentation/lib/lead-display";
+
+export const dynamic = "force-dynamic";
+
+/** Compact "YYYY-MM-DD HH:mm" in Bangkok time for a log timestamp. */
+function fmt(iso: string): string {
+  return new Date(iso).toLocaleString("th-TH", {
+    timeZone: "Asia/Bangkok",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+export default async function AdminLeadDetailPage({
+  params,
+}: {
+  params: Promise<{ leadId: string }>;
+}) {
+  await requireRole("platform_admin");
+  const { leadId } = await params;
+
+  const lead = await container.leadRepository.findById(leadId);
+  if (!lead) notFound();
+
+  const [categories, logs, convertedShop] = await Promise.all([
+    container.shopCategoryRepository.listActive(),
+    container.leadVisitLogRepository.listByLead(leadId, 50),
+    lead.convertedShopId
+      ? container.shopRepository.findById(lead.convertedShopId)
+      : Promise.resolve(null),
+  ]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-2">
+        <Link href="/admin/leads">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft size={14} />
+            รายการลีด
+          </Button>
+        </Link>
+        <Badge tone={LEAD_STATUS_TONE[lead.status]}>
+          {LEAD_STATUS_LABEL[lead.status]}
+        </Badge>
+      </div>
+
+      <Card>
+        <CardHeader
+          title={lead.name}
+          subtitle={lead.phone ?? undefined}
+        />
+        <LeadEditForm
+          lead={lead}
+          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="สถานะการขาย" />
+        <LeadStatusControl lead={lead} />
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="ตำแหน่งร้าน"
+          subtitle="ปักหมุดเพื่อให้แสดงบนแผนที่ลีด และใช้กดนำทาง"
+        />
+        <LeadLocationEditor
+          leadId={lead.id}
+          latitude={lead.latitude}
+          longitude={lead.longitude}
+          address={lead.address}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader title="รูปร้าน" />
+        <LeadPhotoUpload leadId={lead.id} hasPhoto={lead.photoUrl !== null} />
+      </Card>
+
+      <Card>
+        <CardHeader title="บันทึกการเข้าพบ" />
+        <AddVisitLogForm leadId={lead.id} currentStatus={lead.status} />
+        <div className="mt-4">
+          {logs.length === 0 ? (
+            <EmptyState icon={<Phone />} title="ยังไม่มีบันทึกการเข้าพบ" />
+          ) : (
+            <ul className="flex flex-col divide-y divide-border">
+              {logs.map((log) => (
+                <li key={log.id} className="flex flex-col gap-0.5 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-foreground">
+                      {LEAD_REACTION_LABEL[log.reaction]}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {fmt(log.createdAt)}
+                    </span>
+                  </div>
+                  {log.statusBefore &&
+                    log.statusAfter &&
+                    log.statusBefore !== log.statusAfter && (
+                      <p className="text-xs text-muted">
+                        {LEAD_STATUS_LABEL[log.statusBefore]} →{" "}
+                        {LEAD_STATUS_LABEL[log.statusAfter]}
+                      </p>
+                    )}
+                  {log.note && (
+                    <p className="text-sm text-foreground">{log.note}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="แปลงเป็นร้านจริง" />
+        {convertedShop ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="success">แปลงเป็นร้านแล้ว</Badge>
+            <Link
+              href={`/s/${convertedShop.slug}`}
+              className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
+            >
+              <Store size={14} />/s/{convertedShop.slug}
+            </Link>
+          </div>
+        ) : (
+          <ConvertLeadButton lead={lead} />
+        )}
+      </Card>
+    </div>
+  );
+}
