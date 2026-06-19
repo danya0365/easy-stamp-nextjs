@@ -15,6 +15,10 @@ import { RedemptionList } from "@/src/presentation/components/stamp/RedemptionLi
 import { buildCustomerRedemptionItems } from "@/src/presentation/components/stamp/redemption-items";
 import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
+import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
+import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
+import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
+import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +82,31 @@ export default async function PublicShopCheckPage({
     ? await buildCustomerRedemptionItems(shop.id, historyPage.items)
     : [];
 
+  // Shop imagery + reviews (public).
+  const images = await container.shopImageRepository.listByShop(shop.id);
+  const coverImage = images.find((i) => i.kind === "cover") ?? null;
+  const profileImage = images.find((i) => i.kind === "profile") ?? null;
+  const gallery = images.filter((i) => i.kind === "gallery");
+  const [reviewSummary, reviewsPage, myReview, category, profile, stampTypes, branches] =
+    await Promise.all([
+      container.shopReviewRepository.summary(shop.id),
+      container.shopReviewRepository.pageByShop(shop.id),
+      view
+        ? container.shopReviewRepository.findByCustomer(shop.id, view.customer.id)
+        : Promise.resolve(null),
+      shop.categoryId
+        ? container.shopCategoryRepository.findById(shop.categoryId)
+        : Promise.resolve(null),
+      container.shopProfileRepository.get(shop.id),
+      container.stampTypeRepository.listByShop(shop.id, { activeOnly: true }),
+      container.branchRepository.listByShop(shop.id),
+    ]);
+  // Prefer a branch that has coordinates (for the navigate button).
+  const primaryBranch =
+    branches.find((b) => b.latitude !== null && b.longitude !== null) ??
+    branches[0] ??
+    null;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 py-8">
       {isPaused && (
@@ -86,6 +115,16 @@ export default async function PublicShopCheckPage({
           ร้านนี้ปิดให้บริการชั่วคราว — ดูแต้มสะสมได้ แต่ยังสะสม/แลกไม่ได้จนกว่าจะเปิดอีกครั้ง
         </p>
       )}
+
+      <ShopHero
+        coverImage={coverImage}
+        profileImage={profileImage}
+        shopName={shop.name}
+        categoryName={category?.name ?? null}
+        rating={reviewSummary}
+      />
+      <ShopGallery images={gallery} />
+
       {view ? (
         <>
           <Card>
@@ -120,23 +159,38 @@ export default async function PublicShopCheckPage({
             </Card>
           )}
         </>
+      ) : bind === "invalid" ? (
+        <EmptyState
+          icon={<TriangleAlert />}
+          title="QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
+          description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตรใหม่ แล้วสแกนด้วยกล้องมือถือของคุณ"
+        />
       ) : (
-        <>
-          <header className="text-center">
-            <h1 className="text-2xl font-bold text-brand-700">{shop.name}</h1>
-            <p className="text-sm text-muted">บัตรสะสมแสตมป์</p>
-          </header>
-          <EmptyState
-            icon={bind === "invalid" ? <TriangleAlert /> : <Smartphone />}
-            title={
-              bind === "invalid"
-                ? "QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
-                : "ยังไม่ได้ผูกอุปกรณ์นี้"
-            }
-            description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตร แล้วสแกนด้วยกล้องมือถือของคุณ เพื่อดูแต้มสะสม"
-          />
-        </>
+        <Card className="bg-brand-50 ring-brand-100">
+          <p className="flex items-center gap-2 text-sm text-brand-700">
+            <Smartphone className="size-5 shrink-0" />
+            <span>
+              <strong>อยากสะสมแสตมป์ร้านนี้?</strong> สแกน QR ผูกบัตรที่ร้าน
+              แล้วสะสมแต้ม/ดูรางวัลได้เลย
+            </span>
+          </p>
+        </Card>
       )}
+
+      <ShopDetails
+        profile={profile}
+        stampTypes={stampTypes}
+        branch={primaryBranch}
+      />
+
+      <ShopReviewsSection
+        slug={slug}
+        shopId={shop.id}
+        summary={reviewSummary}
+        initial={reviewsPage}
+        myReview={myReview}
+        canReview={!!view}
+      />
 
       <Link
         href="/privacy"

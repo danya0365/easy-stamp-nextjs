@@ -40,6 +40,15 @@ export function leadPhotoKey(leadId: string, ext: string): string {
   return `leads/${leadId}.${ext}`;
 }
 
+/** Storage key for a shop image (stored in shop_images.storageKey). */
+export function shopImageKey(
+  shopId: string,
+  imageId: string,
+  ext: string,
+): string {
+  return `shops/${shopId}/${imageId}.${ext}`;
+}
+
 /** content-type from a stored key/url like "slips/<id>.png". */
 export function contentTypeForKey(url: string): string {
   const ext = url.split(".").pop()?.toLowerCase() ?? "";

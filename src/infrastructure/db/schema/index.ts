@@ -19,3 +19,6 @@ export * from "./contact-requests";
 export * from "./rate-limits";
 export * from "./leads";
 export * from "./lead-visit-logs";
+export * from "./shop-images";
+export * from "./shop-reviews";
+export * from "./shop-profiles";

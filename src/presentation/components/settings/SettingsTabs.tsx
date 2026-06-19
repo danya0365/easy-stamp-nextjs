@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ShieldCheck, Stamp } from "lucide-react";
+import { ImageIcon, Info, ShieldCheck, Stamp } from "lucide-react";
 
 // Icons are referenced by string key because functions (component refs) can't
 // be passed from a server component into this client component as props.
-const ICONS = { stamp: Stamp, shield: ShieldCheck };
+const ICONS = { stamp: Stamp, shield: ShieldCheck, image: ImageIcon, info: Info };
 export type SettingsTabIcon = keyof typeof ICONS;
 
 type Tab = {

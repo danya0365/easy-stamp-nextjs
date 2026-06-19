@@ -9,9 +9,17 @@ import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUs
 import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopUseCase";
 import { ResumeShopUseCase } from "@/src/application/use-cases/billing/ResumeShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
+import { SetReviewHiddenUseCase } from "@/src/application/use-cases/review/SetReviewHiddenUseCase";
 import { bahtToSatang, satangToBaht } from "@/src/presentation/lib/money";
 import type { Page } from "@/src/application/repositories/pagination";
+import type { ShopReview } from "@/src/domain/entities";
 import type { PendingPaymentRow } from "@/src/presentation/components/admin/AdminPaymentQueue";
+
+/** A review plus its shop name — the admin moderation list row. */
+export interface AdminReviewRow {
+  review: ShopReview;
+  shopName: string;
+}
 
 export interface AdminFormState {
   error?: string;
@@ -64,6 +72,44 @@ export async function createShopAction(
     });
     revalidatePath("/admin/shops");
     return { success: "สร้างร้านค้าและบัญชีเจ้าของร้านแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Helper: attach shop names to a page of reviews for the admin list. */
+async function toReviewRows(reviews: ShopReview[]): Promise<AdminReviewRow[]> {
+  const shops = await container.shopRepository.list();
+  const name = new Map(shops.map((s) => [s.id, s.name]));
+  return reviews.map((review) => ({
+    review,
+    shopName: name.get(review.shopId) ?? review.shopId,
+  }));
+}
+
+/** Next page of the cross-shop review moderation list. */
+export async function loadMoreReviewsAction(
+  cursor: string,
+): Promise<Page<AdminReviewRow>> {
+  await requireRole("platform_admin");
+  const page = await container.shopReviewRepository.pageAll({ cursor });
+  return { items: await toReviewRows(page.items), nextCursor: page.nextCursor };
+}
+
+/** Admin hides/unhides a review. */
+export async function setReviewHiddenAction(
+  reviewId: string,
+  hidden: boolean,
+): Promise<{ error?: string }> {
+  try {
+    await requireRole("platform_admin");
+    const review = await new SetReviewHiddenUseCase(
+      container.shopReviewRepository,
+    ).execute(reviewId, hidden);
+    revalidatePath("/admin/reviews");
+    const shop = await container.shopRepository.findById(review.shopId);
+    if (shop) revalidatePath(`/s/${shop.slug}`);
+    return {};
   } catch (e) {
     return { error: (e as Error).message };
   }

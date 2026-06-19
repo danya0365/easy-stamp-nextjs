@@ -45,3 +45,10 @@ next-env.d.ts
 /uploads
 /local.db
 local.db*
+
+# Tests
+/.e2e.db
+.e2e.db*
+/test-results
+/playwright-report
+/playwright/.cache

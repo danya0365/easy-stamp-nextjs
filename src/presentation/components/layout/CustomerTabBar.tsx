@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, Wallet, BookOpen, Info, type LucideIcon } from "lucide-react";
+import { Map, Store, Wallet, BookOpen, Info, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
@@ -16,6 +16,12 @@ interface Tab {
 
 const TABS: Tab[] = [
   { href: "/", label: "แผนที่", icon: Map, active: (p) => p === "/" },
+  {
+    href: "/shops",
+    label: "ร้านค้า",
+    icon: Store,
+    active: (p) => p.startsWith("/shops"),
+  },
   {
     href: "/me",
     label: "บัตรของฉัน",

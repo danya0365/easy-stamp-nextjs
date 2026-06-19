@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { Button } from "@/src/presentation/components/ui/Button";
 import { StatCard } from "@/src/presentation/components/ui/StatCard";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { OnboardingSuggestions } from "@/src/presentation/components/shop/OnboardingSuggestions";
@@ -28,13 +29,23 @@ export default async function ShopDashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
-        <p className="mt-1 text-sm text-muted">
-          {stampTypes.length === 1
-            ? `ครบ ${stampTypes[0].threshold} ดวง = ${stampTypes[0].rewardText || "ของรางวัล"}`
-            : `${stampTypes.length} ประเภทแสตมป์`}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {stampTypes.length === 1
+              ? `ครบ ${stampTypes[0].threshold} ดวง = ${stampTypes[0].rewardText || "ของรางวัล"}`
+              : `${stampTypes.length} ประเภทแสตมป์`}
+          </p>
+        </div>
+        {shop && (
+          <a href={`/s/${shop.slug}`} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">
+              <ExternalLink size={14} />
+              เปิดหน้าร้าน
+            </Button>
+          </a>
+        )}
       </div>
 
       <FeatureCarousel />

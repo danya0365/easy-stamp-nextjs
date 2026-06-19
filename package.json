@@ -7,6 +7,11 @@
     "build": "node scripts/vercel-migrate.mjs && next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:css": "stylelint \"public/styles/**/*.css\"",
+    "lint:all": "eslint && stylelint \"public/styles/**/*.css\"",
+    "test": "node scripts/test.mjs",
+    "test:cov": "node scripts/test.mjs --coverage",
+    "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -42,6 +47,7 @@
   },
   "devDependencies": {
     "@next/env": "^16.2.9",
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
@@ -51,6 +57,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "stylelint": "^17.13.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
