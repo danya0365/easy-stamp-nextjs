@@ -6,6 +6,7 @@ import {
   MailCheck,
   MapPinned,
   MessageSquare,
+  Star,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   contact_request: MessageSquare,
   contact_resolved: MailCheck,
   lead_follow_up_due: MapPinned,
+  shop_received_review: Star,
 };
 
 /** A single notification, ready to drop inside an `<li>`. */

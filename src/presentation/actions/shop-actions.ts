@@ -15,8 +15,12 @@ import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPass
 import { CreateStampTypeUseCase } from "@/src/application/use-cases/stamp/CreateStampTypeUseCase";
 import { UpdateStampTypeUseCase } from "@/src/application/use-cases/stamp/UpdateStampTypeUseCase";
 import { SetStampTypeActiveUseCase } from "@/src/application/use-cases/stamp/SetStampTypeActiveUseCase";
+import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopImageUseCase";
+import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
+import { ReplyToReviewUseCase } from "@/src/application/use-cases/review/ReplyToReviewUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
 import type { Page } from "@/src/application/repositories/pagination";
+import type { ShopImageKind, ShopReview } from "@/src/domain/entities";
 import {
   buildCustomerRows,
   type CustomerRow,
@@ -96,6 +100,90 @@ export async function updateSettingsAction(
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+/** Owner uploads a shop profile image (kind=profile) or gallery photo. */
+export async function uploadShopImageAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const shopId = await ownerShopId();
+    const kind = String(formData.get("kind") ?? "") as ShopImageKind;
+    if (kind !== "profile" && kind !== "gallery") {
+      throw new Error("ประเภทรูปไม่ถูกต้อง");
+    }
+    const file = formData.get("image");
+    if (!(file instanceof File) || file.size === 0) {
+      throw new Error("กรุณาแนบรูป");
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    await new SaveShopImageUseCase(
+      container.shopImageRepository,
+      container.slipStorage,
+    ).execute({
+      shopId,
+      kind,
+      filename: file.name,
+      contentType: file.type,
+      bytes,
+    });
+    revalidatePath("/shop/settings");
+    revalidatePath(`/s/${(await container.shopRepository.findById(shopId))?.slug ?? ""}`);
+    return { success: "อัปโหลดรูปแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Owner removes one of their shop images. */
+export async function deleteShopImageAction(
+  imageId: string,
+): Promise<{ error?: string }> {
+  try {
+    const shopId = await ownerShopId();
+    await new DeleteShopImageUseCase(
+      container.shopImageRepository,
+      container.slipStorage,
+    ).execute(shopId, imageId);
+    revalidatePath("/shop/settings");
+    const slug = (await container.shopRepository.findById(shopId))?.slug;
+    if (slug) revalidatePath(`/s/${slug}`);
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Owner replies to a review of their own shop (works even when paused). */
+export async function replyToReviewAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const user = await requireRole("shop_owner");
+    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    await new ReplyToReviewUseCase(container.shopReviewRepository).execute(
+      user.shopId,
+      String(formData.get("reviewId") ?? ""),
+      String(formData.get("reply") ?? ""),
+    );
+    revalidatePath("/shop/reviews");
+    return { success: "ตอบกลับแล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Next page of the shop's own reviews (owner view — includes hidden). */
+export async function loadMoreShopReviewsAction(
+  cursor: string,
+): Promise<Page<ShopReview>> {
+  const user = await requireRole("shop_owner");
+  return container.shopReviewRepository.pageByShop(user.shopId!, {
+    cursor,
+    includeHidden: true,
+  });
 }
 
 export async function createStampTypeAction(

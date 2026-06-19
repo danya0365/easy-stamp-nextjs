@@ -1,6 +1,6 @@
 import "server-only";
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type {
@@ -17,14 +17,16 @@ import {
 const BASE_DIR = path.join(process.cwd(), "uploads");
 
 /**
- * Resolve a storage key like "slips/<id>.png" to a safe absolute path under
- * BASE_DIR. Each path segment is sanitized to block traversal; returns null for
- * keys that don't match the expected "<dir>/<file>" shape.
+ * Resolve a storage key like "slips/<id>.png" or "shops/<id>/<img>.png" to a
+ * safe absolute path under BASE_DIR. Every segment is sanitized to block
+ * traversal; the last segment is the file, the rest are nested dirs. Returns
+ * null for malformed keys (fewer than 2 segments or an empty segment).
  */
 function resolveKey(key: string): { dir: string; file: string } | null {
   const parts = key.split("/").map((p) => p.replace(/[^a-zA-Z0-9._-]/g, ""));
-  if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
-  return { dir: path.join(BASE_DIR, parts[0]), file: parts[1] };
+  if (parts.length < 2 || parts.some((p) => !p)) return null;
+  const file = parts.pop()!;
+  return { dir: path.join(BASE_DIR, ...parts), file };
 }
 
 /** Stores uploads on local disk under ./uploads (dev only — Vercel uses R2). */
@@ -56,6 +58,16 @@ export class LocalSlipStorage implements ISlipStorage {
       return { bytes: new Uint8Array(buf), contentType: contentTypeForKey(url) };
     } catch {
       return null;
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    const resolved = resolveKey(key);
+    if (!resolved) return;
+    try {
+      await unlink(path.join(resolved.dir, resolved.file));
+    } catch {
+      /* best-effort — already gone is fine */
     }
   }
 }

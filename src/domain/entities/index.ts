@@ -15,8 +15,39 @@ export type NotificationType =
   | "payment_rejected"
   | "contact_request"
   | "contact_resolved"
-  | "lead_follow_up_due";
+  | "lead_follow_up_due"
+  | "shop_received_review";
 export type ContactRequestStatus = "open" | "resolved";
+
+export type ShopImageKind = "profile" | "gallery";
+
+export interface ShopImage {
+  id: string;
+  shopId: string;
+  kind: ShopImageKind;
+  storageKey: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface ShopReview {
+  id: string;
+  shopId: string;
+  customerId: string;
+  rating: number;
+  comment: string | null;
+  ownerReply: string | null;
+  ownerRepliedAt: string | null;
+  isHidden: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Aggregate rating for a shop (hidden reviews excluded). */
+export interface ReviewSummary {
+  average: number;
+  count: number;
+}
 
 export type LeadStatus = "new" | "visited" | "interested" | "won" | "lost";
 export type LeadLostReason =

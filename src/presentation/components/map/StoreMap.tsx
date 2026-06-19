@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
+import type { MapShopLocation } from "./StoreMapView";
 
 // maplibre-gl touches `window`, so the map is client-only (no SSR) and
 // lazy-loaded — it stays out of the initial bundle until the homepage mounts.
@@ -15,7 +15,7 @@ const StoreMapView = dynamic(() => import("./StoreMapView"), {
   ),
 });
 
-export function StoreMap({ locations }: { locations: ShopMapLocation[] }) {
+export function StoreMap({ locations }: { locations: MapShopLocation[] }) {
   return (
     <div className="relative h-full w-full overflow-hidden">
       <StoreMapView locations={locations} />

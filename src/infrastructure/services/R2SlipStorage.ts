@@ -4,6 +4,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
   NoSuchKey,
 } from "@aws-sdk/client-s3";
 
@@ -99,6 +100,16 @@ export class R2SlipStorage implements ISlipStorage {
     } catch (e) {
       if (e instanceof NoSuchKey) return null;
       throw e;
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+    } catch (e) {
+      console.error("[r2] delete failed:", (e as Error).message);
     }
   }
 }

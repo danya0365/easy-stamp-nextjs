@@ -1,0 +1,113 @@
+"use client";
+
+import { useActionState, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
+
+import {
+  uploadShopImageAction,
+  deleteShopImageAction,
+  type FormState,
+} from "@/src/presentation/actions/shop-actions";
+import type { ShopImage } from "@/src/domain/entities";
+import { Button } from "@/src/presentation/components/ui/Button";
+
+const FILE_INPUT_CLASS =
+  "text-sm text-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700";
+
+function UploadForm({ kind, label }: { kind: "profile" | "gallery"; label: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    uploadShopImageAction,
+    {},
+  );
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="kind" value={kind} />
+      <input
+        type="file"
+        name="image"
+        accept="image/png,image/jpeg,image/webp,image/heic"
+        required
+        className={FILE_INPUT_CLASS}
+      />
+      {state.error && <p className="text-sm text-error">{state.error}</p>}
+      {state.success && <p className="text-sm text-success">{state.success}</p>}
+      <Button type="submit" size="sm" variant="outline" disabled={pending}>
+        {pending ? "กำลังอัปโหลด…" : label}
+      </Button>
+    </form>
+  );
+}
+
+function DeleteButton({ imageId }: { imageId: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const res = await deleteShopImageAction(imageId);
+          if (res.error) setError(res.error);
+          else router.refresh();
+        })
+      }
+      className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70 disabled:opacity-50"
+      aria-label="ลบรูป"
+      title={error ?? "ลบรูป"}
+    >
+      <Trash2 className="size-3.5" />
+    </button>
+  );
+}
+
+export function ShopImagesManager({ images }: { images: ShopImage[] }) {
+  const profile = images.find((i) => i.kind === "profile") ?? null;
+  const gallery = images.filter((i) => i.kind === "gallery");
+
+  return (
+    <div className="flex flex-col gap-6">
+      <section className="flex flex-col gap-3">
+        <p className="text-sm font-medium text-foreground">รูปโปรไฟล์ร้าน</p>
+        {profile ? (
+          <div className="relative w-28">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/shop-images/${profile.id}`}
+              alt="โปรไฟล์ร้าน"
+              className="h-28 w-28 rounded-2xl border border-border object-cover"
+            />
+            <DeleteButton imageId={profile.id} />
+          </div>
+        ) : (
+          <p className="text-xs text-muted">ยังไม่มีรูปโปรไฟล์</p>
+        )}
+        <UploadForm kind="profile" label={profile ? "เปลี่ยนรูปโปรไฟล์" : "อัปโหลดรูปโปรไฟล์"} />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <p className="text-sm font-medium text-foreground">
+          แกลเลอรี่ ({gallery.length})
+        </p>
+        {gallery.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            {gallery.map((img) => (
+              <div key={img.id} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/api/shop-images/${img.id}`}
+                  alt="ภาพร้าน"
+                  className="aspect-square w-full rounded-lg border border-border object-cover"
+                />
+                <DeleteButton imageId={img.id} />
+              </div>
+            ))}
+          </div>
+        )}
+        <UploadForm kind="gallery" label="เพิ่มรูปแกลเลอรี่" />
+      </section>
+    </div>
+  );
+}

@@ -11,14 +11,22 @@ import { ArrowRight, MapPin } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
+import type { ReviewSummary } from "@/src/domain/entities";
+import { StarRating } from "@/src/presentation/components/ui/StarRating";
 import { OSM_STYLE, DEFAULT_CENTER, boundsOf } from "./osm-style";
+
+/** A map branch enriched with its shop's rating + profile image for the popup. */
+export type MapShopLocation = ShopMapLocation & {
+  rating: ReviewSummary;
+  profileImageId: string | null;
+};
 
 export default function StoreMapView({
   locations,
 }: {
-  locations: ShopMapLocation[];
+  locations: MapShopLocation[];
 }) {
-  const [active, setActive] = useState<ShopMapLocation | null>(null);
+  const [active, setActive] = useState<MapShopLocation | null>(null);
 
   const bounds = boundsOf(locations);
   const initialViewState = bounds
@@ -71,8 +79,30 @@ export default function StoreMapView({
           maxWidth="240px"
         >
           <div className="flex flex-col gap-1 p-1">
-            <p className="font-semibold text-gray-900">{active.shopName}</p>
-            <p className="text-xs text-gray-500">{active.branchName}</p>
+            <div className="flex items-center gap-2">
+              {active.profileImageId && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/api/shop-images/${active.profileImageId}`}
+                  alt={active.shopName}
+                  className="size-10 shrink-0 rounded-lg object-cover"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900">{active.shopName}</p>
+                <p className="truncate text-xs text-gray-500">
+                  {active.branchName}
+                </p>
+              </div>
+            </div>
+            {active.rating.count > 0 && (
+              <div className="flex items-center gap-1">
+                <StarRating value={active.rating.average} size="sm" />
+                <span className="text-xs text-gray-500">
+                  {active.rating.average.toFixed(1)} ({active.rating.count})
+                </span>
+              </div>
+            )}
             {active.address && (
               <p className="text-xs text-gray-600">{active.address}</p>
             )}
@@ -80,7 +110,7 @@ export default function StoreMapView({
               href={`/s/${active.shopSlug}`}
               className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
             >
-              ดูบัตรสะสมแสตมป์
+              ดูร้าน &amp; รีวิว
               <ArrowRight className="size-3.5" />
             </a>
           </div>

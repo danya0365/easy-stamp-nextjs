@@ -9,6 +9,7 @@ import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePas
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
+import { ShopImagesManager } from "@/src/presentation/components/shop/ShopImagesManager";
 import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTabs";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,10 @@ export default async function ShopSettingsPage() {
   const user = await requireRole("shop_owner");
   const shop = await container.shopRepository.findById(user.shopId!);
   if (!shop) return null;
-  const [stampTypes, subscription] = await Promise.all([
+  const [stampTypes, subscription, shopImages] = await Promise.all([
     container.stampTypeRepository.listByShop(shop.id),
     container.subscriptionRepository.findByShop(shop.id),
+    container.shopImageRepository.listByShop(shop.id),
   ]);
 
   return (
@@ -54,6 +56,20 @@ export default async function ShopSettingsPage() {
                 <PauseShopControl paused={!!subscription?.pausedAt} />
               </Card>
             </>
+          ),
+        },
+        {
+          id: "images",
+          label: "ภาพร้าน",
+          icon: "image",
+          content: (
+            <Card>
+              <CardHeader
+                title="รูปโปรไฟล์ & แกลเลอรี่"
+                subtitle={`รูปจะแสดงบนหน้าร้านสาธารณะ /s/${shop.slug}`}
+              />
+              <ShopImagesManager images={shopImages} />
+            </Card>
           ),
         },
         {

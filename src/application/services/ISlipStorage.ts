@@ -26,4 +26,6 @@ export interface ISlipStorage {
   saveObject(input: SaveObjectInput): Promise<{ url: string }>;
   /** Read raw bytes for serving via an auth-gated route handler. */
   read(url: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
+  /** Best-effort delete by key (e.g. removing a shop image). Never throws. */
+  delete(key: string): Promise<void>;
 }
