@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPinned, Map as MapIcon } from "lucide-react";
+import { MapPinned, Map as MapIcon, Plus } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -7,7 +7,6 @@ import type { LeadStatus } from "@/src/domain/entities";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
-import { CreateLeadForm } from "@/src/presentation/components/leads/CreateLeadForm";
 import { LeadList } from "@/src/presentation/components/leads/LeadList";
 import type { LeadRow } from "@/src/presentation/actions/lead-actions";
 import {
@@ -52,23 +51,25 @@ export default async function AdminLeadsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader
-          title="เพิ่มลีด (ร้านที่กำลังสำรวจ)"
-          subtitle="เก็บข้อมูลร้านเป้าหมายก่อนลงพื้นที่ — ปักหมุดและนำทางได้จากหน้าแผนที่"
-          action={
-            <Link href="/admin/leads/map">
-              <Button variant="outline" size="sm">
-                <MapIcon size={14} />
-                แผนที่
-              </Button>
-            </Link>
-          }
-        />
-        <CreateLeadForm
-          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
-        />
-      </Card>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold text-foreground">
+          ลีด (ร้านที่กำลังสำรวจ)
+        </h1>
+        <div className="flex gap-2">
+          <Link href="/admin/leads/map">
+            <Button variant="outline" size="sm">
+              <MapIcon size={14} />
+              แผนที่
+            </Button>
+          </Link>
+          <Link href="/admin/leads/new">
+            <Button size="sm">
+              <Plus size={14} />
+              เพิ่มลีด
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       <Card>
         <CardHeader title="ลีดทั้งหมด" />
