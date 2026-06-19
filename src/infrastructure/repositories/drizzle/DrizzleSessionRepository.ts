@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Session, User } from "@/src/domain/entities";

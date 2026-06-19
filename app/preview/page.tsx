@@ -16,7 +16,7 @@ import { SuspensionBanner } from "@/src/presentation/components/billing/Suspensi
 import { PromptPayQR } from "@/src/presentation/components/billing/PromptPayQR";
 import { PhoneLookupForm } from "@/src/presentation/components/stamp/PhoneLookupForm";
 import { CardBalance } from "@/src/presentation/components/stamp/CardBalance";
-import { ThemeSwitcher } from "@/src/presentation/components/theme-switcher";
+import { ThemeSwitcher } from "@/src/presentation/components/ThemeSwitcher";
 
 // Dev-only design-system showcase. Safe to delete before production.
 export const metadata = { title: "Preview · Design System" };

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Branch } from "@/src/domain/entities";

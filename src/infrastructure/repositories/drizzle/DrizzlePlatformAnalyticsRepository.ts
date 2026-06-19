@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db, schema } from "@/src/infrastructure/db/client";

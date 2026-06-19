@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, eq, lt, or, type SQL } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 

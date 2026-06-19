@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
 
 import { logoutAction } from "@/src/presentation/actions/auth-actions";
-import { ThemeSwitcher } from "@/src/presentation/components/theme-switcher";
+import { ThemeSwitcher } from "@/src/presentation/components/ThemeSwitcher";
 import { Logo } from "@/src/presentation/components/layout/Logo";
 
 interface AppHeaderProps {

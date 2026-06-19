@@ -1,3 +1,5 @@
+import "server-only";
+
 import bcrypt from "bcryptjs";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 

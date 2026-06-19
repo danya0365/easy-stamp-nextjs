@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, asc, desc, eq, count } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { ContactRequest, ContactRequestStatus } from "@/src/domain/entities";

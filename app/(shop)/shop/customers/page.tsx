@@ -6,7 +6,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { PhoneLookupForm } from "@/src/presentation/components/stamp/PhoneLookupForm";
 import { CustomerList } from "@/src/presentation/components/shop/CustomerList";
-import { buildCustomerRows } from "@/src/presentation/components/shop/customer-rows";
+import { AnnotateCustomerEligibilityUseCase } from "@/src/application/use-cases/stamp/AnnotateCustomerEligibilityUseCase";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,11 @@ export default async function ShopCustomersPage({
   const page = await container.customerRepository.pageByShop(shopId, {
     search: search || undefined,
   });
-  const rows = await buildCustomerRows(shopId, page.items);
+  const rows = await new AnnotateCustomerEligibilityUseCase(
+    container.stampTypeRepository,
+    container.stampCardRepository,
+    container.stampBalanceRepository,
+  ).execute(shopId, page.items);
 
   return (
     <div className="flex flex-col gap-4">
