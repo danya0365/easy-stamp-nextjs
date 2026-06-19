@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   CreditCard,
   MailCheck,
+  MapPinned,
   MessageSquare,
   XCircle,
   type LucideIcon,
@@ -20,6 +21,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   payment_rejected: XCircle,
   contact_request: MessageSquare,
   contact_resolved: MailCheck,
+  lead_follow_up_due: MapPinned,
 };
 
 /** A single notification, ready to drop inside an `<li>`. */

@@ -17,17 +17,27 @@ export const TYPE_BY_EXT: Record<string, string> = {
   heic: "image/heic",
 };
 
+/** Pick a file extension from a content-type, falling back to the filename. */
+export function extForContentType(contentType: string, filename: string): string {
+  const fromType = EXT_BY_TYPE[contentType];
+  if (fromType) return fromType;
+  const fromName = filename.split(".").pop()?.toLowerCase();
+  return fromName && TYPE_BY_EXT[fromName] ? fromName : "bin";
+}
+
 /** Pick a file extension from the content-type, falling back to the filename. */
 export function extFor(input: SaveSlipInput): string {
-  const fromType = EXT_BY_TYPE[input.contentType];
-  if (fromType) return fromType;
-  const fromName = input.filename.split(".").pop()?.toLowerCase();
-  return fromName && TYPE_BY_EXT[fromName] ? fromName : "bin";
+  return extForContentType(input.contentType, input.filename);
 }
 
 /** Storage key for a slip (also the value stored in payments.slipUrl). */
 export function slipKey(paymentId: string, ext: string): string {
   return `slips/${paymentId}.${ext}`;
+}
+
+/** Storage key for a lead photo (also the value stored in leads.photoUrl). */
+export function leadPhotoKey(leadId: string, ext: string): string {
+  return `leads/${leadId}.${ext}`;
 }
 
 /** content-type from a stored key/url like "slips/<id>.png". */

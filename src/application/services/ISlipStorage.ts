@@ -7,6 +7,13 @@ export interface SaveSlipInput {
   bytes: Uint8Array;
 }
 
+export interface SaveObjectInput {
+  /** Full storage key, e.g. "leads/<id>.png". */
+  key: string;
+  contentType: string;
+  bytes: Uint8Array;
+}
+
 /**
  * Abstraction over where uploaded payment slips live. Phase 1 writes to local
  * disk; a future implementation could store in object storage (S3/R2) without
@@ -15,6 +22,8 @@ export interface SaveSlipInput {
 export interface ISlipStorage {
   /** Persist the slip and return a URL/path retrievable later. */
   save(input: SaveSlipInput): Promise<{ url: string }>;
-  /** Read raw bytes for serving via the auth-gated slip route handler. */
+  /** Persist arbitrary bytes under an explicit key (e.g. lead photos). */
+  saveObject(input: SaveObjectInput): Promise<{ url: string }>;
+  /** Read raw bytes for serving via an auth-gated route handler. */
   read(url: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
 }

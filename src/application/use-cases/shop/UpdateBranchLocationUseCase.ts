@@ -3,6 +3,7 @@ import type {
   IBranchRepository,
   UpdateBranchLocationInput,
 } from "@/src/application/repositories/IBranchRepository";
+import { validateLatLng, normalizeAddress } from "@/src/domain/services/geo";
 
 export class UpdateBranchLocationUseCase {
   constructor(private readonly branches: IBranchRepository) {}
@@ -22,22 +23,8 @@ export class UpdateBranchLocationUseCase {
     }
 
     const { latitude, longitude } = input;
-    const hasLat = latitude !== null;
-    const hasLng = longitude !== null;
-    if (hasLat !== hasLng) {
-      throw new Error("ต้องระบุทั้งละติจูดและลองจิจูด");
-    }
-    if (hasLat && (latitude! < -90 || latitude! > 90)) {
-      throw new Error("ละติจูดต้องอยู่ระหว่าง -90 ถึง 90");
-    }
-    if (hasLng && (longitude! < -180 || longitude! > 180)) {
-      throw new Error("ลองจิจูดต้องอยู่ระหว่าง -180 ถึง 180");
-    }
-
-    const address = input.address?.trim() || null;
-    if (address && address.length > 200) {
-      throw new Error("ที่อยู่ต้องไม่เกิน 200 ตัวอักษร");
-    }
+    validateLatLng({ latitude, longitude });
+    const address = normalizeAddress(input.address);
 
     return this.branches.updateLocation(branchId, { latitude, longitude, address });
   }
