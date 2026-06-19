@@ -41,6 +41,7 @@ import {
   NullMessagePusher,
   lineConfigFromEnv,
 } from "@/src/infrastructure/services/LineMessagingPusher";
+import { createGeocoder } from "@/src/infrastructure/services/OsmGeocoder";
 import { NotificationService } from "@/src/application/services/NotificationService";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
@@ -70,6 +71,7 @@ import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
+import type { IGeocoder } from "@/src/application/services/IGeocoder";
 
 /** R2 in any environment that configures it (prod/Vercel); local disk otherwise. */
 function createSlipStorage(): ISlipStorage {
@@ -152,6 +154,7 @@ class Container {
   readonly slipStorage: ISlipStorage = createSlipStorage();
   readonly messagePusher: IMessagePusher = createMessagePusher();
   readonly turnstile: TurnstileVerifier = createTurnstile();
+  readonly geocoder: IGeocoder = createGeocoder();
 
   readonly notificationService: NotificationService = new NotificationService(
     this.notificationRepository,
