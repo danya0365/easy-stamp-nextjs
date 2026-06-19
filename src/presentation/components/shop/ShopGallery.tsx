@@ -7,14 +7,14 @@ export function ShopGallery({ images }: { images: ShopImage[] }) {
   return (
     <Card>
       <CardHeader title="ภาพร้าน" />
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2.5">
         {images.map((img) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={img.id}
             src={`/api/shop-images/${img.id}`}
             alt="ภาพร้าน"
-            className="aspect-square w-full rounded-lg border border-border object-cover"
+            className="aspect-square w-full rounded-xl object-cover ring-1 ring-border"
           />
         ))}
       </div>

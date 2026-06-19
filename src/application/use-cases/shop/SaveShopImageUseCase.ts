@@ -20,7 +20,10 @@ export interface SaveShopImageInput {
   bytes: Uint8Array;
 }
 
-/** Upload a shop profile image (replaces the old one) or add a gallery photo. */
+/** Cover/profile are single (each replaces the old one); gallery is many. */
+const SINGLE_KINDS: ShopImageKind[] = ["profile", "cover"];
+
+/** Upload a shop cover/profile image (replaces the old one) or add a gallery photo. */
 export class SaveShopImageUseCase {
   constructor(
     private readonly images: IShopImageRepository,
@@ -36,8 +39,8 @@ export class SaveShopImageUseCase {
       throw new Error("ไฟล์ใหญ่เกิน 5MB");
     }
 
+    const existing = await this.images.listByShop(input.shopId);
     if (input.kind === "gallery") {
-      const existing = await this.images.listByShop(input.shopId);
       const galleryCount = existing.filter((i) => i.kind === "gallery").length;
       if (galleryCount >= MAX_GALLERY) {
         throw new Error(`เพิ่มรูปแกลเลอรี่ได้สูงสุด ${MAX_GALLERY} รูป`);
@@ -56,9 +59,9 @@ export class SaveShopImageUseCase {
       bytes: input.bytes,
     });
 
-    // Profile is single — remove the previous one (row + object) first.
-    if (input.kind === "profile") {
-      const prev = await this.images.findProfile(input.shopId);
+    // Cover/profile are single — remove the previous one (row + object) first.
+    if (SINGLE_KINDS.includes(input.kind)) {
+      const prev = existing.find((i) => i.kind === input.kind);
       if (prev) {
         await this.images.delete(prev.id);
         await this.storage.delete(prev.storageKey);

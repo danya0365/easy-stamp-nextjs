@@ -110,7 +110,7 @@ export async function uploadShopImageAction(
   try {
     const shopId = await ownerShopId();
     const kind = String(formData.get("kind") ?? "") as ShopImageKind;
-    if (kind !== "profile" && kind !== "gallery") {
+    if (kind !== "profile" && kind !== "gallery" && kind !== "cover") {
       throw new Error("ประเภทรูปไม่ถูกต้อง");
     }
     const file = formData.get("image");

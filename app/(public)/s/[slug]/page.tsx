@@ -15,7 +15,7 @@ import { RedemptionList } from "@/src/presentation/components/stamp/RedemptionLi
 import { buildCustomerRedemptionItems } from "@/src/presentation/components/stamp/redemption-items";
 import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
-import { ShopProfileHeader } from "@/src/presentation/components/shop/ShopProfileHeader";
+import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
 import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 
@@ -83,13 +83,17 @@ export default async function PublicShopCheckPage({
 
   // Shop imagery + reviews (public).
   const images = await container.shopImageRepository.listByShop(shop.id);
+  const coverImage = images.find((i) => i.kind === "cover") ?? null;
   const profileImage = images.find((i) => i.kind === "profile") ?? null;
   const gallery = images.filter((i) => i.kind === "gallery");
-  const [reviewSummary, reviewsPage, myReview] = await Promise.all([
+  const [reviewSummary, reviewsPage, myReview, category] = await Promise.all([
     container.shopReviewRepository.summary(shop.id),
     container.shopReviewRepository.pageByShop(shop.id),
     view
       ? container.shopReviewRepository.findByCustomer(shop.id, view.customer.id)
+      : Promise.resolve(null),
+    shop.categoryId
+      ? container.shopCategoryRepository.findById(shop.categoryId)
       : Promise.resolve(null),
   ]);
 
@@ -102,7 +106,13 @@ export default async function PublicShopCheckPage({
         </p>
       )}
 
-      <ShopProfileHeader profileImage={profileImage} shopName={shop.name} />
+      <ShopHero
+        coverImage={coverImage}
+        profileImage={profileImage}
+        shopName={shop.name}
+        categoryName={category?.name ?? null}
+        rating={reviewSummary}
+      />
       <ShopGallery images={gallery} />
 
       {view ? (

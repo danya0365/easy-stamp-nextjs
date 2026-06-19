@@ -19,7 +19,7 @@ export type NotificationType =
   | "shop_received_review";
 export type ContactRequestStatus = "open" | "resolved";
 
-export type ShopImageKind = "profile" | "gallery";
+export type ShopImageKind = "profile" | "gallery" | "cover";
 
 export interface ShopImage {
   id: string;

@@ -2,8 +2,8 @@ import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { id, createdAt } from "./_shared";
 import { shops } from "./shops";
 
-/** A shop's profile image (max one) or a gallery photo (many). */
-export const SHOP_IMAGE_KINDS = ["profile", "gallery"] as const;
+/** A shop's cover banner / profile image (max one each) or a gallery photo (many). */
+export const SHOP_IMAGE_KINDS = ["profile", "gallery", "cover"] as const;
 export type ShopImageKind = (typeof SHOP_IMAGE_KINDS)[number];
 
 /** Owner-uploaded shop imagery shown on the public shop page. */

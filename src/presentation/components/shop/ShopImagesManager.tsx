@@ -15,7 +15,13 @@ import { Button } from "@/src/presentation/components/ui/Button";
 const FILE_INPUT_CLASS =
   "text-sm text-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700";
 
-function UploadForm({ kind, label }: { kind: "profile" | "gallery"; label: string }) {
+function UploadForm({
+  kind,
+  label,
+}: {
+  kind: "profile" | "gallery" | "cover";
+  label: string;
+}) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     uploadShopImageAction,
     {},
@@ -64,11 +70,35 @@ function DeleteButton({ imageId }: { imageId: string }) {
 }
 
 export function ShopImagesManager({ images }: { images: ShopImage[] }) {
+  const cover = images.find((i) => i.kind === "cover") ?? null;
   const profile = images.find((i) => i.kind === "profile") ?? null;
   const gallery = images.filter((i) => i.kind === "gallery");
 
   return (
     <div className="flex flex-col gap-6">
+      <section className="flex flex-col gap-3">
+        <p className="text-sm font-medium text-foreground">
+          รูปปก (Cover) — แบนเนอร์กว้างบนหน้าร้าน
+        </p>
+        {cover ? (
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/shop-images/${cover.id}`}
+              alt="รูปปกร้าน"
+              className="h-32 w-full rounded-xl border border-border object-cover"
+            />
+            <DeleteButton imageId={cover.id} />
+          </div>
+        ) : (
+          <p className="text-xs text-muted">ยังไม่มีรูปปก</p>
+        )}
+        <UploadForm
+          kind="cover"
+          label={cover ? "เปลี่ยนรูปปก" : "อัปโหลดรูปปก"}
+        />
+      </section>
+
       <section className="flex flex-col gap-3">
         <p className="text-sm font-medium text-foreground">รูปโปรไฟล์ร้าน</p>
         {profile ? (

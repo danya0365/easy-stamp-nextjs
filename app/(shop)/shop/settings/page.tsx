@@ -36,7 +36,19 @@ export default async function ShopSettingsPage() {
               <Card>
                 <CardHeader
                   title="ประเภทแสตมป์"
-                  subtitle={`กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง · ลิงก์ลูกค้า: /s/${shop.slug}`}
+                  subtitle={
+                    <>
+                      กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง ·{" "}
+                      <a
+                        href={`/s/${shop.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-brand-700 hover:underline"
+                      >
+                        เปิดหน้าร้าน /s/{shop.slug} ↗
+                      </a>
+                    </>
+                  }
                 />
                 <StampTypesManager types={stampTypes} />
                 <Link
