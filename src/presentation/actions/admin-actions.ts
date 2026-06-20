@@ -17,6 +17,7 @@ import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopU
 import { ResumeShopUseCase } from "@/src/application/use-cases/billing/ResumeShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
 import { ResetPeerTwoFactorUseCase } from "@/src/application/use-cases/auth/ResetPeerTwoFactorUseCase";
+import { assertPasswordAcceptable } from "@/src/application/use-cases/auth/password-policy";
 import { SetReviewHiddenUseCase } from "@/src/application/use-cases/review/SetReviewHiddenUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
@@ -61,6 +62,8 @@ export async function createShopAction(
 ): Promise<AdminFormState> {
   try {
     await requireRole("platform_admin");
+    const ownerPassword = String(formData.get("ownerPassword") ?? "");
+    await assertPasswordAcceptable(ownerPassword, container.passwordBreachChecker);
     await new CreateShopUseCase(
       container.shopRepository,
       container.userRepository,
@@ -72,7 +75,7 @@ export async function createShopAction(
       name: String(formData.get("name") ?? ""),
       slug: String(formData.get("slug") ?? ""),
       ownerEmail: String(formData.get("ownerEmail") ?? ""),
-      ownerPassword: String(formData.get("ownerPassword") ?? ""),
+      ownerPassword,
       pricePerDaySatang: bahtToSatang(
         Number(formData.get("pricePerDayBaht") ?? 0),
       ),

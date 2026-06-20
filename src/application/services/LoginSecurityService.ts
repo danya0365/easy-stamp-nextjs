@@ -88,6 +88,17 @@ export class LoginSecurityService {
           : `IP ${ctx.ip} ใส่รหัสผิด ${byIp} ครั้งใน 15 นาที (อาจเป็น brute-force)`,
         linkUrl: "/admin/security",
       });
+      // Also warn the account's owner directly (in-app + LINE) — it's their account.
+      if (user) {
+        const link =
+          user.role === "platform_admin" ? "/admin/security" : "/shop/security";
+        await this.notifications.notify(user.id, {
+          type: "security_alert",
+          title: "⚠️ บัญชีของคุณถูกพยายามเข้าสู่ระบบผิดปกติ",
+          body: "มีการใส่รหัสผ่านผิดหลายครั้ง บัญชีถูกล็อกชั่วคราว — หากไม่ใช่คุณ โปรดเปลี่ยนรหัสผ่านทันที",
+          linkUrl: link,
+        });
+      }
     }
   }
 }

@@ -5,6 +5,7 @@ import { ShieldAlert, ShieldCheck, Shield } from "lucide-react";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { loadMoreAuditAction } from "@/src/presentation/actions/security-actions";
+import { loadMoreShopAuditAction } from "@/src/presentation/actions/shop-actions";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import { ROLE_LABEL } from "@/src/domain/types/roles";
 import type { AuditLog } from "@/src/domain/entities";
@@ -72,17 +73,25 @@ function summarize(e: AuditLog): string {
 export function AuditTimeline({
   initialItems,
   initialCursor,
-  action,
+  action = "",
+  scope = "admin",
 }: {
   initialItems: AuditLog[];
   initialCursor: string | null;
-  action: string;
+  /** Admin scope only: filter by a single action name. */
+  action?: string;
+  /** "admin" = whole platform; "shop" = the owner's own shop only. */
+  scope?: "admin" | "shop";
 }) {
+  const loadMore =
+    scope === "shop"
+      ? (cursor: string) => loadMoreShopAuditAction(cursor)
+      : (cursor: string) => loadMoreAuditAction(action, cursor);
   return (
     <LoadMore<AuditLog>
       initialItems={initialItems}
       initialCursor={initialCursor}
-      loadMore={(cursor) => loadMoreAuditAction(action, cursor)}
+      loadMore={loadMore}
       getKey={(e) => e.id}
       renderItem={(e) => (
         <li className="flex items-start justify-between gap-3 py-2.5">

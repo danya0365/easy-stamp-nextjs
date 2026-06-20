@@ -24,7 +24,7 @@ const sec = () => container.loginSecurity;
 
 test("locks an account after threshold failures + alerts admins once", async () => {
   const admin = await adminUser("sec-admin@test.local");
-  const { shop } = await seedShop("sec-lock");
+  const { shop, ownerId } = await seedShop("sec-lock");
   const email = "sec-lock@test.local"; // seedShop owner email = `${slug}@test.local`
 
   // Below threshold → not locked yet.
@@ -40,6 +40,14 @@ test("locks an account after threshold failures + alerts admins once", async () 
   const adminNotis = await container.notificationRepository.listByUser(admin.id);
   const alerts = adminNotis.filter((n) => n.type === "security_alert");
   assert.equal(alerts.length, 1, "exactly one brute-force alert (fires once at threshold)");
+
+  // The account's owner is warned directly too (it's their account).
+  const ownerNotis = await container.notificationRepository.listByUser(ownerId);
+  assert.equal(
+    ownerNotis.filter((n) => n.type === "security_alert").length,
+    1,
+    "owner notified their own account was attacked",
+  );
   assert.ok(shop, "shop seeded");
 });
 

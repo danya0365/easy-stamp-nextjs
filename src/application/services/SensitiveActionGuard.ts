@@ -54,6 +54,15 @@ export class SensitiveActionGuard {
         body: c.alertBody,
         linkUrl: "/admin/security",
       });
+      // Also tell the shop owner — it's their shop being abused.
+      if (c.shopId) {
+        await this.notifications.notifyShopOwner(c.shopId, {
+          type: "security_alert",
+          title: c.alertTitle,
+          body: c.alertBody,
+          linkUrl: "/shop/security",
+        });
+      }
     }
     return { allowed: false };
   }
