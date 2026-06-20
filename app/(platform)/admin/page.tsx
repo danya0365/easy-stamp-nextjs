@@ -3,8 +3,12 @@ import Link from "next/link";
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
+import { LogOut } from "lucide-react";
+
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
+import { TwoFactorPanel } from "@/src/presentation/components/auth/TwoFactorPanel";
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
+import { signOutEverywhereAction } from "@/src/presentation/actions/auth-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -58,8 +62,37 @@ export default async function AdminDashboardPage() {
       </Card>
 
       <Card>
+        <CardHeader
+          title="การยืนยันตัวตน 2 ชั้น (2FA)"
+          subtitle="ป้องกันบัญชีผู้ดูแลด้วย TOTP — แนะนำให้เปิดใช้งาน"
+        />
+        <TwoFactorPanel enabled={user.totpEnabled} />
+      </Card>
+
+      <Card>
         <CardHeader title="เปลี่ยนรหัสผ่าน" />
         <ChangePasswordForm />
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="อุปกรณ์ที่เข้าสู่ระบบ"
+          subtitle="ออกจากระบบทุกอุปกรณ์ยกเว้นเครื่องนี้ (เผื่อทำอุปกรณ์หาย)"
+        />
+        <form
+          action={async () => {
+            "use server";
+            await signOutEverywhereAction();
+          }}
+        >
+          <button
+            type="submit"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted-surface"
+          >
+            <LogOut className="size-4" />
+            ออกจากระบบบนอุปกรณ์อื่นทั้งหมด
+          </button>
+        </form>
       </Card>
     </div>
   );

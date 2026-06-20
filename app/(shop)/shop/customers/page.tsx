@@ -1,6 +1,6 @@
 import { Users } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -15,8 +15,7 @@ export default async function ShopCustomersPage({
 }: {
   searchParams: Promise<{ phone?: string }>;
 }) {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
   const { phone } = await searchParams;
   const search = phone?.trim() ?? "";
 

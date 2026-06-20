@@ -1,7 +1,11 @@
 import Link from "next/link";
-import { Store } from "lucide-react";
+import { Eye, LogOut, Store } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
+import {
+  startImpersonationAction,
+  forceLogoutUserAction,
+} from "@/src/presentation/actions/admin-actions";
 import { container } from "@/src/infrastructure/di/container";
 import { GetBillingStateUseCase } from "@/src/application/use-cases/billing/GetBillingStateUseCase";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -100,8 +104,35 @@ export default async function AdminShopsPage() {
                       shopId={shop.id}
                       adminSuspended={adminSuspended}
                     />
+                    <form action={startImpersonationAction.bind(null, shop.id)}>
+                      <button
+                        type="submit"
+                        title="ดูหน้าจอแบบร้านนี้ (อ่านอย่างเดียว)"
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
+                      >
+                        <Eye className="size-3.5" />
+                        ดูแบบร้าน
+                      </button>
+                    </form>
                     {owner && (
-                      <ResetPasswordControl kind="owner" userId={owner.id} />
+                      <>
+                        <ResetPasswordControl kind="owner" userId={owner.id} />
+                        <form
+                          action={async () => {
+                            "use server";
+                            await forceLogoutUserAction(owner.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            title="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
+                            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
+                          >
+                            <LogOut className="size-3.5" />
+                            เตะออก
+                          </button>
+                        </form>
+                      </>
                     )}
                   </div>
                 </li>

@@ -17,6 +17,7 @@ export * from "./topup-transactions";
 export * from "./notifications";
 export * from "./contact-requests";
 export * from "./rate-limits";
+export * from "./audit-logs";
 export * from "./leads";
 export * from "./lead-visit-logs";
 export * from "./shop-images";

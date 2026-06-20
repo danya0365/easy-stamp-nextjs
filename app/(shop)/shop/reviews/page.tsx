@@ -1,6 +1,6 @@
 import { Star } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -10,8 +10,7 @@ import { OwnerReviewList } from "@/src/presentation/components/reviews/OwnerRevi
 export const dynamic = "force-dynamic";
 
 export default async function ShopReviewsPage() {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
   const [summary, page] = await Promise.all([
     container.shopReviewRepository.summary(shopId),
     container.shopReviewRepository.pageByShop(shopId, { includeHidden: true }),

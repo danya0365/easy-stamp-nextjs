@@ -1,12 +1,13 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { container } from "@/src/infrastructure/di/container";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
+import { ImpersonationBanner } from "@/src/presentation/components/admin/ImpersonationBanner";
 import { SuspensionBanner } from "@/src/presentation/components/billing/SuspensionBanner";
 import { PreExpiryBanner } from "@/src/presentation/components/billing/PreExpiryBanner";
 import { PausedBanner } from "@/src/presentation/components/billing/PausedBanner";
@@ -16,10 +17,14 @@ export default async function ShopLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireRole("shop_owner");
-  const { status } = await getBillingState(user.shopId!);
+  const { user, shopId, impersonating } = await requireShopAccess();
+  const { status } = await getBillingState(shopId);
   const pathname = (await headers()).get("x-pathname") ?? "";
-  const unread = await container.notificationRepository.countUnread(user.id);
+  // Impersonating admins have no shop-owner notifications of their own.
+  const unread = impersonating
+    ? 0
+    : await container.notificationRepository.countUnread(user.id);
+  const shop = impersonating ? await container.shopRepository.findById(shopId) : null;
 
   // Suspended: block everything except the billing page (so they can pay).
   if (status.isSuspended && !pathname.startsWith("/shop/billing")) {
@@ -28,9 +33,12 @@ export default async function ShopLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
+      {impersonating && (
+        <ImpersonationBanner shopName={shop?.name ?? "—"} />
+      )}
       <AppHeader
         brand="Easy Stamp"
-        role="ร้านค้า"
+        role={impersonating ? "ดูแบบร้าน" : "ร้านค้า"}
         userEmail={user.email}
         notifications={{ href: "/shop/notifications", unread }}
       />

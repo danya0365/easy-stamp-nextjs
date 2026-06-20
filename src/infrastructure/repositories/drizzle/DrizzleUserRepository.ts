@@ -20,6 +20,7 @@ function toUser(row: Row): User {
     branchId: row.branchId,
     isActive: row.isActive,
     lineUserId: row.lineUserId,
+    totpEnabled: !!row.totpConfirmedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -170,5 +171,64 @@ export class DrizzleUserRepository implements IUserRepository {
       .update(schema.users)
       .set({ loginOtpHash: null, loginOtpExpiresAt: null, loginOtpAttempts: 0 })
       .where(eq(schema.users.id, id));
+  }
+
+  async setTotpSecret(id: string, secret: string | null): Promise<void> {
+    // Setting a new pending secret also clears any prior confirmation/recovery.
+    await db
+      .update(schema.users)
+      .set({
+        totpSecret: secret,
+        totpConfirmedAt: null,
+        totpRecoveryCodes: null,
+      })
+      .where(eq(schema.users.id, id));
+  }
+
+  async enableTotp(id: string, recoveryHashes: string[]): Promise<void> {
+    await db
+      .update(schema.users)
+      .set({
+        totpConfirmedAt: new Date().toISOString(),
+        totpRecoveryCodes: JSON.stringify(recoveryHashes),
+      })
+      .where(eq(schema.users.id, id));
+  }
+
+  async disableTotp(id: string): Promise<void> {
+    await db
+      .update(schema.users)
+      .set({ totpSecret: null, totpConfirmedAt: null, totpRecoveryCodes: null })
+      .where(eq(schema.users.id, id));
+  }
+
+  async setTotpRecoveryCodes(id: string, recoveryHashes: string[]): Promise<void> {
+    await db
+      .update(schema.users)
+      .set({ totpRecoveryCodes: JSON.stringify(recoveryHashes) })
+      .where(eq(schema.users.id, id));
+  }
+
+  async getTotpState(id: string): Promise<{
+    secret: string | null;
+    confirmedAt: string | null;
+    recoveryCodes: string[];
+  } | null> {
+    const row = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
+    if (!row) return null;
+    let recoveryCodes: string[] = [];
+    if (row.totpRecoveryCodes) {
+      try {
+        const parsed: unknown = JSON.parse(row.totpRecoveryCodes);
+        if (Array.isArray(parsed)) recoveryCodes = parsed.filter((c): c is string => typeof c === "string");
+      } catch {
+        /* corrupt JSON → treat as no recovery codes */
+      }
+    }
+    return {
+      secret: row.totpSecret,
+      confirmedAt: row.totpConfirmedAt,
+      recoveryCodes,
+    };
   }
 }

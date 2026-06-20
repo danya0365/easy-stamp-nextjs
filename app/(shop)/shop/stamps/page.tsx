@@ -1,13 +1,13 @@
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { StampStation } from "@/src/presentation/components/stamp/StampStation";
 
 export const dynamic = "force-dynamic";
 
 export default async function ShopStampsPage() {
-  const user = await requireRole("shop_owner");
+  const { shopId } = await requireShopAccess();
   const stampTypes = await container.stampTypeRepository.listByShop(
-    user.shopId!,
+    shopId,
     { activeOnly: true },
   );
   return (

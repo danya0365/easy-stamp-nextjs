@@ -16,3 +16,9 @@ export async function getClientIp(): Promise<string> {
   }
   return h.get("x-real-ip")?.trim() || "unknown";
 }
+
+/** Best-effort User-Agent string for audit logging (truncated, never throws). */
+export async function getUserAgent(): Promise<string | null> {
+  const h = await headers();
+  return h.get("user-agent")?.slice(0, 400) || null;
+}

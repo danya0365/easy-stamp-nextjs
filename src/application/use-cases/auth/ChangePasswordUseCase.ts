@@ -1,4 +1,5 @@
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
+import type { ISessionRepository } from "@/src/application/repositories/ISessionRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import { assertValidPassword } from "./password-policy";
 
@@ -7,6 +8,7 @@ export class ChangePasswordUseCase {
   constructor(
     private readonly users: IUserRepository,
     private readonly hasher: IPasswordHasher,
+    private readonly sessions: ISessionRepository,
   ) {}
 
   async execute(
@@ -27,5 +29,8 @@ export class ChangePasswordUseCase {
 
     const passwordHash = await this.hasher.hash(newPassword);
     await this.users.updatePassword(userId, passwordHash);
+    // Invalidate every session so a leaked/old cookie can't survive a change.
+    // (The caller re-establishes the current device's session.)
+    await this.sessions.deleteAllForUser(userId);
   }
 }

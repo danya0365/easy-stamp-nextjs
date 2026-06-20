@@ -1,6 +1,6 @@
 import { Clock } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
@@ -10,9 +10,9 @@ import { formatDateTime } from "@/src/presentation/lib/format-date";
 export const dynamic = "force-dynamic";
 
 export default async function ShopContactPage() {
-  const user = await requireRole("shop_owner");
+  const { shopId } = await requireShopAccess();
   const requests = await container.contactRequestRepository.listByShop(
-    user.shopId!,
+    shopId,
     10,
   );
   const open = requests.find((r) => r.status === "open");

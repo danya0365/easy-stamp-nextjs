@@ -24,6 +24,8 @@ import {
   type CustomerRow,
 } from "@/src/application/use-cases/stamp/AnnotateCustomerEligibilityUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
+import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
+import { getClientIp } from "@/src/presentation/lib/request-ip";
 import type { Page } from "@/src/application/repositories/pagination";
 import type { ShopImageKind, ShopReview } from "@/src/domain/entities";
 
@@ -340,8 +342,9 @@ export async function createStaffAction(
   formData: FormData,
 ): Promise<FormState> {
   try {
+    const owner = await requireRole("shop_owner");
     const shopId = await ownerShopId();
-    await new CreateStaffUseCase(
+    const staff = await new CreateStaffUseCase(
       container.userRepository,
       container.branchRepository,
       container.passwordHasher,
@@ -350,6 +353,16 @@ export async function createStaffAction(
       branchId: String(formData.get("branchId") ?? ""),
       email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
+    });
+    await container.auditLogger.record({
+      actorUserId: owner.id,
+      actorRole: owner.role,
+      action: AUDIT_ACTIONS.staffCreated,
+      targetType: "user",
+      targetId: staff.id,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { email: staff.email },
     });
     revalidatePath("/shop/staff");
     return { success: "เพิ่มพนักงานแล้ว" };
@@ -377,7 +390,8 @@ export async function resetStaffPasswordAction(
   newPassword: string,
 ): Promise<{ error?: string }> {
   try {
-    const shopId = await ownerShopId();
+    const owner = await requireRole("shop_owner");
+    const shopId = owner.shopId;
     const target = await container.userRepository.findById(userId);
     if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
       throw new Error("ไม่พบพนักงานในร้านนี้");
@@ -385,7 +399,17 @@ export async function resetStaffPasswordAction(
     await new ResetPasswordUseCase(
       container.userRepository,
       container.passwordHasher,
+      container.sessionRepository,
     ).execute(userId, newPassword);
+    await container.auditLogger.record({
+      actorUserId: owner.id,
+      actorRole: owner.role,
+      action: AUDIT_ACTIONS.passwordResetByAdmin,
+      targetType: "user",
+      targetId: userId,
+      shopId,
+      ip: await getClientIp(),
+    });
     return {};
   } catch (e) {
     return { error: (e as Error).message };

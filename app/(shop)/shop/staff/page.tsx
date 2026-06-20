@@ -1,6 +1,6 @@
 import { User } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -11,8 +11,7 @@ import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPa
 export const dynamic = "force-dynamic";
 
 export default async function ShopStaffPage() {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
   const [branches, users] = await Promise.all([
     container.branchRepository.listByShop(shopId),
     container.userRepository.listByShop(shopId),

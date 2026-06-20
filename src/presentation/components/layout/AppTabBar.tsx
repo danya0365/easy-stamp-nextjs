@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   QrCode,
   Settings,
+  ShieldAlert,
   Stamp,
   Star,
   Store,
@@ -61,6 +62,7 @@ const NAVS = {
     { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },
     { href: "/admin/contacts", label: "ติดต่อ", icon: MessageSquare },
+    { href: "/admin/security", label: "ความปลอดภัย", icon: ShieldAlert },
   ],
   staff: [
     { href: "/staff", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },

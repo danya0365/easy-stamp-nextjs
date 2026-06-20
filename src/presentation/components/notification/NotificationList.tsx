@@ -6,6 +6,7 @@ import {
   MailCheck,
   MapPinned,
   MessageSquare,
+  ShieldAlert,
   Star,
   XCircle,
   type LucideIcon,
@@ -24,6 +25,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   contact_resolved: MailCheck,
   lead_follow_up_due: MapPinned,
   shop_received_review: Star,
+  security_alert: ShieldAlert,
 };
 
 /** A single notification, ready to drop inside an `<li>`. */

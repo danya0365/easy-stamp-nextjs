@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BookOpen, ExternalLink } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -14,8 +14,7 @@ import { FeatureCarousel } from "@/src/presentation/components/shop/FeatureCarou
 export const dynamic = "force-dynamic";
 
 export default async function ShopDashboardPage() {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { user, shopId } = await requireShopAccess();
   const [shop, branches, users, customers, redemptions, stampTypes] =
     await Promise.all([
       container.shopRepository.findById(shopId),

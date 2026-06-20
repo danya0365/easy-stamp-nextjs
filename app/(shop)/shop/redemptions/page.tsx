@@ -1,4 +1,4 @@
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { RedemptionHistory } from "@/src/presentation/components/stamp/RedemptionHistory";
@@ -8,8 +8,7 @@ import { BuildRedemptionItemsUseCase } from "@/src/application/use-cases/stamp/B
 export const dynamic = "force-dynamic";
 
 export default async function ShopRedemptionsPage() {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
 
   const page = await container.rewardRedemptionRepository.pageByShop(shopId);
   const items = await new BuildRedemptionItemsUseCase(

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
@@ -16,8 +16,8 @@ import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTab
 export const dynamic = "force-dynamic";
 
 export default async function ShopSettingsPage() {
-  const user = await requireRole("shop_owner");
-  const shop = await container.shopRepository.findById(user.shopId!);
+  const { user, shopId } = await requireShopAccess();
+  const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
   const [stampTypes, subscription, shopImages, shopProfile] = await Promise.all([
     container.stampTypeRepository.listByShop(shop.id),

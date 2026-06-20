@@ -29,6 +29,7 @@ function toUser(row: UserRow): User {
     branchId: row.branchId,
     isActive: row.isActive,
     lineUserId: row.lineUserId,
+    totpEnabled: !!row.totpConfirmedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

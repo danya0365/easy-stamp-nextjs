@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BarChart3, Trophy } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StatCard } from "@/src/presentation/components/ui/StatCard";
@@ -24,8 +24,7 @@ export default async function ShopAnalyticsPage({
 }: {
   searchParams: Promise<{ range?: string }>;
 }) {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
   const { range } = await searchParams;
   const parsed = Number(range);
   const rangeDays: RangeDays = isValidRange(parsed) ? parsed : DEFAULT_RANGE;

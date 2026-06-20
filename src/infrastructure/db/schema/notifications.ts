@@ -10,6 +10,7 @@ export const NOTIFICATION_TYPES = [
   "contact_resolved",
   "lead_follow_up_due",
   "shop_received_review",
+  "security_alert",
 ] as const;
 
 /** Per-recipient in-app notifications (operators only — customers are anonymous). */

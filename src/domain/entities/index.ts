@@ -16,8 +16,25 @@ export type NotificationType =
   | "contact_request"
   | "contact_resolved"
   | "lead_follow_up_due"
-  | "shop_received_review";
+  | "shop_received_review"
+  | "security_alert";
 export type ContactRequestStatus = "open" | "resolved";
+
+/** Append-only security/support audit event. */
+export interface AuditLog {
+  id: string;
+  actorUserId: string | null;
+  actorRole: Role | null;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  shopId: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  /** JSON string of extra context, or null. */
+  metadata: string | null;
+  createdAt: string;
+}
 
 export type ShopImageKind = "profile" | "gallery" | "cover";
 
@@ -115,6 +132,8 @@ export interface User {
   isActive: boolean;
   /** LINE Messaging API push target, null until the operator links their LINE. */
   lineUserId: string | null;
+  /** Whether TOTP two-factor is active (secret confirmed). Never exposes the secret. */
+  totpEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }

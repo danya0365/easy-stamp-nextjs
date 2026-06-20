@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -11,13 +12,23 @@ import {
   forgetAccount,
   getSession,
   rememberAccount,
+  requireRole,
+  setPendingTwoFactor,
+  getPendingTwoFactor,
+  clearPendingTwoFactor,
 } from "@/src/infrastructure/auth/session";
 import { LoginUseCase } from "@/src/application/use-cases/auth/LoginUseCase";
 import { ChangePasswordUseCase } from "@/src/application/use-cases/auth/ChangePasswordUseCase";
 import { RequestLoginOtpUseCase } from "@/src/application/use-cases/auth/RequestLoginOtpUseCase";
 import { VerifyLoginOtpUseCase } from "@/src/application/use-cases/auth/VerifyLoginOtpUseCase";
+import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
+import { VerifyTwoFactorUseCase } from "@/src/application/use-cases/auth/VerifyTwoFactorUseCase";
+import { BeginTwoFactorSetupUseCase } from "@/src/application/use-cases/auth/BeginTwoFactorSetupUseCase";
+import { ConfirmTwoFactorSetupUseCase } from "@/src/application/use-cases/auth/ConfirmTwoFactorSetupUseCase";
+import { DisableTwoFactorUseCase } from "@/src/application/use-cases/auth/DisableTwoFactorUseCase";
 import { lineConfigFromEnv } from "@/src/infrastructure/services/LineMessagingPusher";
-import { getClientIp } from "@/src/presentation/lib/request-ip";
+import { getClientIp, getUserAgent } from "@/src/presentation/lib/request-ip";
+import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
 import type { User } from "@/src/domain/entities";
 import { ROLE_HOME } from "@/src/domain/types/roles";
@@ -36,6 +47,38 @@ const LOGIN_WINDOW_MS = 10 * 60_000;
 
 export interface LoginFormState {
   error?: string;
+  /** Step 1 passed but the account has 2FA — UI should show the code step. */
+  twoFactorRequired?: boolean;
+}
+
+/**
+ * Finish a login after step-1 (password/OTP) succeeds. If the account has 2FA,
+ * stash a short-lived pending marker and ask the UI for the code instead of
+ * creating a session. Otherwise create the session and redirect.
+ */
+async function completeLogin(
+  user: User,
+  method: "password" | "line_otp",
+  ip: string,
+  userAgent: string | null,
+): Promise<LoginFormState> {
+  if (user.totpEnabled) {
+    await setPendingTwoFactor(user.id);
+    return { twoFactorRequired: true };
+  }
+  await container.auditLogger.record({
+    actorUserId: user.id,
+    actorRole: user.role,
+    action: AUDIT_ACTIONS.loginSucceeded,
+    shopId: user.shopId,
+    ip,
+    userAgent,
+    metadata: { method },
+  });
+  await rememberAccount({ email: user.email, role: user.role });
+  await createSession(user.id);
+  await sendLoginAlert(user, method === "password" ? "รหัสผ่าน" : "LINE OTP");
+  redirect(ROLE_HOME[user.role]);
 }
 
 /** Where the login UI should go next after the email step. */
@@ -113,6 +156,8 @@ export async function verifyLoginOtpAction(
   const otp = String(formData.get("otp") ?? "").trim();
   if (!email || !otp) return { error: "กรุณากรอกรหัส OTP" };
 
+  const ip = await getClientIp();
+  const userAgent = await getUserAgent();
   let user;
   try {
     user = await new VerifyLoginOtpUseCase(
@@ -120,13 +165,70 @@ export async function verifyLoginOtpAction(
       container.passwordHasher,
     ).execute(email, otp);
   } catch (e) {
+    await container.auditLogger.record({
+      action: AUDIT_ACTIONS.otpFailed,
+      ip,
+      userAgent,
+      metadata: { email: email.toLowerCase(), reason: (e as Error).message },
+    });
     return { error: (e as Error).message };
   }
-  if (!user) return { error: "รหัส OTP ไม่ถูกต้องหรือหมดอายุ" };
+  if (!user) {
+    await container.auditLogger.record({
+      action: AUDIT_ACTIONS.otpFailed,
+      ip,
+      userAgent,
+      metadata: { email: email.toLowerCase(), reason: "invalid_or_expired" },
+    });
+    return { error: "รหัส OTP ไม่ถูกต้องหรือหมดอายุ" };
+  }
 
+  return completeLogin(user, "line_otp", ip, userAgent);
+}
+
+/** Step 3 (2FA-enabled accounts): verify the TOTP/recovery code → start session. */
+export async function verifyLoginTwoFactorAction(
+  _prev: LoginFormState,
+  formData: FormData,
+): Promise<LoginFormState> {
+  const code = String(formData.get("code") ?? "").trim();
+  const userId = await getPendingTwoFactor();
+  if (!userId) return { error: "หมดเวลายืนยันตัวตน กรุณาเข้าสู่ระบบใหม่" };
+
+  const ip = await getClientIp();
+  const userAgent = await getUserAgent();
+  const user = await container.userRepository.findById(userId);
+  const ok = user
+    ? await new VerifyTwoFactorUseCase(
+        container.userRepository,
+        container.totp,
+        container.passwordHasher,
+      ).execute(userId, code)
+    : false;
+
+  if (!ok || !user) {
+    await container.auditLogger.record({
+      actorUserId: userId,
+      action: AUDIT_ACTIONS.twoFactorFailed,
+      ip,
+      userAgent,
+    });
+    return { error: "รหัสยืนยันไม่ถูกต้อง", twoFactorRequired: true };
+  }
+
+  await clearPendingTwoFactor();
+  await container.auditLogger.record({
+    actorUserId: user.id,
+    actorRole: user.role,
+    action: AUDIT_ACTIONS.loginSucceeded,
+    shopId: user.shopId,
+    ip,
+    userAgent,
+    metadata: { method: "2fa" },
+  });
   await rememberAccount({ email: user.email, role: user.role });
   await createSession(user.id);
-  await sendLoginAlert(user, "LINE OTP");
+  await sendLoginAlert(user, "2FA");
   redirect(ROLE_HOME[user.role]);
 }
 
@@ -144,6 +246,7 @@ export async function loginAction(
 
   // IP+email rate-limit (anti password stuffing).
   const ip = await getClientIp();
+  const userAgent = await getUserAgent();
   const rl = await container.rateLimitRepository.hit(
     `login:${ip}:${parsed.data.email.toLowerCase()}`,
     LOGIN_LIMIT,
@@ -155,20 +258,31 @@ export async function loginAction(
     };
   }
 
+  // Account-level lockout (brute-force protection across IPs).
+  try {
+    await container.loginSecurity.assertNotLocked(parsed.data.email);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+
   const useCase = new LoginUseCase(
     container.userRepository,
     container.passwordHasher,
   );
   const user = await useCase.execute(parsed.data.email, parsed.data.password);
   if (!user) {
+    await container.loginSecurity.recordFailure({
+      email: parsed.data.email,
+      ip,
+      userAgent,
+      method: "password",
+    });
     return { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
   }
 
-  await rememberAccount({ email: user.email, role: user.role });
-  await createSession(user.id);
-  await sendLoginAlert(user, "รหัสผ่าน");
-  // redirect throws — must run outside the validation path above.
-  redirect(ROLE_HOME[user.role]);
+  // completeLogin redirects (throws) on success, or returns a 2FA-required
+  // state for accounts with two-factor enabled.
+  return completeLogin(user, "password", ip, userAgent);
 }
 
 export async function logoutAction(): Promise<void> {
@@ -205,6 +319,94 @@ export async function devLoginAsAction(userId: string): Promise<void> {
   redirect(ROLE_HOME[user.role]);
 }
 
+export interface TwoFactorSetupState {
+  secret?: string;
+  uri?: string;
+  qrDataUrl?: string;
+  recoveryCodes?: string[];
+  error?: string;
+  success?: string;
+}
+
+/** Admin begins 2FA enrollment — returns the secret + a QR data-URL to scan. */
+export async function beginTwoFactorSetupAction(): Promise<TwoFactorSetupState> {
+  const user = await requireRole("platform_admin");
+  const { secret, uri } = await new BeginTwoFactorSetupUseCase(
+    container.userRepository,
+    container.totp,
+  ).execute(user.id, user.email);
+  const qrDataUrl = await renderQrDataUrl(uri);
+  return { secret, uri, qrDataUrl };
+}
+
+/** Admin confirms 2FA with a code from their app — activates it + returns recovery codes. */
+export async function confirmTwoFactorSetupAction(
+  _prev: TwoFactorSetupState,
+  formData: FormData,
+): Promise<TwoFactorSetupState> {
+  try {
+    const user = await requireRole("platform_admin");
+    const code = String(formData.get("code") ?? "").trim();
+    const recoveryCodes = await new ConfirmTwoFactorSetupUseCase(
+      container.userRepository,
+      container.totp,
+      container.passwordHasher,
+    ).execute(user.id, code);
+    await container.auditLogger.record({
+      actorUserId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTIONS.twoFactorEnabled,
+      ip: await getClientIp(),
+    });
+    revalidatePath("/admin");
+    return { recoveryCodes, success: "เปิดใช้งาน 2FA แล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Admin turns off 2FA (must re-enter their password). */
+export async function disableTwoFactorAction(
+  _prev: TwoFactorSetupState,
+  formData: FormData,
+): Promise<TwoFactorSetupState> {
+  try {
+    const user = await requireRole("platform_admin");
+    const password = String(formData.get("password") ?? "");
+    await new DisableTwoFactorUseCase(
+      container.userRepository,
+      container.passwordHasher,
+    ).execute(user.id, password);
+    await container.auditLogger.record({
+      actorUserId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTIONS.twoFactorDisabled,
+      ip: await getClientIp(),
+    });
+    revalidatePath("/admin");
+    return { success: "ปิด 2FA แล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Sign out of every OTHER device (keeps the current one). */
+export async function signOutEverywhereAction(): Promise<{ error?: string; success?: string }> {
+  const user = await getSession();
+  if (!user) return { error: "กรุณาเข้าสู่ระบบใหม่" };
+  await container.sessionRepository.deleteAllForUser(user.id);
+  await createSession(user.id); // re-establish the current device
+  await container.auditLogger.record({
+    actorUserId: user.id,
+    actorRole: user.role,
+    action: AUDIT_ACTIONS.sessionsRevoked,
+    shopId: user.shopId,
+    ip: await getClientIp(),
+    userAgent: await getUserAgent(),
+  });
+  return { success: "ออกจากระบบบนอุปกรณ์อื่นทั้งหมดแล้ว" };
+}
+
 /** Any logged-in user changes their own password (verifies the current one). */
 export async function changeMyPasswordAction(
   _prev: PasswordFormState,
@@ -222,9 +424,22 @@ export async function changeMyPasswordAction(
     await new ChangePasswordUseCase(
       container.userRepository,
       container.passwordHasher,
+      container.sessionRepository,
     ).execute(user.id, current, next);
 
-    return { success: "เปลี่ยนรหัสผ่านแล้ว" };
+    // The use case revoked every session (incl. this one) — re-establish the
+    // current device so the user stays signed in here while others are logged out.
+    await createSession(user.id);
+    await container.auditLogger.record({
+      actorUserId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTIONS.passwordChanged,
+      shopId: user.shopId,
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+    });
+
+    return { success: "เปลี่ยนรหัสผ่านแล้ว — ออกจากระบบบนอุปกรณ์อื่นทั้งหมดแล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
   }

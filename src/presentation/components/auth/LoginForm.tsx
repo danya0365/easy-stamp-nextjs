@@ -7,6 +7,7 @@ import {
   loginAction,
   requestLoginOtpAction,
   verifyLoginOtpAction,
+  verifyLoginTwoFactorAction,
   forgetAccountAction,
 } from "@/src/presentation/actions/auth-actions";
 import { ROLE_LABEL } from "@/src/domain/types/roles";
@@ -19,7 +20,7 @@ const btnCls =
   "mt-2 rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-on-brand transition hover:bg-brand-700 disabled:opacity-60";
 const linkCls = "text-sm text-brand-700 hover:underline";
 
-type Step = "email" | "otp" | "password" | "unavailable";
+type Step = "email" | "otp" | "password" | "unavailable" | "twofa";
 
 export function LoginForm({
   knownAccounts = [],
@@ -91,9 +92,11 @@ export function LoginForm({
     setError(null);
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
-      // On success the action redirects (throws); we only get here on error.
+      // On success the action redirects (throws); we only get here on error
+      // or when the account needs a 2FA code.
       const res = await verifyLoginOtpAction({}, fd);
-      if (res?.error) setError(res.error);
+      if (res?.twoFactorRequired) setStep("twofa");
+      else if (res?.error) setError(res.error);
     });
   }
 
@@ -103,6 +106,17 @@ export function LoginForm({
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const res = await loginAction({}, fd);
+      if (res?.twoFactorRequired) setStep("twofa");
+      else if (res?.error) setError(res.error);
+    });
+  }
+
+  function onSubmitTwoFactor(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const fd = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const res = await verifyLoginTwoFactorAction({}, fd);
       if (res?.error) setError(res.error);
     });
   }
@@ -299,6 +313,43 @@ export function LoginForm({
           เปลี่ยนอีเมล
         </button>
       </div>
+    );
+  }
+
+  // --- 2FA step: TOTP / recovery code (after step-1 success) ---
+  if (step === "twofa") {
+    return (
+      <form onSubmit={onSubmitTwoFactor} className="flex flex-col gap-4">
+        <p className="text-sm text-muted">
+          กรอกรหัส 6 หลักจากแอป Authenticator (หรือรหัสสำรอง 1 ครั้ง)
+        </p>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="code" className="text-sm font-medium text-foreground">
+            รหัสยืนยัน 2 ชั้น
+          </label>
+          <input
+            id="code"
+            name="code"
+            inputMode="text"
+            autoComplete="one-time-code"
+            required
+            autoFocus
+            className={`${inputCls} text-center text-lg tracking-[0.3em]`}
+          />
+        </div>
+        {errorBox}
+        <button type="submit" disabled={pending} className={btnCls}>
+          {pending ? "กำลังยืนยัน…" : "ยืนยัน"}
+        </button>
+        <button
+          type="button"
+          onClick={backToEmail}
+          className={`${linkCls} inline-flex items-center gap-1 text-left`}
+        >
+          <ArrowLeft className="size-4" />
+          ยกเลิก
+        </button>
+      </form>
     );
   }
 
