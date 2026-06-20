@@ -30,6 +30,7 @@ import { DrizzleAuditLogRepository } from "@/src/infrastructure/repositories/dri
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
 import { CryptoTotpService } from "@/src/infrastructure/services/CryptoTotpService";
+import { HibpPasswordBreachChecker } from "@/src/infrastructure/services/HibpPasswordBreachChecker";
 import {
   TurnstileVerifier,
   turnstileConfigFromEnv,
@@ -81,6 +82,7 @@ import type { IShopProfileRepository } from "@/src/application/repositories/ISho
 import type { IAuditLogRepository } from "@/src/application/repositories/IAuditLogRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import type { ITotpService } from "@/src/application/services/ITotpService";
+import type { IPasswordBreachChecker } from "@/src/application/services/IPasswordBreachChecker";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
@@ -172,6 +174,8 @@ class Container {
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
   readonly totp: ITotpService = new CryptoTotpService();
+  readonly passwordBreachChecker: IPasswordBreachChecker =
+    new HibpPasswordBreachChecker();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();
   readonly slipStorage: ISlipStorage = createSlipStorage();
   readonly messagePusher: IMessagePusher = createMessagePusher();

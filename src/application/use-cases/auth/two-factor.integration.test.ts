@@ -8,6 +8,8 @@ import { BeginTwoFactorSetupUseCase } from "./BeginTwoFactorSetupUseCase";
 import { ConfirmTwoFactorSetupUseCase } from "./ConfirmTwoFactorSetupUseCase";
 import { VerifyTwoFactorUseCase } from "./VerifyTwoFactorUseCase";
 import { DisableTwoFactorUseCase } from "./DisableTwoFactorUseCase";
+import { RegenerateRecoveryCodesUseCase } from "./RegenerateRecoveryCodesUseCase";
+import { ResetPeerTwoFactorUseCase } from "./ResetPeerTwoFactorUseCase";
 
 before(async () => {
   await migrateTestDb();
@@ -63,4 +65,63 @@ test("enroll → confirm → verify (TOTP + recovery), then disable", async () =
   await disable.execute(admin.id, "password123");
   assert.equal((await container.userRepository.findById(admin.id))?.totpEnabled, false);
   assert.equal(await verify.execute(admin.id, totpAt(secret, now())), false, "2FA off → verify false");
+});
+
+test("regenerate recovery codes invalidates the old set (and needs the password)", async () => {
+  const admin = await adminUser("2fa-regen@test.local");
+  const { secret } = await new BeginTwoFactorSetupUseCase(
+    container.userRepository,
+    container.totp,
+  ).execute(admin.id, admin.email);
+  const oldCodes = await new ConfirmTwoFactorSetupUseCase(
+    container.userRepository,
+    container.totp,
+    container.passwordHasher,
+  ).execute(admin.id, totpAt(secret, now()));
+
+  const regen = new RegenerateRecoveryCodesUseCase(
+    container.userRepository,
+    container.passwordHasher,
+  );
+  await assert.rejects(regen.execute(admin.id, "wrongpw"), /รหัสผ่าน/);
+  const newCodes = await regen.execute(admin.id, "password123");
+  assert.equal(newCodes.length, 10);
+  assert.notDeepEqual(newCodes, oldCodes, "a fresh set is issued");
+
+  const verify = new VerifyTwoFactorUseCase(
+    container.userRepository,
+    container.totp,
+    container.passwordHasher,
+  );
+  assert.equal(await verify.execute(admin.id, oldCodes[0]), false, "old code no longer works");
+  assert.equal(await verify.execute(admin.id, newCodes[0]), true, "new code works");
+});
+
+test("break-glass: a peer admin resets another admin's 2FA + kills sessions", async () => {
+  const target = await adminUser("2fa-peer@test.local");
+  const { secret } = await new BeginTwoFactorSetupUseCase(
+    container.userRepository,
+    container.totp,
+  ).execute(target.id, target.email);
+  await new ConfirmTwoFactorSetupUseCase(
+    container.userRepository,
+    container.totp,
+    container.passwordHasher,
+  ).execute(target.id, totpAt(secret, now()));
+  const session = await container.sessionRepository.create({
+    userId: target.id,
+    expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+  });
+
+  await new ResetPeerTwoFactorUseCase(
+    container.userRepository,
+    container.sessionRepository,
+  ).execute(target.id);
+
+  assert.equal((await container.userRepository.findById(target.id))?.totpEnabled, false, "2FA cleared");
+  assert.equal(
+    await container.sessionRepository.findValid(session.id, new Date()),
+    null,
+    "sessions killed (forces re-login + re-enroll)",
+  );
 });

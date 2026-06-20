@@ -11,6 +11,9 @@ export const sessions = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     expiresAt: text().notNull(),
+    // Device context captured at sign-in, for the "active devices" list.
+    userAgent: text(),
+    ip: text(),
     createdAt: createdAt(),
   },
   (t) => [

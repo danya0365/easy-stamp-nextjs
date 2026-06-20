@@ -24,6 +24,9 @@ export const AUDIT_ACTIONS = {
   twoFactorEnabled: "two_factor_enabled",
   twoFactorDisabled: "two_factor_disabled",
   twoFactorFailed: "two_factor_failed",
+  twoFactorResetByAdmin: "two_factor_reset_by_admin",
+  recoveryCodesRegenerated: "recovery_codes_regenerated",
+  sessionRevoked: "session_revoked",
 } as const;
 
 /**

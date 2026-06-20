@@ -16,6 +16,7 @@ import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUs
 import { PauseShopUseCase } from "@/src/application/use-cases/billing/PauseShopUseCase";
 import { ResumeShopUseCase } from "@/src/application/use-cases/billing/ResumeShopUseCase";
 import { ResetPasswordUseCase } from "@/src/application/use-cases/auth/ResetPasswordUseCase";
+import { ResetPeerTwoFactorUseCase } from "@/src/application/use-cases/auth/ResetPeerTwoFactorUseCase";
 import { SetReviewHiddenUseCase } from "@/src/application/use-cases/review/SetReviewHiddenUseCase";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
@@ -242,6 +243,13 @@ export async function startImpersonationAction(shopId: string): Promise<void> {
     ip: await getClientIp(),
     metadata: { shopName: shop.name },
   });
+  // High-risk: notify every admin that someone is viewing a tenant's screens.
+  await container.notificationService.notifyAdmins({
+    type: "security_alert",
+    title: "👁️ เริ่มดูร้านแบบ admin (impersonation)",
+    body: `${admin.email} กำลังดูหน้าจอในนามร้าน ${shop.name} (อ่านอย่างเดียว)`,
+    linkUrl: "/admin/security",
+  });
   redirect("/shop");
 }
 
@@ -262,6 +270,44 @@ export async function stopImpersonationAction(): Promise<void> {
     });
   }
   redirect("/admin/shops");
+}
+
+/** Break-glass: an admin resets another admin's 2FA (lost device + codes). */
+export async function resetPeerTwoFactorAction(
+  userId: string,
+): Promise<{ error?: string }> {
+  try {
+    const admin = await requireRole("platform_admin");
+    if (userId === admin.id) {
+      throw new Error(
+        "รีเซ็ต 2FA ของตัวเองที่นี่ไม่ได้ — ใช้สคริปต์ break-glass (npm run reset-2fa)",
+      );
+    }
+    const target = await new ResetPeerTwoFactorUseCase(
+      container.userRepository,
+      container.sessionRepository,
+    ).execute(userId);
+    await container.auditLogger.record({
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: AUDIT_ACTIONS.twoFactorResetByAdmin,
+      targetType: "user",
+      targetId: userId,
+      ip: await getClientIp(),
+      metadata: { targetEmail: target.email },
+    });
+    // Tell every admin — a 2FA reset on a peer is high-risk (insider/compromise).
+    await container.notificationService.notifyAdmins({
+      type: "security_alert",
+      title: "⚠️ มีการรีเซ็ต 2FA ของผู้ดูแลระบบ",
+      body: `${admin.email} รีเซ็ตการยืนยัน 2 ชั้นของ ${target.email}`,
+      linkUrl: "/admin/security",
+    });
+    revalidatePath("/admin/security");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /** Admin force-logs-out a user from all devices (e.g. a compromised account). */
@@ -303,6 +349,7 @@ export async function adminResetOwnerPasswordAction(
       container.userRepository,
       container.passwordHasher,
       container.sessionRepository,
+      container.passwordBreachChecker,
     ).execute(userId, newPassword);
     await container.auditLogger.record({
       actorUserId: admin.id,

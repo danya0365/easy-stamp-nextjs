@@ -1,12 +1,16 @@
 import Link from "next/link";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import {
+  requireRole,
+  getCurrentSessionToken,
+} from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { LogOut } from "lucide-react";
 
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
 import { TwoFactorPanel } from "@/src/presentation/components/auth/TwoFactorPanel";
+import { DeviceList } from "@/src/presentation/components/auth/DeviceList";
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 import { signOutEverywhereAction } from "@/src/presentation/actions/auth-actions";
 
@@ -14,11 +18,22 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const user = await requireRole("platform_admin");
-  const [shops, pending, openContacts] = await Promise.all([
-    container.shopRepository.list(),
-    container.paymentRepository.listByStatus("pending"),
-    container.contactRequestRepository.countByStatus("open"),
-  ]);
+  const [shops, pending, openContacts, totpState, sessions, currentToken] =
+    await Promise.all([
+      container.shopRepository.list(),
+      container.paymentRepository.listByStatus("pending"),
+      container.contactRequestRepository.countByStatus("open"),
+      container.userRepository.getTotpState(user.id),
+      container.sessionRepository.listByUser(user.id, new Date()),
+      getCurrentSessionToken(),
+    ]);
+  const devices = sessions.map((s) => ({
+    id: s.id,
+    userAgent: s.userAgent,
+    ip: s.ip,
+    createdAt: s.createdAt,
+    isCurrent: s.id === currentToken,
+  }));
 
   return (
     <div className="flex flex-col gap-5">
@@ -66,7 +81,10 @@ export default async function AdminDashboardPage() {
           title="การยืนยันตัวตน 2 ชั้น (2FA)"
           subtitle="ป้องกันบัญชีผู้ดูแลด้วย TOTP — แนะนำให้เปิดใช้งาน"
         />
-        <TwoFactorPanel enabled={user.totpEnabled} />
+        <TwoFactorPanel
+          enabled={user.totpEnabled}
+          recoveryRemaining={totpState?.recoveryCodes.length}
+        />
       </Card>
 
       <Card>
@@ -77,9 +95,11 @@ export default async function AdminDashboardPage() {
       <Card>
         <CardHeader
           title="อุปกรณ์ที่เข้าสู่ระบบ"
-          subtitle="ออกจากระบบทุกอุปกรณ์ยกเว้นเครื่องนี้ (เผื่อทำอุปกรณ์หาย)"
+          subtitle="อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้"
         />
+        <DeviceList devices={devices} />
         <form
+          className="mt-3"
           action={async () => {
             "use server";
             await signOutEverywhereAction();

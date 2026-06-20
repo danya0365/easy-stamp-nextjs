@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -150,12 +150,25 @@ export function requireBranchScope(user: User, branchId: string): void {
   }
 }
 
-/** Create a session row and set the httpOnly cookie. Server Actions only. */
+/** The current session token (cookie value), or null. */
+export async function getCurrentSessionToken(): Promise<string | null> {
+  return (await cookies()).get(COOKIE_NAME)?.value ?? null;
+}
+
+/** Create a session row (capturing device context) and set the httpOnly cookie. */
 export async function createSession(userId: string): Promise<void> {
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const h = await headers();
+  const ip =
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-real-ip")?.trim() ||
+    null;
+  const userAgent = h.get("user-agent")?.slice(0, 400) || null;
   const session = await container.sessionRepository.create({
     userId,
     expiresAt: expiresAt.toISOString(),
+    userAgent,
+    ip,
   });
   (await cookies()).set(COOKIE_NAME, session.id, {
     httpOnly: true,

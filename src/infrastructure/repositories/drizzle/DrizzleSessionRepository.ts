@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Session, User } from "@/src/domain/entities";
 import type {
@@ -16,6 +16,8 @@ function toSession(row: SessionRow): Session {
     id: row.id,
     userId: row.userId,
     expiresAt: row.expiresAt,
+    userAgent: row.userAgent,
+    ip: row.ip,
     createdAt: row.createdAt,
   };
 }
@@ -39,7 +41,12 @@ export class DrizzleSessionRepository implements ISessionRepository {
   async create(input: CreateSessionInput): Promise<Session> {
     const [row] = await db
       .insert(schema.sessions)
-      .values({ userId: input.userId, expiresAt: input.expiresAt })
+      .values({
+        userId: input.userId,
+        expiresAt: input.expiresAt,
+        userAgent: input.userAgent ?? null,
+        ip: input.ip ?? null,
+      })
       .returning();
     return toSession(row);
   }
@@ -69,5 +76,22 @@ export class DrizzleSessionRepository implements ISessionRepository {
 
   async deleteAllForUser(userId: string): Promise<void> {
     await db.delete(schema.sessions).where(eq(schema.sessions.userId, userId));
+  }
+
+  async listByUser(userId: string, now: Date): Promise<Session[]> {
+    const rows = await db.query.sessions.findMany({
+      where: and(
+        eq(schema.sessions.userId, userId),
+        gt(schema.sessions.expiresAt, now.toISOString()),
+      ),
+      orderBy: desc(schema.sessions.createdAt),
+    });
+    return rows.map(toSession);
+  }
+
+  async deleteById(id: string, userId: string): Promise<void> {
+    await db
+      .delete(schema.sessions)
+      .where(and(eq(schema.sessions.id, id), eq(schema.sessions.userId, userId)));
   }
 }

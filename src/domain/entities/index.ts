@@ -147,6 +147,8 @@ export interface Session {
   id: string;
   userId: string;
   expiresAt: string;
+  userAgent: string | null;
+  ip: string | null;
   createdAt: string;
 }
 

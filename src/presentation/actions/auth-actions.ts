@@ -26,6 +26,7 @@ import { VerifyTwoFactorUseCase } from "@/src/application/use-cases/auth/VerifyT
 import { BeginTwoFactorSetupUseCase } from "@/src/application/use-cases/auth/BeginTwoFactorSetupUseCase";
 import { ConfirmTwoFactorSetupUseCase } from "@/src/application/use-cases/auth/ConfirmTwoFactorSetupUseCase";
 import { DisableTwoFactorUseCase } from "@/src/application/use-cases/auth/DisableTwoFactorUseCase";
+import { RegenerateRecoveryCodesUseCase } from "@/src/application/use-cases/auth/RegenerateRecoveryCodesUseCase";
 import { lineConfigFromEnv } from "@/src/infrastructure/services/LineMessagingPusher";
 import { getClientIp, getUserAgent } from "@/src/presentation/lib/request-ip";
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
@@ -365,6 +366,31 @@ export async function confirmTwoFactorSetupAction(
   }
 }
 
+/** Admin regenerates recovery codes (invalidates the old set; needs the password). */
+export async function regenerateRecoveryCodesAction(
+  _prev: TwoFactorSetupState,
+  formData: FormData,
+): Promise<TwoFactorSetupState> {
+  try {
+    const user = await requireRole("platform_admin");
+    const password = String(formData.get("password") ?? "");
+    const recoveryCodes = await new RegenerateRecoveryCodesUseCase(
+      container.userRepository,
+      container.passwordHasher,
+    ).execute(user.id, password);
+    await container.auditLogger.record({
+      actorUserId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTIONS.recoveryCodesRegenerated,
+      ip: await getClientIp(),
+    });
+    revalidatePath("/admin");
+    return { recoveryCodes, success: "สร้างรหัสสำรองชุดใหม่แล้ว" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 /** Admin turns off 2FA (must re-enter their password). */
 export async function disableTwoFactorAction(
   _prev: TwoFactorSetupState,
@@ -383,11 +409,35 @@ export async function disableTwoFactorAction(
       action: AUDIT_ACTIONS.twoFactorDisabled,
       ip: await getClientIp(),
     });
+    // High-risk: tell every admin (compromise/insider signal).
+    await container.notificationService.notifyAdmins({
+      type: "security_alert",
+      title: "⚠️ มีการปิด 2FA ของผู้ดูแลระบบ",
+      body: `${user.email} ปิดการยืนยัน 2 ชั้นของบัญชีตัวเอง`,
+      linkUrl: "/admin/security",
+    });
     revalidatePath("/admin");
     return { success: "ปิด 2FA แล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+/** Revoke one of MY active sessions by id (from the devices list). */
+export async function revokeSessionAction(
+  sessionId: string,
+): Promise<{ error?: string }> {
+  const user = await getSession();
+  if (!user) return { error: "กรุณาเข้าสู่ระบบใหม่" };
+  await container.sessionRepository.deleteById(sessionId, user.id);
+  await container.auditLogger.record({
+    actorUserId: user.id,
+    actorRole: user.role,
+    action: AUDIT_ACTIONS.sessionRevoked,
+    ip: await getClientIp(),
+  });
+  revalidatePath("/admin");
+  return {};
 }
 
 /** Sign out of every OTHER device (keeps the current one). */
@@ -425,6 +475,7 @@ export async function changeMyPasswordAction(
       container.userRepository,
       container.passwordHasher,
       container.sessionRepository,
+      container.passwordBreachChecker,
     ).execute(user.id, current, next);
 
     // The use case revoked every session (incl. this one) — re-establish the

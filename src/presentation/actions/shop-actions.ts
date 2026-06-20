@@ -400,6 +400,7 @@ export async function resetStaffPasswordAction(
       container.userRepository,
       container.passwordHasher,
       container.sessionRepository,
+      container.passwordBreachChecker,
     ).execute(userId, newPassword);
     await container.auditLogger.record({
       actorUserId: owner.id,
