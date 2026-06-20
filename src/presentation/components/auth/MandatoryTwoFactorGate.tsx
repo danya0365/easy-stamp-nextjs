@@ -1,20 +1,16 @@
-import Link from "next/link";
-import { ArrowRight, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { TwoFactorPanel } from "@/src/presentation/components/auth/TwoFactorPanel";
 
-export const dynamic = "force-dynamic";
-
 /**
- * Mandatory 2FA enrollment gate. The (platform) layout redirects any admin
- * without 2FA here until they enable it, so the rest of the admin area stays
- * locked behind a second factor.
+ * Mandatory-2FA gate rendered IN PLACE OF the admin content (not a redirect) when
+ * a platform admin hasn't enrolled yet. Rendering instead of redirecting avoids
+ * the App Router soft-navigation blank-screen bug that a layout-level redirect to
+ * a same-layout route caused. After enrollment the panel does a full reload to
+ * `/admin`, so the layout re-renders with `totpEnabled` true and shows content.
  */
-export default async function Setup2faPage() {
-  const user = await requireRole("platform_admin");
-
+export function MandatoryTwoFactorGate() {
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4">
       <div className="flex items-start gap-2 rounded-lg border border-warning bg-warning-surface px-4 py-3 text-sm text-warning">
@@ -29,17 +25,8 @@ export default async function Setup2faPage() {
           title="ตั้งค่า 2FA"
           subtitle="สแกน QR ด้วยแอป Authenticator (Google Authenticator, Authy, 1Password ฯลฯ)"
         />
-        <TwoFactorPanel enabled={user.totpEnabled} redirectTo="/admin" />
+        <TwoFactorPanel enabled={false} redirectTo="/admin" />
       </Card>
-      {user.totpEnabled && (
-        <Link
-          href="/admin"
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 font-medium text-on-brand hover:bg-brand-700"
-        >
-          เข้าสู่แดชบอร์ดผู้ดูแล
-          <ArrowRight className="size-4" />
-        </Link>
-      )}
     </div>
   );
 }
