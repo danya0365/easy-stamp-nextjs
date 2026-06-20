@@ -24,8 +24,11 @@ import {
   type CustomerRow,
 } from "@/src/application/use-cases/stamp/AnnotateCustomerEligibilityUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
+import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
+import { assertPasswordAcceptable } from "@/src/application/use-cases/auth/password-policy";
+import { getClientIp } from "@/src/presentation/lib/request-ip";
 import type { Page } from "@/src/application/repositories/pagination";
-import type { ShopImageKind, ShopReview } from "@/src/domain/entities";
+import type { ShopImageKind, ShopReview, AuditLog } from "@/src/domain/entities";
 
 export interface FormState {
   error?: string;
@@ -340,8 +343,11 @@ export async function createStaffAction(
   formData: FormData,
 ): Promise<FormState> {
   try {
+    const owner = await requireRole("shop_owner");
     const shopId = await ownerShopId();
-    await new CreateStaffUseCase(
+    const password = String(formData.get("password") ?? "");
+    await assertPasswordAcceptable(password, container.passwordBreachChecker);
+    const staff = await new CreateStaffUseCase(
       container.userRepository,
       container.branchRepository,
       container.passwordHasher,
@@ -349,7 +355,17 @@ export async function createStaffAction(
       shopId,
       branchId: String(formData.get("branchId") ?? ""),
       email: String(formData.get("email") ?? ""),
-      password: String(formData.get("password") ?? ""),
+      password,
+    });
+    await container.auditLogger.record({
+      actorUserId: owner.id,
+      actorRole: owner.role,
+      action: AUDIT_ACTIONS.staffCreated,
+      targetType: "user",
+      targetId: staff.id,
+      shopId,
+      ip: await getClientIp(),
+      metadata: { email: staff.email },
     });
     revalidatePath("/shop/staff");
     return { success: "เพิ่มพนักงานแล้ว" };
@@ -371,13 +387,50 @@ export async function toggleStaffAction(
   revalidatePath("/shop/staff");
 }
 
+/** Owner force-logs-out one of their staff from all devices (compromised account). */
+export async function forceLogoutStaffAction(
+  userId: string,
+): Promise<{ error?: string }> {
+  try {
+    const owner = await requireRole("shop_owner");
+    const target = await container.userRepository.findById(userId);
+    if (!target || target.shopId !== owner.shopId || target.role !== "branch_staff") {
+      throw new Error("ไม่พบพนักงานในร้านนี้");
+    }
+    await container.sessionRepository.deleteAllForUser(userId);
+    await container.auditLogger.record({
+      actorUserId: owner.id,
+      actorRole: owner.role,
+      action: AUDIT_ACTIONS.forceLogout,
+      targetType: "user",
+      targetId: userId,
+      shopId: owner.shopId,
+      ip: await getClientIp(),
+      metadata: { email: target.email },
+    });
+    revalidatePath("/shop/staff");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+/** Next page of this shop's own audit trail (owner Security page "load more"). */
+export async function loadMoreShopAuditAction(
+  cursor: string,
+): Promise<Page<AuditLog>> {
+  const owner = await requireRole("shop_owner");
+  return container.auditLogRepository.pageByShop(owner.shopId!, { cursor });
+}
+
 /** Owner sets a new password for one of their staff (e.g. they forgot it). */
 export async function resetStaffPasswordAction(
   userId: string,
   newPassword: string,
 ): Promise<{ error?: string }> {
   try {
-    const shopId = await ownerShopId();
+    const owner = await requireRole("shop_owner");
+    const shopId = owner.shopId;
     const target = await container.userRepository.findById(userId);
     if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
       throw new Error("ไม่พบพนักงานในร้านนี้");
@@ -385,7 +438,18 @@ export async function resetStaffPasswordAction(
     await new ResetPasswordUseCase(
       container.userRepository,
       container.passwordHasher,
+      container.sessionRepository,
+      container.passwordBreachChecker,
     ).execute(userId, newPassword);
+    await container.auditLogger.record({
+      actorUserId: owner.id,
+      actorRole: owner.role,
+      action: AUDIT_ACTIONS.passwordResetByAdmin,
+      targetType: "user",
+      targetId: userId,
+      shopId,
+      ip: await getClientIp(),
+    });
     return {};
   } catch (e) {
     return { error: (e as Error).message };

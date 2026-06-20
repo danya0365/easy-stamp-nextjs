@@ -41,6 +41,12 @@ export const users = sqliteTable(
     loginOtpHash: text(),
     loginOtpExpiresAt: text(),
     loginOtpAttempts: integer().notNull().default(0),
+    // TOTP 2FA (admins). totpSecret is the base32 shared secret (pending until
+    // confirmed); totpConfirmedAt non-null ⇒ 2FA is active; totpRecoveryCodes is
+    // a JSON array of bcrypt-hashed single-use recovery codes. All server-only.
+    totpSecret: text(),
+    totpConfirmedAt: text(),
+    totpRecoveryCodes: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

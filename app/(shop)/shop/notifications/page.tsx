@@ -1,4 +1,4 @@
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { NotificationList } from "@/src/presentation/components/notification/NotificationList";
@@ -8,7 +8,7 @@ import { MarkAllReadOnView } from "@/src/presentation/components/notification/Ma
 export const dynamic = "force-dynamic";
 
 export default async function ShopNotificationsPage() {
-  const user = await requireRole("shop_owner");
+  const { user } = await requireShopAccess();
   const page = await container.notificationRepository.pageByUser(user.id);
 
   return (

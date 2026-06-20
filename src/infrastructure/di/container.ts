@@ -26,8 +26,11 @@ import { DrizzleLeadVisitLogRepository } from "@/src/infrastructure/repositories
 import { DrizzleShopImageRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopImageRepository";
 import { DrizzleShopReviewRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopReviewRepository";
 import { DrizzleShopProfileRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleShopProfileRepository";
+import { DrizzleAuditLogRepository } from "@/src/infrastructure/repositories/drizzle/DrizzleAuditLogRepository";
 
 import { BcryptPasswordHasher } from "@/src/infrastructure/services/BcryptPasswordHasher";
+import { CryptoTotpService } from "@/src/infrastructure/services/CryptoTotpService";
+import { HibpPasswordBreachChecker } from "@/src/infrastructure/services/HibpPasswordBreachChecker";
 import {
   TurnstileVerifier,
   turnstileConfigFromEnv,
@@ -46,6 +49,9 @@ import {
 } from "@/src/infrastructure/services/LineMessagingPusher";
 import { createGeocoder } from "@/src/infrastructure/services/OsmGeocoder";
 import { NotificationService } from "@/src/application/services/NotificationService";
+import { AuditLogger } from "@/src/application/services/AuditLogger";
+import { LoginSecurityService } from "@/src/application/services/LoginSecurityService";
+import { SensitiveActionGuard } from "@/src/application/services/SensitiveActionGuard";
 
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
@@ -73,7 +79,10 @@ import type { ILeadVisitLogRepository } from "@/src/application/repositories/ILe
 import type { IShopImageRepository } from "@/src/application/repositories/IShopImageRepository";
 import type { IShopReviewRepository } from "@/src/application/repositories/IShopReviewRepository";
 import type { IShopProfileRepository } from "@/src/application/repositories/IShopProfileRepository";
+import type { IAuditLogRepository } from "@/src/application/repositories/IAuditLogRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
+import type { ITotpService } from "@/src/application/services/ITotpService";
+import type { IPasswordBreachChecker } from "@/src/application/services/IPasswordBreachChecker";
 import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifier";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
@@ -160,8 +169,13 @@ class Container {
     new DrizzleShopReviewRepository();
   readonly shopProfileRepository: IShopProfileRepository =
     new DrizzleShopProfileRepository();
+  readonly auditLogRepository: IAuditLogRepository =
+    new DrizzleAuditLogRepository();
 
   readonly passwordHasher: IPasswordHasher = new BcryptPasswordHasher();
+  readonly totp: ITotpService = new CryptoTotpService();
+  readonly passwordBreachChecker: IPasswordBreachChecker =
+    new HibpPasswordBreachChecker();
   readonly paymentVerifier: IPaymentVerifier = new ManualSlipPaymentVerifier();
   readonly slipStorage: ISlipStorage = createSlipStorage();
   readonly messagePusher: IMessagePusher = createMessagePusher();
@@ -172,6 +186,18 @@ class Container {
     this.notificationRepository,
     this.userRepository,
     this.messagePusher,
+  );
+  readonly auditLogger: AuditLogger = new AuditLogger(this.auditLogRepository);
+  readonly loginSecurity: LoginSecurityService = new LoginSecurityService(
+    this.userRepository,
+    this.auditLogRepository,
+    this.auditLogger,
+    this.notificationService,
+  );
+  readonly sensitiveActionGuard: SensitiveActionGuard = new SensitiveActionGuard(
+    this.rateLimitRepository,
+    this.auditLogger,
+    this.notificationService,
   );
 }
 

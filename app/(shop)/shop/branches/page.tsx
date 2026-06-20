@@ -1,6 +1,6 @@
 import { Building2 } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
@@ -11,8 +11,8 @@ import { BranchLocationEditor } from "@/src/presentation/components/map/BranchLo
 export const dynamic = "force-dynamic";
 
 export default async function ShopBranchesPage() {
-  const user = await requireRole("shop_owner");
-  const branches = await container.branchRepository.listByShop(user.shopId!);
+  const { shopId } = await requireShopAccess();
+  const branches = await container.branchRepository.listByShop(shopId);
 
   return (
     <div className="flex flex-col gap-4">

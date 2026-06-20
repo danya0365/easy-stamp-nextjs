@@ -1,7 +1,8 @@
-import { User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
+import { forceLogoutStaffAction } from "@/src/presentation/actions/shop-actions";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { AddStaffForm } from "@/src/presentation/components/shop/AddStaffForm";
@@ -11,8 +12,7 @@ import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPa
 export const dynamic = "force-dynamic";
 
 export default async function ShopStaffPage() {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
   const [branches, users] = await Promise.all([
     container.branchRepository.listByShop(shopId),
     container.userRepository.listByShop(shopId),
@@ -51,6 +51,21 @@ export default async function ShopStaffPage() {
                     isActive={s.isActive}
                   />
                   <ResetPasswordControl kind="staff" userId={s.id} />
+                  <form
+                    action={async () => {
+                      "use server";
+                      await forceLogoutStaffAction(s.id);
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      title="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
+                    >
+                      <LogOut className="size-3.5" />
+                      เตะออก
+                    </button>
+                  </form>
                 </div>
               </li>
             ))}

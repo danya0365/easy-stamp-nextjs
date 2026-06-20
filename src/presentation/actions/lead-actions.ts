@@ -11,6 +11,7 @@ import { SetLeadStatusUseCase } from "@/src/application/use-cases/lead/SetLeadSt
 import { AddLeadVisitLogUseCase } from "@/src/application/use-cases/lead/AddLeadVisitLogUseCase";
 import { SaveLeadPhotoUseCase } from "@/src/application/use-cases/lead/SaveLeadPhotoUseCase";
 import { ConvertLeadToShopUseCase } from "@/src/application/use-cases/lead/ConvertLeadToShopUseCase";
+import { assertPasswordAcceptable } from "@/src/application/use-cases/auth/password-policy";
 import { bahtToSatang } from "@/src/presentation/lib/money";
 import type { Page } from "@/src/application/repositories/pagination";
 import type {
@@ -222,6 +223,8 @@ export async function convertLeadToShopAction(
   try {
     const user = await requireRole("platform_admin");
     const leadId = String(formData.get("leadId") ?? "");
+    const ownerPassword = String(formData.get("ownerPassword") ?? "");
+    await assertPasswordAcceptable(ownerPassword, container.passwordBreachChecker);
     const { shop } = await new ConvertLeadToShopUseCase(
       container.leadRepository,
       container.leadVisitLogRepository,
@@ -236,7 +239,7 @@ export async function convertLeadToShopAction(
       leadId,
       slug: String(formData.get("slug") ?? ""),
       ownerEmail: String(formData.get("ownerEmail") ?? ""),
-      ownerPassword: String(formData.get("ownerPassword") ?? ""),
+      ownerPassword,
       pricePerDaySatang: bahtToSatang(
         Number(formData.get("pricePerDayBaht") ?? 0),
       ),

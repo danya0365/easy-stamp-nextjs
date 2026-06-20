@@ -12,6 +12,12 @@ import { RedeemRewardUseCase } from "@/src/application/use-cases/stamp/RedeemRew
 import { GenerateBindCodeUseCase } from "@/src/application/use-cases/member/GenerateBindCodeUseCase";
 import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { getClientIp } from "@/src/presentation/lib/request-ip";
+
+// Velocity guard on stamp issuance (per operator, per shop). Generous for real
+// staff, but a compromised account mass-issuing stamps trips it → admin alert.
+const STAMP_ADD_VELOCITY_LIMIT = 200;
+const STAMP_ADD_VELOCITY_WINDOW_MS = 60 * 60_000; // 1 ชม.
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import type { CustomerCardView } from "@/src/domain/entities";
@@ -93,6 +99,27 @@ export async function addStampsAction(
   try {
     const { shopId, branchId, user } = await operatorContext();
     await assertShopActive(shopId);
+
+    const guard = await container.sensitiveActionGuard.check({
+      key: `stamp_add:${shopId}:${user.id}`,
+      limit: STAMP_ADD_VELOCITY_LIMIT,
+      windowMs: STAMP_ADD_VELOCITY_WINDOW_MS,
+      shopId,
+      actorUserId: user.id,
+      ip: await getClientIp(),
+      alertTitle: "⚠️ พบการเพิ่มแสตมป์ผิดปกติ",
+      alertBody: `บัญชีหนึ่งเพิ่มแสตมป์เกิน ${STAMP_ADD_VELOCITY_LIMIT} ครั้ง/ชม. ในร้านเดียว — อาจเป็นบัญชีที่ถูกเข้าถึงโดยไม่ได้รับอนุญาต`,
+      metadata: { performedBy: user.id },
+    });
+    if (!guard.allowed) {
+      return {
+        phone,
+        error:
+          "ตรวจพบการเพิ่มแสตมป์ถี่ผิดปกติ ระบบแจ้งผู้ดูแลแล้ว กรุณาลองใหม่ภายหลัง",
+        searched: true,
+      };
+    }
+
     const view = await new AddStampsUseCase(
       container.shopRepository,
       container.customerRepository,

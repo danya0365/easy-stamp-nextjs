@@ -41,4 +41,18 @@ export interface IUserRepository {
   bumpLoginOtpAttempts(id: string): Promise<number>;
   /** Clears the OTP (hash/expiry null, attempts 0) after success or invalidation. */
   clearLoginOtp(id: string): Promise<void>;
+  /** TOTP 2FA: store the pending base32 secret (not yet active), or null to clear. */
+  setTotpSecret(id: string, secret: string | null): Promise<void>;
+  /** Activate 2FA: mark confirmed (now) and store the hashed recovery codes. */
+  enableTotp(id: string, recoveryHashes: string[]): Promise<void>;
+  /** Turn off 2FA entirely (clears secret, confirmation, recovery codes). */
+  disableTotp(id: string): Promise<void>;
+  /** Replace the stored recovery-code hashes (e.g. after consuming one). */
+  setTotpRecoveryCodes(id: string, recoveryHashes: string[]): Promise<void>;
+  /** Reads the raw TOTP state (secret + confirmation + recovery hashes), or null. */
+  getTotpState(id: string): Promise<{
+    secret: string | null;
+    confirmedAt: string | null;
+    recoveryCodes: string[];
+  } | null>;
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { container } from "@/src/infrastructure/di/container";
@@ -46,6 +46,94 @@ export async function requireRole(...roles: Role[]): Promise<User> {
   return user;
 }
 
+// Read-only admin impersonation ("view as shop"). Stored in its own short-lived
+// httpOnly cookie and honored ONLY for a platform_admin session. It NEVER grants
+// write access: every mutating action still calls requireRole("shop_owner") (or
+// ownerShopId), which a platform_admin fails — so writes are blocked by
+// construction. Impersonation only changes which shop READ pages render.
+const IMPERSONATE_COOKIE = "es_impersonate";
+const IMPERSONATE_TTL_MS = 30 * 60_000; // 30 นาที
+
+export interface Impersonation {
+  shopId: string;
+  by: string;
+}
+
+export interface ShopAccess {
+  user: User;
+  shopId: string;
+  impersonating: boolean;
+}
+
+/** Begin impersonating a shop (admin only — caller must check the role). */
+export async function startImpersonation(
+  shopId: string,
+  byAdminId: string,
+): Promise<void> {
+  const exp = Date.now() + IMPERSONATE_TTL_MS;
+  (await cookies()).set(
+    IMPERSONATE_COOKIE,
+    JSON.stringify({ shopId, by: byAdminId, exp }),
+    {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(exp),
+    },
+  );
+}
+
+export async function stopImpersonation(): Promise<void> {
+  (await cookies()).delete(IMPERSONATE_COOKIE);
+}
+
+/** The active impersonation, or null. Honored ONLY for a platform_admin session. */
+export async function getImpersonation(): Promise<Impersonation | null> {
+  const raw = (await cookies()).get(IMPERSONATE_COOKIE)?.value;
+  if (!raw) return null;
+  let parsed: { shopId?: unknown; by?: unknown; exp?: unknown };
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (
+    typeof parsed.shopId !== "string" ||
+    typeof parsed.by !== "string" ||
+    typeof parsed.exp !== "number" ||
+    parsed.exp < Date.now()
+  ) {
+    return null;
+  }
+  // Only a platform_admin may impersonate — a forged cookie from any other
+  // session is ignored.
+  const user = await getSession();
+  if (user?.role !== "platform_admin") return null;
+  return { shopId: parsed.shopId, by: parsed.by };
+}
+
+/**
+ * Read access to a shop's screens: the owner's own shop, or a platform_admin
+ * impersonating one. Use in shop READ pages + the (shop) layout instead of
+ * requireRole("shop_owner"). Mutating actions keep requireRole("shop_owner") so
+ * an impersonating admin can view but never write.
+ */
+export async function requireShopAccess(): Promise<ShopAccess> {
+  const user = await getSession();
+  if (!user) redirect("/login");
+  if (user.role === "shop_owner") {
+    if (!user.shopId) redirect("/login");
+    return { user, shopId: user.shopId, impersonating: false };
+  }
+  if (user.role === "platform_admin") {
+    const imp = await getImpersonation();
+    if (imp) return { user, shopId: imp.shopId, impersonating: true };
+    redirect("/admin/shops");
+  }
+  redirect("/login");
+}
+
 /** Assert the user owns the given shop (platform_admin bypasses). */
 export function requireShopScope(user: User, shopId: string): void {
   if (user.role === "platform_admin") return;
@@ -62,12 +150,25 @@ export function requireBranchScope(user: User, branchId: string): void {
   }
 }
 
-/** Create a session row and set the httpOnly cookie. Server Actions only. */
+/** The current session token (cookie value), or null. */
+export async function getCurrentSessionToken(): Promise<string | null> {
+  return (await cookies()).get(COOKIE_NAME)?.value ?? null;
+}
+
+/** Create a session row (capturing device context) and set the httpOnly cookie. */
 export async function createSession(userId: string): Promise<void> {
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const h = await headers();
+  const ip =
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-real-ip")?.trim() ||
+    null;
+  const userAgent = h.get("user-agent")?.slice(0, 400) || null;
   const session = await container.sessionRepository.create({
     userId,
     expiresAt: expiresAt.toISOString(),
+    userAgent,
+    ip,
   });
   (await cookies()).set(COOKIE_NAME, session.id, {
     httpOnly: true,
@@ -76,6 +177,42 @@ export async function createSession(userId: string): Promise<void> {
     path: "/",
     expires: expiresAt,
   });
+}
+
+// Pending 2FA: set after step-1 (password/OTP) succeeds for a 2FA-enabled
+// account, BEFORE a real session exists. Short-lived + httpOnly; holds only the
+// userId who already proved step 1. The session is created only after the TOTP
+// challenge passes.
+const PENDING_2FA_COOKIE = "es_pending_2fa";
+const PENDING_2FA_TTL_MS = 5 * 60_000; // 5 นาที
+
+export async function setPendingTwoFactor(userId: string): Promise<void> {
+  const exp = Date.now() + PENDING_2FA_TTL_MS;
+  (await cookies()).set(PENDING_2FA_COOKIE, JSON.stringify({ userId, exp }), {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(exp),
+  });
+}
+
+export async function getPendingTwoFactor(): Promise<string | null> {
+  const raw = (await cookies()).get(PENDING_2FA_COOKIE)?.value;
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw) as { userId?: unknown; exp?: unknown };
+    if (typeof v.userId !== "string" || typeof v.exp !== "number" || v.exp < Date.now()) {
+      return null;
+    }
+    return v.userId;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearPendingTwoFactor(): Promise<void> {
+  (await cookies()).delete(PENDING_2FA_COOKIE);
 }
 
 /** Delete the current session row and clear the cookie. Server Actions only. */

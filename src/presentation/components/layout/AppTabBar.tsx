@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   QrCode,
   Settings,
+  ShieldAlert,
   Stamp,
   Star,
   Store,
@@ -49,6 +50,7 @@ const NAVS = {
     { href: "/shop/staff", label: "พนักงาน", icon: UserCog },
     { href: "/shop/qr", label: "ป้าย QR", icon: QrCode },
     { href: "/shop/settings", label: "ตั้งค่า", icon: Settings },
+    { href: "/shop/security", label: "ความปลอดภัย", icon: ShieldAlert },
     { href: "/shop/billing", label: "ชำระเงิน", icon: CreditCard },
     { href: "/shop/contact", label: "ติดต่อผู้ดูแล", icon: LifeBuoy },
   ],
@@ -61,6 +63,7 @@ const NAVS = {
     { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },
     { href: "/admin/contacts", label: "ติดต่อ", icon: MessageSquare },
+    { href: "/admin/security", label: "ความปลอดภัย", icon: ShieldAlert },
   ],
   staff: [
     { href: "/staff", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },

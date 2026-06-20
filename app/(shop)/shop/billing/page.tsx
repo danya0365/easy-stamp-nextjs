@@ -1,6 +1,6 @@
 import { CalendarClock, Package, Receipt, TriangleAlert } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -15,8 +15,7 @@ import { formatDate } from "@/src/presentation/lib/format-date";
 export const dynamic = "force-dynamic";
 
 export default async function ShopBillingPage() {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopAccess();
   const { subscription, status } = await getBillingState(shopId);
   const paymentsPage = await container.paymentRepository.pageByShop(shopId);
   const topupsPage = await container.topupTransactionRepository.pageByShop(shopId);

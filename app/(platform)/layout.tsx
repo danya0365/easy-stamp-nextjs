@@ -1,3 +1,6 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
@@ -10,6 +13,14 @@ export default async function PlatformLayout({
   children: React.ReactNode;
 }) {
   const user = await requireRole("platform_admin");
+
+  // 2FA is mandatory for platform admins: until enrolled, force them onto the
+  // setup page (the only admin route exempt from this redirect).
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  if (!user.totpEnabled && !pathname.startsWith("/admin/setup-2fa")) {
+    redirect("/admin/setup-2fa");
+  }
+
   const unread = await container.notificationRepository.countUnread(user.id);
   return (
     <div className="flex min-h-dvh flex-col">

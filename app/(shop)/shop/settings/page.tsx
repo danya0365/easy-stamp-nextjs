@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { LogOut } from "lucide-react";
+
+import {
+  requireShopAccess,
+  getCurrentSessionToken,
+} from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
+import { signOutEverywhereAction } from "@/src/presentation/actions/auth-actions";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
 import { ChangePasswordForm } from "@/src/presentation/components/auth/ChangePasswordForm";
+import { DeviceList } from "@/src/presentation/components/auth/DeviceList";
 import { ContactAdminButton } from "@/src/presentation/components/shop/ContactAdminButton";
 import { ConnectionsSection } from "@/src/presentation/components/channels/ConnectionsSection";
 import { PauseShopControl } from "@/src/presentation/components/shop/PauseShopControl";
@@ -16,15 +23,28 @@ import { SettingsTabs } from "@/src/presentation/components/settings/SettingsTab
 export const dynamic = "force-dynamic";
 
 export default async function ShopSettingsPage() {
-  const user = await requireRole("shop_owner");
-  const shop = await container.shopRepository.findById(user.shopId!);
+  const { user, shopId, impersonating } = await requireShopAccess();
+  const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
-  const [stampTypes, subscription, shopImages, shopProfile] = await Promise.all([
-    container.stampTypeRepository.listByShop(shop.id),
-    container.subscriptionRepository.findByShop(shop.id),
-    container.shopImageRepository.listByShop(shop.id),
-    container.shopProfileRepository.get(shop.id),
-  ]);
+  const [stampTypes, subscription, shopImages, shopProfile, sessions, currentToken] =
+    await Promise.all([
+      container.stampTypeRepository.listByShop(shop.id),
+      container.subscriptionRepository.findByShop(shop.id),
+      container.shopImageRepository.listByShop(shop.id),
+      container.shopProfileRepository.get(shop.id),
+      // Device list is the owner's own account; skip while an admin impersonates.
+      impersonating
+        ? Promise.resolve([])
+        : container.sessionRepository.listByUser(user.id, new Date()),
+      impersonating ? Promise.resolve(null) : getCurrentSessionToken(),
+    ]);
+  const devices = sessions.map((s) => ({
+    id: s.id,
+    userAgent: s.userAgent,
+    ip: s.ip,
+    createdAt: s.createdAt,
+    isCurrent: s.id === currentToken,
+  }));
 
   return (
     <SettingsTabs
@@ -121,6 +141,31 @@ export default async function ShopSettingsPage() {
                   addUrl={process.env.NEXT_PUBLIC_LINE_OA_ADD_URL}
                 />
               </Card>
+
+              {!impersonating && (
+                <Card>
+                  <CardHeader
+                    title="อุปกรณ์ที่เข้าสู่ระบบ"
+                    subtitle="อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้"
+                  />
+                  <DeviceList devices={devices} />
+                  <form
+                    className="mt-3"
+                    action={async () => {
+                      "use server";
+                      await signOutEverywhereAction();
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted-surface"
+                    >
+                      <LogOut className="size-4" />
+                      ออกจากระบบบนอุปกรณ์อื่นทั้งหมด
+                    </button>
+                  </form>
+                </Card>
+              )}
             </>
           ),
         },
