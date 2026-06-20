@@ -359,7 +359,13 @@ export async function confirmTwoFactorSetupAction(
       action: AUDIT_ACTIONS.twoFactorEnabled,
       ip: await getClientIp(),
     });
-    revalidatePath("/admin");
+    // NOTE: do NOT revalidatePath("/admin") here. Enrollment happens inside the
+    // mandatory-2FA gate, which the (platform) layout renders only while
+    // totpEnabled is false. Revalidating re-renders the layout with the now-true
+    // totpEnabled, swapping the gate (and this recovery-codes screen) for the
+    // /admin content mid-flow — the codes flash and vanish before the user can
+    // save them. The panel's "ดำเนินการต่อ" button does a full window reload,
+    // which refreshes the layout cleanly once the codes are saved.
     return { recoveryCodes, success: "เปิดใช้งาน 2FA แล้ว" };
   } catch (e) {
     return { error: (e as Error).message };
