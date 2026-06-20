@@ -5,10 +5,12 @@
 // Usage:
 //   node scripts/reset-2fa.mjs <email>            # local DB
 //   NODE_ENV=production node scripts/reset-2fa.mjs <email> --yes   # prod (explicit)
-import { loadEnvConfig } from "@next/env";
+import nextEnv from "@next/env"; // CommonJS module — import default, then destructure
 import { createClient } from "@libsql/client";
 
-loadEnvConfig(process.cwd());
+// Default to the DEV env (.env.local → local file DB). Set NODE_ENV=production to
+// load .env.production.local and target the prod Turso DB (then --yes is required).
+nextEnv.loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
 const email = process.argv[2];
 const force = process.argv.includes("--yes");

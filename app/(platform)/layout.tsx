@@ -1,11 +1,9 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { AppHeader } from "@/src/presentation/components/layout/AppHeader";
 import { AppTabBar } from "@/src/presentation/components/layout/AppTabBar";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
+import { MandatoryTwoFactorGate } from "@/src/presentation/components/auth/MandatoryTwoFactorGate";
 
 export default async function PlatformLayout({
   children,
@@ -14,14 +12,13 @@ export default async function PlatformLayout({
 }) {
   const user = await requireRole("platform_admin");
 
-  // 2FA is mandatory for platform admins: until enrolled, force them onto the
-  // setup page (the only admin route exempt from this redirect).
-  const pathname = (await headers()).get("x-pathname") ?? "";
-  if (!user.totpEnabled && !pathname.startsWith("/admin/setup-2fa")) {
-    redirect("/admin/setup-2fa");
-  }
+  // 2FA is mandatory for platform admins. Gate by RENDERING the setup card in
+  // place of the content (NOT a layout-level redirect, which blanks the screen on
+  // App Router soft navigation). Admin can't reach any admin feature until enrolled.
+  const unread = user.totpEnabled
+    ? await container.notificationRepository.countUnread(user.id)
+    : 0;
 
-  const unread = await container.notificationRepository.countUnread(user.id);
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader
@@ -31,7 +28,7 @@ export default async function PlatformLayout({
         notifications={{ href: "/admin/notifications", unread }}
       />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
-        {children}
+        {user.totpEnabled ? children : <MandatoryTwoFactorGate />}
         <AppVersion />
       </main>
       <AppTabBar nav="admin" />
