@@ -8,3 +8,4 @@ export { StampDots } from "./StampDots";
 export { EmptyState } from "./EmptyState";
 export { Spinner } from "./Spinner";
 export { Modal } from "./Modal";
+export { ImageCropField } from "./ImageCropField";

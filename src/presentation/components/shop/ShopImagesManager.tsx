@@ -11,9 +11,15 @@ import {
 } from "@/src/presentation/actions/shop-actions";
 import type { ShopImage } from "@/src/domain/entities";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { ImageCropField } from "@/src/presentation/components/ui/ImageCropField";
 
-const FILE_INPUT_CLASS =
-  "text-sm text-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700";
+// Lock the crop ratio to how each image renders on the public shop page:
+// cover is a wide banner, profile/gallery are squares.
+const ASPECT_BY_KIND: Record<"profile" | "gallery" | "cover", number> = {
+  cover: 16 / 9,
+  profile: 1,
+  gallery: 1,
+};
 
 function UploadForm({
   kind,
@@ -26,19 +32,24 @@ function UploadForm({
     uploadShopImageAction,
     {},
   );
+  const [ready, setReady] = useState(false);
   return (
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="kind" value={kind} />
-      <input
-        type="file"
+      <ImageCropField
         name="image"
-        accept="image/png,image/jpeg,image/webp,image/heic"
-        required
-        className={FILE_INPUT_CLASS}
+        aspect={ASPECT_BY_KIND[kind]}
+        label="เลือกรูป"
+        onReadyChange={setReady}
       />
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
-      <Button type="submit" size="sm" variant="outline" disabled={pending}>
+      <Button
+        type="submit"
+        size="sm"
+        variant="outline"
+        disabled={pending || !ready}
+      >
         {pending ? "กำลังอัปโหลด…" : label}
       </Button>
     </form>

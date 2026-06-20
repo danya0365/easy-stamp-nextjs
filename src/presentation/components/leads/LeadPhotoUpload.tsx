@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ImagePlus } from "lucide-react";
 
 import {
@@ -8,6 +8,7 @@ import {
   type LeadFormState,
 } from "@/src/presentation/actions/lead-actions";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { ImageCropField } from "@/src/presentation/components/ui/ImageCropField";
 
 export function LeadPhotoUpload({
   leadId,
@@ -20,6 +21,7 @@ export function LeadPhotoUpload({
     uploadLeadPhotoAction,
     {},
   );
+  const [ready, setReady] = useState(false);
 
   return (
     <div className="flex flex-col gap-3">
@@ -39,18 +41,22 @@ export function LeadPhotoUpload({
 
       <form action={action} className="flex flex-col gap-2">
         <input type="hidden" name="leadId" value={leadId} />
-        <input
-          type="file"
+        <ImageCropField
           name="photo"
-          accept="image/png,image/jpeg,image/webp,image/heic"
-          required
-          className="text-sm text-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700"
+          aspect={null}
+          label={hasPhoto ? "เลือกรูปใหม่" : "เลือกรูปร้าน"}
+          onReadyChange={setReady}
         />
         {state.error && <p className="text-sm text-error">{state.error}</p>}
         {state.success && (
           <p className="text-sm text-success">{state.success}</p>
         )}
-        <Button type="submit" size="sm" variant="outline" disabled={pending}>
+        <Button
+          type="submit"
+          size="sm"
+          variant="outline"
+          disabled={pending || !ready}
+        >
           {pending ? "กำลังอัปโหลด…" : hasPhoto ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
         </Button>
       </form>
