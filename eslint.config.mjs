@@ -45,6 +45,33 @@ const eslintConfig = defineConfig([
       "no-restricted-syntax": ["error", ...RESTRICTED_COLOR_SYNTAX],
     },
   },
+  // Architecture tripwire (instant editor feedback for the most common slip).
+  // The full layer contract is enforced by dependency-cruiser (npm run depcruise
+  // / lint:all / CI) — see .dependency-cruiser.cjs. This mirrors only the single
+  // highest-value rule so a wrong import lights up red while you type.
+  {
+    files: ["src/presentation/components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/src/infrastructure/di/container",
+              message:
+                "component ห้ามแตะ DI container — เรียก use case จาก server component หรือ action แทน",
+            },
+          ],
+          patterns: [
+            {
+              group: ["@/src/infrastructure/repositories/*"],
+              message: "component ห้าม import repository ตรงๆ",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { LeadVisitLog } from "@/src/domain/entities";

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { ShopImage } from "@/src/domain/entities";

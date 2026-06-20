@@ -1,16 +1,11 @@
 import { Gift } from "lucide-react";
 
-import type { RewardRedemption } from "@/src/domain/entities";
 import { Badge } from "../ui/Badge";
 import { EmptyState } from "../ui/EmptyState";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
+import type { RedemptionItem } from "@/src/application/use-cases/stamp/BuildRedemptionItemsUseCase";
 
-export interface RedemptionItem extends RewardRedemption {
-  /** Customer name/phone — only shown on the shop-facing list. */
-  customerLabel?: string;
-  /** Branch name, when the redemption was tied to a branch. */
-  branchLabel?: string | null;
-}
+export type { RedemptionItem };
 
 /** A single redemption row (full `<li>`). */
 export function RedemptionRow({

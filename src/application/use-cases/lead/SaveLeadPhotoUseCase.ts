@@ -4,7 +4,7 @@ import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import {
   extForContentType,
   leadPhotoKey,
-} from "@/src/infrastructure/services/slip-media";
+} from "@/src/application/services/slip-media";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic"];

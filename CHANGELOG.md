@@ -5,6 +5,22 @@
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-06-20
+
+### Added
+- **รีวิวร้านค้า** — ลูกค้าที่ผูกบัตรกับร้านแล้วให้ดาว (1–5) + เขียนคอมเมนต์ได้, เจ้าของร้านตอบกลับรีวิวได้ (แม้ร้านถูกพัก), แอดมินซ่อนรีวิวที่ไม่เหมาะสมได้ · คะแนนเฉลี่ยแสดงบนหน้าร้านสาธารณะและ popup บนแผนที่
+- **รูปภาพร้าน** — เจ้าของร้านอัปโหลดรูปประจำร้าน, รูปปก (cover) และแกลเลอรีได้ · หน้า public ของร้านปรับเป็น ShopHero แบบโซเชียล (cover + รูปประจำร้านวงกลม)
+- **หน้ารวมร้านค้าสาธารณะ [/shops](app/(public)/shops)** — ไดเรกทอรีร้านทั้งหมดสำหรับลูกค้าขาจร เข้าดูรีวิว/รายละเอียดร้านได้จากแผนที่หรือหน้ารวม
+- **รายละเอียดร้านบนหน้า public** — คำอธิบายร้าน, เวลาเปิด-ปิด, ช่องทางติดต่อ และลิงก์โซเชียล (LINE/Facebook/Instagram/เว็บไซต์)
+
+### Changed
+- บังคับกฎ CSS ธีม semantic token ด้วย linter (ESLint กัน hardcode สีใน className + stylelint กัน hex ในชั้น token) — `npm run lint:all`
+
+### Internal
+- **ชุดทดสอบอัตโนมัติ** — test runner `node:test` + tsx (integration ขับ use case + Drizzle repo จริงบน in-memory libSQL ผ่าน DI container) + Playwright E2E smoke · `npm test` / `npm run test:e2e`
+- **บังคับ Clean Architecture rules อัตโนมัติ** — dependency-cruiser คุมทิศทาง dependency 4 layer + `server-only` + ไม่มี cycle (`npm run depcruise` อยู่ใน `lint:all` + CI), ESLint tripwire เตือน component ที่แตะ DI container/repo, และ GitHub Actions CI (lint:all + tsc + test) block ทุก push/PR ที่ผิดกฎ — ลดการตรวจ manual
+- refactor ให้ตรง Clean Architecture เป๊ะ (ย้าย business logic เข้า use case, projection helper เข้า application, เติม `server-only` ครบ)
+
 ## [1.11.0] - 2026-06-19
 
 ### Added

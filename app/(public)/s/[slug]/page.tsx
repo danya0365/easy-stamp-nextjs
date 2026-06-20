@@ -12,7 +12,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CardBalance } from "@/src/presentation/components/stamp/CardBalance";
 import { RedemptionList } from "@/src/presentation/components/stamp/RedemptionList";
-import { buildCustomerRedemptionItems } from "@/src/presentation/components/stamp/redemption-items";
+import { BuildRedemptionItemsUseCase } from "@/src/application/use-cases/stamp/BuildRedemptionItemsUseCase";
 import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
@@ -79,7 +79,10 @@ export default async function PublicShopCheckPage({
       )
     : { items: [], nextCursor: null };
   const historyItems = view
-    ? await buildCustomerRedemptionItems(shop.id, historyPage.items)
+    ? await new BuildRedemptionItemsUseCase(
+        container.customerRepository,
+        container.branchRepository,
+      ).forCustomer(shop.id, historyPage.items)
     : [];
 
   // Shop imagery + reviews (public).

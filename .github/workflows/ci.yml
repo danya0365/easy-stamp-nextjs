@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Main gate: architecture rules + types + unit/integration tests. Fast.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # eslint + stylelint + dependency-cruiser (layer rules + server-only).
+      - run: npm run lint:all
+      - run: npx tsc --noEmit
+      # node:test runner — forces TURSO_DATABASE_URL=:memory:, needs no secrets.
+      - run: npm test
+      # NOTE: never run `npm run build` here — its prestep (scripts/vercel-migrate.mjs)
+      # migrates the PROD Turso DB. Building belongs to the Vercel deploy, not CI.
+
+  # E2E smoke (heavier: downloads a browser). Separate job so the gate stays quick.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # global-setup migrates a throwaway file DB (file:./.e2e.db); no prod access.
+      - run: npm run test:e2e

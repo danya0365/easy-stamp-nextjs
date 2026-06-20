@@ -17,11 +17,10 @@ import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import type { CustomerCardView } from "@/src/domain/entities";
 import type { Page } from "@/src/application/repositories/pagination";
 import { normalizePhone } from "@/src/domain/services/phone";
-import type { RedemptionItem } from "@/src/presentation/components/stamp/RedemptionHistory";
 import {
-  buildShopRedemptionItems,
-  buildCustomerRedemptionItems,
-} from "@/src/presentation/components/stamp/redemption-items";
+  BuildRedemptionItemsUseCase,
+  type RedemptionItem,
+} from "@/src/application/use-cases/stamp/BuildRedemptionItemsUseCase";
 
 export interface StampActionState {
   phone?: string;
@@ -183,7 +182,10 @@ export async function loadMoreShopRedemptionsAction(
     cursor,
   });
   return {
-    items: await buildShopRedemptionItems(shopId, page.items),
+    items: await new BuildRedemptionItemsUseCase(
+      container.customerRepository,
+      container.branchRepository,
+    ).forShop(shopId, page.items),
     nextCursor: page.nextCursor,
   };
 }
@@ -213,7 +215,10 @@ export async function loadMoreMyRedemptionsAction(
     { cursor },
   );
   return {
-    items: await buildCustomerRedemptionItems(shop.id, page.items),
+    items: await new BuildRedemptionItemsUseCase(
+      container.customerRepository,
+      container.branchRepository,
+    ).forCustomer(shop.id, page.items),
     nextCursor: page.nextCursor,
   };
 }

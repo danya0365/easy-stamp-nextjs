@@ -12,7 +12,7 @@ import {
   contentTypeForKey,
   extFor,
   slipKey,
-} from "@/src/infrastructure/services/slip-media";
+} from "@/src/application/services/slip-media";
 
 const BASE_DIR = path.join(process.cwd(), "uploads");
 

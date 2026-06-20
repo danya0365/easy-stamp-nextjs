@@ -19,13 +19,13 @@ import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopI
 import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
 import { UpdateShopProfileUseCase } from "@/src/application/use-cases/shop/UpdateShopProfileUseCase";
 import { ReplyToReviewUseCase } from "@/src/application/use-cases/review/ReplyToReviewUseCase";
+import {
+  AnnotateCustomerEligibilityUseCase,
+  type CustomerRow,
+} from "@/src/application/use-cases/stamp/AnnotateCustomerEligibilityUseCase";
 import { bahtToSatang } from "@/src/presentation/lib/money";
 import type { Page } from "@/src/application/repositories/pagination";
 import type { ShopImageKind, ShopReview } from "@/src/domain/entities";
-import {
-  buildCustomerRows,
-  type CustomerRow,
-} from "@/src/presentation/components/shop/customer-rows";
 
 export interface FormState {
   error?: string;
@@ -65,7 +65,11 @@ export async function loadMoreCustomersAction(
     search: search || undefined,
   });
   return {
-    items: await buildCustomerRows(shopId, page.items),
+    items: await new AnnotateCustomerEligibilityUseCase(
+      container.stampTypeRepository,
+      container.stampCardRepository,
+      container.stampBalanceRepository,
+    ).execute(shopId, page.items),
     nextCursor: page.nextCursor,
   };
 }

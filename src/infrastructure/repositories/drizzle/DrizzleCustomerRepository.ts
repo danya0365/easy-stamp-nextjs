@@ -1,3 +1,5 @@
+import "server-only";
+
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Customer } from "@/src/domain/entities";

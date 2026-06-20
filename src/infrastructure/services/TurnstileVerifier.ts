@@ -1,3 +1,5 @@
+import "server-only";
+
 export interface TurnstileConfig {
   siteKey: string;
   secretKey: string;

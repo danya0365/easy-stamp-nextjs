@@ -1,3 +1,5 @@
+import "server-only";
+
 import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { ShopCategory } from "@/src/domain/entities";

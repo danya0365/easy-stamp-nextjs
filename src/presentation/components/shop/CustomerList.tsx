@@ -4,7 +4,7 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
 import { formatPhone } from "@/src/domain/services/phone";
 import { loadMoreCustomersAction } from "@/src/presentation/actions/shop-actions";
-import type { CustomerRow } from "./customer-rows";
+import type { CustomerRow } from "@/src/application/use-cases/stamp/AnnotateCustomerEligibilityUseCase";
 
 /** Cursor-paginated customer list; `search` is carried into "load more". */
 export function CustomerList({
