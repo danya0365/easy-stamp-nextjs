@@ -96,6 +96,10 @@ domain  ←  application  ←  infrastructure
 │   └── vercel-migrate.mjs            # รัน db:migrate เฉพาะตอน VERCEL_ENV=production
 ├── proxy.ts                          # optimistic auth gate (ชื่อนี้แทน middleware.ts)
 ├── drizzle.config.ts                 # dialect turso, casing snake_case
+├── .dependency-cruiser.cjs           # architecture rules (layer boundary + server-only) → ดู ENFORCEMENT.md
+├── eslint.config.mjs                 # lint + architecture tripwire (component ห้าม import container/repo)
+├── .github/workflows/ci.yml          # CI gate: lint:all + tsc + test (+ e2e)
+├── docs/ARCHITECTURE.md              # layer graph (gen จาก `npm run depcruise:graph`)
 └── package.json                      # version = single source ของเลขเวอร์ชั่น
 ```
 
