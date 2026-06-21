@@ -11,20 +11,25 @@
 import { toPng } from "html-to-image";
 
 /** Snapshot a full-size poster node to a PNG data URL. */
-async function renderPosterPng(node: HTMLElement): Promise<string> {
+async function renderPosterPng(node: HTMLElement, pixelRatio = 1): Promise<string> {
   // Avoid fallback glyphs: wait for the Thai web fonts before rasterizing.
   if (document.fonts?.ready) {
     await document.fonts.ready;
   }
-  return toPng(node, { pixelRatio: 1, cacheBust: true });
+  return toPng(node, { pixelRatio, cacheBust: true });
 }
 
-/** Render the poster node and trigger a PNG download (mirrors ShopQrPoster). */
+/**
+ * Render the node and trigger a PNG download (mirrors ShopQrPoster).
+ * Poster previews render at true size → keep `pixelRatio: 1`; a regular DOM card
+ * (e.g. the handoff card) renders small → pass `pixelRatio: 2` for crisp text.
+ */
 export async function exportPosterPng(
   node: HTMLElement,
   fileName: string,
+  opts?: { pixelRatio?: number },
 ): Promise<void> {
-  const dataUrl = await renderPosterPng(node);
+  const dataUrl = await renderPosterPng(node, opts?.pixelRatio ?? 1);
   const a = document.createElement("a");
   a.href = dataUrl;
   a.download = `${fileName}.png`;

@@ -1,17 +1,19 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Cropper, type ReactCropperElement } from "react-cropper";
-import "cropperjs/dist/cropper.css";
 import { ImagePlus } from "lucide-react";
 
 import { Button } from "./Button";
 import { Modal } from "./Modal";
+import {
+  SimpleImageCropper,
+  type SimpleCropperHandle,
+} from "./SimpleImageCropper";
 import { canvasToCompressedFile } from "@/src/presentation/lib/crop-image";
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
-// `value` is the cropperjs aspectRatio (NaN = free / unconstrained).
+// `value` is the crop-window aspect ratio (NaN = free / matches the photo).
 const RATIO_PRESETS: { label: string; value: number }[] = [
   { label: "อิสระ", value: NaN },
   { label: "1:1", value: 1 },
@@ -29,8 +31,8 @@ const sameRatio = (a: number, b: number) =>
  * `<input name={name}>`, so the surrounding `<form action={...}>` submits the
  * cropped JPEG instead of the raw (often huge) phone photo.
  *
- * Uses cropperjs (imperative DOM, no React re-render loop) for a draggable /
- * resizable crop box. `aspect` sets the starting ratio (`null` = free); pass
+ * Uses the in-house SimpleImageCropper (drag to pan, slider to zoom — no crop
+ * library). `aspect` sets the starting ratio (`null` = free); pass
  * `allowRatioChange` to show the ratio presets (locked otherwise).
  */
 export function ImageCropField({
@@ -49,7 +51,7 @@ export function ImageCropField({
   /** Fired with `true` once a cropped file is staged, `false` while empty/busy. */
   onReadyChange?: (ready: boolean) => void;
 }) {
-  const cropperRef = useRef<ReactCropperElement>(null);
+  const cropperRef = useRef<SimpleCropperHandle>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
@@ -83,9 +85,8 @@ export function ImageCropField({
   );
 
   const pickRatio = useCallback((value: number) => {
+    // The cropper reshapes from the `aspect` prop — just drive it with state.
     setActiveRatio(value);
-    // cropperjs treats NaN as "free"; setAspectRatio applies it imperatively.
-    cropperRef.current?.cropper.setAspectRatio(value);
   }, []);
 
   const closeCropper = useCallback(() => {
@@ -96,16 +97,12 @@ export function ImageCropField({
   }, []);
 
   const confirmCrop = useCallback(async () => {
-    const cropper = cropperRef.current?.cropper;
+    const cropper = cropperRef.current;
     if (!cropper) return;
     setProcessing(true);
     setReady(false);
     try {
-      const canvas = cropper.getCroppedCanvas({
-        maxWidth: 2000,
-        maxHeight: 2000,
-        imageSmoothingQuality: "high",
-      });
+      const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 });
       if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
       const file = await canvasToCompressedFile(canvas, baseName);
       const dt = new DataTransfer();
@@ -205,20 +202,7 @@ export function ImageCropField({
           )}
 
           {src && (
-            <Cropper
-              ref={cropperRef}
-              src={src}
-              className="h-72 w-full"
-              aspectRatio={initialRatio}
-              viewMode={1}
-              dragMode="move"
-              autoCropArea={1}
-              background={false}
-              responsive
-              restore
-              checkOrientation
-              guides
-            />
+            <SimpleImageCropper ref={cropperRef} src={src} aspect={activeRatio} />
           )}
         </div>
       </Modal>

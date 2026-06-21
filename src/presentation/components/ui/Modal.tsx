@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   open: boolean;
@@ -20,9 +21,36 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  // Lock the background while open. On mobile, leaving <body> scrollable behind a
+  // full-screen overlay lets the browser's URL bar show/hide as the page reflows,
+  // which resizes the viewport repeatedly and makes the whole screen flicker. The
+  // position:fixed technique (not just overflow:hidden) is what holds on iOS Safari.
+  useEffect(() => {
+    if (!open) return;
+    const scrollY = window.scrollY;
+    const s = document.body.style;
+    const prev = {
+      position: s.position,
+      top: s.top,
+      width: s.width,
+      overflow: s.overflow,
+    };
+    s.position = "fixed";
+    s.top = `-${scrollY}px`;
+    s.width = "100%";
+    s.overflow = "hidden";
+    return () => {
+      s.position = prev.position;
+      s.top = prev.top;
+      s.width = prev.width;
+      s.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
 
-  return (
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
       onClick={onClose}
@@ -39,6 +67,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
         <div className="text-foreground">{children}</div>
         {footer && <div className="mt-5 flex justify-end gap-2">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

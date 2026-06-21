@@ -13,6 +13,8 @@ import { SaveLeadPhotoUseCase } from "@/src/application/use-cases/lead/SaveLeadP
 import { ConvertLeadToShopUseCase } from "@/src/application/use-cases/lead/ConvertLeadToShopUseCase";
 import { assertPasswordAcceptable } from "@/src/application/use-cases/auth/password-policy";
 import { bahtToSatang } from "@/src/presentation/lib/money";
+import { buildShopHandoff } from "@/src/presentation/lib/build-shop-handoff";
+import type { ShopHandoff } from "@/src/presentation/lib/shop-handoff";
 import type { Page } from "@/src/application/repositories/pagination";
 import type {
   Lead,
@@ -24,6 +26,8 @@ import type {
 export interface LeadFormState {
   error?: string;
   success?: string;
+  /** Present after converting a lead — credentials to hand the owner (once). */
+  handoff?: ShopHandoff;
 }
 
 /** A lead plus its resolved category label — the list/load-more row shape. */
@@ -224,6 +228,7 @@ export async function convertLeadToShopAction(
     const user = await requireRole("platform_admin");
     const leadId = String(formData.get("leadId") ?? "");
     const ownerPassword = String(formData.get("ownerPassword") ?? "");
+    const ownerEmail = String(formData.get("ownerEmail") ?? "");
     await assertPasswordAcceptable(ownerPassword, container.passwordBreachChecker);
     const { shop } = await new ConvertLeadToShopUseCase(
       container.leadRepository,
@@ -238,7 +243,7 @@ export async function convertLeadToShopAction(
     ).execute({
       leadId,
       slug: String(formData.get("slug") ?? ""),
-      ownerEmail: String(formData.get("ownerEmail") ?? ""),
+      ownerEmail,
       ownerPassword,
       pricePerDaySatang: bahtToSatang(
         Number(formData.get("pricePerDayBaht") ?? 0),
@@ -247,11 +252,22 @@ export async function convertLeadToShopAction(
       rewardText: String(formData.get("rewardText") ?? ""),
       performedBy: user.id,
     });
+    // The detail page stays mounted (ConvertLeadButton renders in every state),
+    // so this refresh flows `convertedSlug` in without dropping the credentials
+    // handoff — its state lives in the (preserved) client component.
     revalidatePath(`/admin/leads/${leadId}`);
     revalidatePath("/admin/leads");
     revalidatePath("/admin/leads/map");
     revalidatePath("/admin/shops");
-    return { success: `แปลงเป็นร้าน "${shop.name}" แล้ว (/s/${shop.slug})` };
+    return {
+      success: `แปลงเป็นร้าน "${shop.name}" แล้ว (/s/${shop.slug})`,
+      handoff: await buildShopHandoff({
+        shopName: shop.name,
+        slug: shop.slug,
+        ownerEmail,
+        ownerPassword,
+      }),
+    };
   } catch (e) {
     return { error: (e as Error).message };
   }

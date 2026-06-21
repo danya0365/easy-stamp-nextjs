@@ -18,3 +18,19 @@ export const isProd = process.env.NODE_ENV === "production";
  */
 export const isDevLoginEnabled =
   process.env.NODE_ENV !== "production" && !process.env.VERCEL;
+
+/**
+ * DEV-ONLY 2FA bypass — skips the mandatory-2FA gate and the login TOTP
+ * challenge so local testing isn't blocked by an authenticator code.
+ *
+ * Triple-gated and OPT-IN (off unless explicitly set):
+ *   - NODE_ENV !== "production"      → excludes local prod builds
+ *   - !process.env.VERCEL           → excludes ALL Vercel deployments
+ *   - DEV_DISABLE_2FA === "true"     → must be set on purpose in .env.local
+ *
+ * NEVER weakens 2FA in any hosted environment, even if the var leaks.
+ */
+export const is2faBypassed =
+  process.env.NODE_ENV !== "production" &&
+  !process.env.VERCEL &&
+  process.env.DEV_DISABLE_2FA === "true";

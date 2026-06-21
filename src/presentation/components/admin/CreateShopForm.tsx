@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   createShopAction,
@@ -9,6 +9,9 @@ import {
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
+import { GeneratedPasswordField } from "@/src/presentation/components/ui/GeneratedPasswordField";
+import { ShopCredentialsHandoff } from "@/src/presentation/components/admin/ShopCredentialsHandoff";
+import type { ShopHandoff } from "@/src/presentation/lib/shop-handoff";
 
 export function CreateShopForm({
   categories,
@@ -19,6 +22,25 @@ export function CreateShopForm({
     createShopAction,
     {},
   );
+  // Dismissed-by-reference so the NEXT create still shows its own handoff.
+  const [dismissed, setDismissed] = useState<ShopHandoff | null>(null);
+
+  // After a successful create, show the credentials handoff above the form.
+  if (state.handoff && state.handoff !== dismissed) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-success">{state.success}</p>
+        <ShopCredentialsHandoff handoff={state.handoff} />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setDismissed(state.handoff ?? null)}
+        >
+          สร้างร้านอื่นต่อ
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form action={action} className="flex flex-col gap-3">
@@ -33,7 +55,7 @@ export function CreateShopForm({
           <Input id="ownerEmail" name="ownerEmail" type="email" required />
         </FormField>
         <FormField label="รหัสผ่านเจ้าของร้าน" htmlFor="ownerPassword">
-          <Input id="ownerPassword" name="ownerPassword" type="text" required />
+          <GeneratedPasswordField />
         </FormField>
         <FormField label="ราคา/วัน (บาท)" htmlFor="pricePerDayBaht">
           <Input

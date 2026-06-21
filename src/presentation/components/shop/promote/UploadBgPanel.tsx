@@ -1,8 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Cropper, type ReactCropperElement } from "react-cropper";
-import "cropperjs/dist/cropper.css";
 import { ImagePlus } from "lucide-react";
 
 import type {
@@ -11,6 +9,10 @@ import type {
 } from "@/src/domain/services/promo-poster";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Modal } from "@/src/presentation/components/ui/Modal";
+import {
+  SimpleImageCropper,
+  type SimpleCropperHandle,
+} from "@/src/presentation/components/ui/SimpleImageCropper";
 import { canvasToCompressedFile } from "@/src/presentation/lib/crop-image";
 import { PosterExportArea } from "./PosterExportArea";
 import type { PromoSeedData } from "./types";
@@ -40,7 +42,7 @@ export function UploadBgPanel({
   copy: TemplateCopy;
   seed: PromoSeedData;
 }) {
-  const cropperRef = useRef<ReactCropperElement>(null);
+  const cropperRef = useRef<SimpleCropperHandle>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
   const [src, setSrc] = useState<string | null>(null);
@@ -69,15 +71,11 @@ export function UploadBgPanel({
   }
 
   async function confirmCrop() {
-    const cropper = cropperRef.current?.cropper;
+    const cropper = cropperRef.current;
     if (!cropper) return;
     setProcessing(true);
     try {
-      const canvas = cropper.getCroppedCanvas({
-        maxWidth: 2000,
-        maxHeight: 2000,
-        imageSmoothingQuality: "high",
-      });
+      const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 });
       if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
       const file = await canvasToCompressedFile(canvas, baseName);
       setBgDataUrl(await fileToDataUrl(file));
@@ -152,22 +150,7 @@ export function UploadBgPanel({
           </>
         }
       >
-        {src && (
-          <Cropper
-            ref={cropperRef}
-            src={src}
-            className="h-72 w-full"
-            aspectRatio={aspect}
-            viewMode={1}
-            dragMode="move"
-            autoCropArea={1}
-            background={false}
-            responsive
-            restore
-            checkOrientation
-            guides
-          />
-        )}
+        {src && <SimpleImageCropper ref={cropperRef} src={src} aspect={aspect} />}
       </Modal>
     </div>
   );

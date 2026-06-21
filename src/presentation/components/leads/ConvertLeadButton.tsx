@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { Store } from "lucide-react";
 
 import {
@@ -10,8 +11,11 @@ import {
 import type { Lead } from "@/src/domain/entities";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Input } from "@/src/presentation/components/ui/Input";
+import { Badge } from "@/src/presentation/components/ui/Badge";
 import { FormField } from "@/src/presentation/components/ui/FormField";
 import { Modal } from "@/src/presentation/components/ui/Modal";
+import { GeneratedPasswordField } from "@/src/presentation/components/ui/GeneratedPasswordField";
+import { ShopCredentialsHandoff } from "@/src/presentation/components/admin/ShopCredentialsHandoff";
 
 /** Suggest a URL slug from the lead name (latin/number only). */
 function suggestSlug(name: string): string {
@@ -22,12 +26,57 @@ function suggestSlug(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function ConvertLeadButton({ lead }: { lead: Lead }) {
+/** Badge + public link shown once a lead is (or has been) converted. */
+function ConvertedBadge({ slug }: { slug: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge tone="success">แปลงเป็นร้านแล้ว</Badge>
+      <Link
+        href={`/s/${slug}`}
+        className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
+      >
+        <Store size={14} />/s/{slug}
+      </Link>
+    </div>
+  );
+}
+
+export function ConvertLeadButton({
+  lead,
+  convertedSlug,
+}: {
+  lead: Lead;
+  /** Set once this lead has a shop — the page stays mounted across conversion. */
+  convertedSlug: string | null;
+}) {
   const [open, setOpen] = useState(false);
+  const [handoffDismissed, setHandoffDismissed] = useState(false);
   const [state, action, pending] = useActionState<LeadFormState, FormData>(
     convertLeadToShopAction,
     {},
   );
+
+  // Just converted in this session → show the credentials handoff. This branch
+  // must win even after the page refreshes `convertedSlug` in, because the
+  // plaintext password lives only in this component's action state (shown once).
+  if (state.handoff && !handoffDismissed) {
+    return (
+      <Modal
+        open
+        onClose={() => setHandoffDismissed(true)}
+        title={`สร้างร้าน "${lead.name}" สำเร็จ`}
+      >
+        <div className="flex flex-col gap-4">
+          <ShopCredentialsHandoff handoff={state.handoff} />
+          <Button type="button" onClick={() => setHandoffDismissed(true)}>
+            เสร็จสิ้น
+          </Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (convertedSlug) return <ConvertedBadge slug={convertedSlug} />;
 
   if (lead.status !== "won") {
     return (
@@ -67,7 +116,7 @@ export function ConvertLeadButton({ lead }: { lead: Lead }) {
             <Input id="ownerEmail" name="ownerEmail" type="email" required />
           </FormField>
           <FormField label="รหัสผ่านเจ้าของร้าน" htmlFor="ownerPassword">
-            <Input id="ownerPassword" name="ownerPassword" type="text" required />
+            <GeneratedPasswordField />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
             <FormField label="ราคา/วัน (บาท)" htmlFor="pricePerDayBaht">
@@ -101,9 +150,6 @@ export function ConvertLeadButton({ lead }: { lead: Lead }) {
           </FormField>
 
           {state.error && <p className="text-sm text-error">{state.error}</p>}
-          {state.success && (
-            <p className="text-sm text-success">{state.success}</p>
-          )}
 
           <Button type="submit" disabled={pending}>
             {pending ? "กำลังแปลง…" : "ยืนยันแปลงเป็นร้าน"}

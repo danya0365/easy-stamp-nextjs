@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { container } from "@/src/infrastructure/di/container";
-import { isDevLoginEnabled } from "@/src/infrastructure/config/env";
+import { isDevLoginEnabled, is2faBypassed } from "@/src/infrastructure/config/env";
 import {
   createSession,
   destroySession,
@@ -63,7 +63,8 @@ async function completeLogin(
   ip: string,
   userAgent: string | null,
 ): Promise<LoginFormState> {
-  if (user.totpEnabled) {
+  // DEV bypass: skip the TOTP challenge entirely (local testing only).
+  if (user.totpEnabled && !is2faBypassed) {
     await setPendingTwoFactor(user.id);
     return { twoFactorRequired: true };
   }
