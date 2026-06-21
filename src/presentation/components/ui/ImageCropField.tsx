@@ -1,62 +1,62 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import Cropper, { type Area } from "react-easy-crop";
+import { Cropper, type ReactCropperElement } from "react-cropper";
+import "cropperjs/dist/cropper.css";
 import { ImagePlus } from "lucide-react";
 
 import { Button } from "./Button";
 import { Modal } from "./Modal";
-import { getCroppedImageFile, type CropPixels } from "@/src/presentation/lib/crop-image";
+import { canvasToCompressedFile } from "@/src/presentation/lib/crop-image";
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
-/** Measure a free-crop image's natural ratio so `aspect` is fixed up front. */
-function measureAspect(url: string): Promise<number> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () =>
-      resolve(img.naturalHeight ? img.naturalWidth / img.naturalHeight : 4 / 3);
-    img.onerror = () => resolve(4 / 3);
-    img.src = url;
-  });
-}
+// `value` is the cropperjs aspectRatio (NaN = free / unconstrained).
+const RATIO_PRESETS: { label: string; value: number }[] = [
+  { label: "อิสระ", value: NaN },
+  { label: "1:1", value: 1 },
+  { label: "4:3", value: 4 / 3 },
+  { label: "3:4", value: 3 / 4 },
+  { label: "16:9", value: 16 / 9 },
+  { label: "9:16", value: 9 / 16 },
+];
+
+const sameRatio = (a: number, b: number) =>
+  (Number.isNaN(a) && Number.isNaN(b)) || a === b;
 
 /**
- * File picker that lets the user crop + zoom a photo to a fixed aspect ratio,
- * then stages a downscaled JPEG into a hidden `<input name={name}>` so the
- * surrounding `<form action={...}>` submits the cropped image, not the raw one.
+ * File picker that crops + downscales a photo before staging it into a hidden
+ * `<input name={name}>`, so the surrounding `<form action={...}>` submits the
+ * cropped JPEG instead of the raw (often huge) phone photo.
  *
- * `aspect` locks the crop ratio (e.g. 16/9 for a cover banner); pass `null`
- * to crop freely at the photo's own ratio (zoom/pan only).
+ * Uses cropperjs (imperative DOM, no React re-render loop) for a draggable /
+ * resizable crop box. `aspect` sets the starting ratio (`null` = free); pass
+ * `allowRatioChange` to show the ratio presets (locked otherwise).
  */
 export function ImageCropField({
   name,
   aspect,
   label,
   disabled,
+  allowRatioChange,
   onReadyChange,
 }: {
   name: string;
   aspect: number | null;
   label: string;
   disabled?: boolean;
+  allowRatioChange?: boolean;
   /** Fired with `true` once a cropped file is staged, `false` while empty/busy. */
   onReadyChange?: (ready: boolean) => void;
 }) {
+  const cropperRef = useRef<ReactCropperElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
+  const initialRatio = aspect ?? NaN;
   const [src, setSrc] = useState<string | null>(null);
   const [baseName, setBaseName] = useState("image");
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  // The crop ratio is decided BEFORE the cropper mounts and never changes while
-  // it's open — mutating react-easy-crop's `aspect` mid-session retriggers its
-  // internal recompute and feeds an infinite re-render loop on mobile.
-  const [cropAspect, setCropAspect] = useState(aspect ?? 4 / 3);
-  const [areaPixels, setAreaPixels] = useState<CropPixels | null>(null);
-  // Mirror of `areaPixels` for change-detection without re-running callbacks.
-  const areaRef = useRef<CropPixels | null>(null);
+  const [activeRatio, setActiveRatio] = useState<number>(initialRatio);
 
   const [preview, setPreview] = useState<string | null>(null);
   const [sizeKb, setSizeKb] = useState<number | null>(null);
@@ -69,40 +69,23 @@ export function ImageCropField({
   );
 
   const onPickRaw = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       // Picker only feeds the cropper — clear it so the raw file is never submitted.
       if (pickRef.current) pickRef.current.value = "";
       if (!file) return;
-      const url = URL.createObjectURL(file);
       setError(null);
       setBaseName(file.name);
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      setAreaPixels(null);
-      areaRef.current = null;
-      // Lock the ratio first; only then mount the cropper (open the modal).
-      setCropAspect(aspect ?? (await measureAspect(url)));
-      setSrc(url);
+      setActiveRatio(initialRatio);
+      setSrc(URL.createObjectURL(file));
     },
-    [aspect],
+    [initialRatio],
   );
 
-  const onCropComplete = useCallback((_area: Area, pixels: Area) => {
-    // react-easy-crop re-emits the same crop on every resize/recompute tick;
-    // skip the state update when nothing actually changed to stop render churn.
-    const prev = areaRef.current;
-    if (
-      prev &&
-      prev.x === pixels.x &&
-      prev.y === pixels.y &&
-      prev.width === pixels.width &&
-      prev.height === pixels.height
-    ) {
-      return;
-    }
-    areaRef.current = pixels;
-    setAreaPixels(pixels);
+  const pickRatio = useCallback((value: number) => {
+    setActiveRatio(value);
+    // cropperjs treats NaN as "free"; setAspectRatio applies it imperatively.
+    cropperRef.current?.cropper.setAspectRatio(value);
   }, []);
 
   const closeCropper = useCallback(() => {
@@ -113,11 +96,18 @@ export function ImageCropField({
   }, []);
 
   const confirmCrop = useCallback(async () => {
-    if (!src || !areaRef.current) return;
+    const cropper = cropperRef.current?.cropper;
+    if (!cropper) return;
     setProcessing(true);
     setReady(false);
     try {
-      const file = await getCroppedImageFile(src, areaRef.current, baseName);
+      const canvas = cropper.getCroppedCanvas({
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageSmoothingQuality: "high",
+      });
+      if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+      const file = await canvasToCompressedFile(canvas, baseName);
       const dt = new DataTransfer();
       dt.items.add(file);
       if (fileRef.current) fileRef.current.files = dt.files;
@@ -135,7 +125,7 @@ export function ImageCropField({
     } finally {
       setProcessing(false);
     }
-  }, [src, baseName, setReady, closeCropper]);
+  }, [baseName, setReady, closeCropper]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -185,43 +175,51 @@ export function ImageCropField({
             <Button type="button" variant="ghost" size="sm" onClick={closeCropper}>
               ยกเลิก
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={processing || !areaPixels}
-              onClick={confirmCrop}
-            >
+            <Button type="button" size="sm" disabled={processing} onClick={confirmCrop}>
               {processing ? "กำลังประมวลผล…" : "ยืนยัน"}
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-3">
-          <div className="relative h-64 w-full overflow-hidden rounded-lg bg-black/80">
-            {src && (
-              <Cropper
-                image={src}
-                crop={crop}
-                zoom={zoom}
-                aspect={cropAspect}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-              />
-            )}
-          </div>
-          <label className="flex items-center gap-2 text-xs text-muted">
-            ซูม
-            <input
-              type="range"
-              min={1}
-              max={3}
-              step={0.01}
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="flex-1 accent-brand-500"
+          {allowRatioChange && (
+            <div className="flex flex-wrap gap-1.5">
+              {RATIO_PRESETS.map((r) => {
+                const active = sameRatio(activeRatio, r.value);
+                return (
+                  <button
+                    key={r.label}
+                    type="button"
+                    onClick={() => pickRatio(r.value)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${
+                      active
+                        ? "bg-brand-500 text-on-brand ring-brand-500"
+                        : "bg-card text-muted ring-border hover:ring-brand-300"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {src && (
+            <Cropper
+              ref={cropperRef}
+              src={src}
+              className="h-72 w-full"
+              aspectRatio={initialRatio}
+              viewMode={1}
+              dragMode="move"
+              autoCropArea={1}
+              background={false}
+              responsive
+              restore
+              checkOrientation
+              guides
             />
-          </label>
+          )}
         </div>
       </Modal>
     </div>

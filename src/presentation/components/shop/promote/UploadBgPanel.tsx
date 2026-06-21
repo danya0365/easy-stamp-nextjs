@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import Cropper, { type Area } from "react-easy-crop";
+import { useRef, useState } from "react";
+import { Cropper, type ReactCropperElement } from "react-cropper";
+import "cropperjs/dist/cropper.css";
 import { ImagePlus } from "lucide-react";
 
 import type {
@@ -10,10 +11,7 @@ import type {
 } from "@/src/domain/services/promo-poster";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { Modal } from "@/src/presentation/components/ui/Modal";
-import {
-  getCroppedImageFile,
-  type CropPixels,
-} from "@/src/presentation/lib/crop-image";
+import { canvasToCompressedFile } from "@/src/presentation/lib/crop-image";
 import { PosterExportArea } from "./PosterExportArea";
 import type { PromoSeedData } from "./types";
 
@@ -42,13 +40,11 @@ export function UploadBgPanel({
   copy: TemplateCopy;
   seed: PromoSeedData;
 }) {
+  const cropperRef = useRef<ReactCropperElement>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
   const [src, setSrc] = useState<string | null>(null);
   const [baseName, setBaseName] = useState("ai-image");
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [areaPixels, setAreaPixels] = useState<CropPixels | null>(null);
 
   const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -58,29 +54,32 @@ export function UploadBgPanel({
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (pickRef.current) pickRef.current.value = "";
     if (!file) return;
     setError(null);
     setBaseName(file.name);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
     setSrc(URL.createObjectURL(file));
-    if (pickRef.current) pickRef.current.value = "";
   }
 
-  const onCropComplete = useCallback((_a: Area, pixels: Area) => {
-    setAreaPixels(pixels);
-  }, []);
-
   function closeCropper() {
-    if (src) URL.revokeObjectURL(src);
-    setSrc(null);
+    setSrc((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
   }
 
   async function confirmCrop() {
-    if (!src || !areaPixels) return;
+    const cropper = cropperRef.current?.cropper;
+    if (!cropper) return;
     setProcessing(true);
     try {
-      const file = await getCroppedImageFile(src, areaPixels, baseName);
+      const canvas = cropper.getCroppedCanvas({
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageSmoothingQuality: "high",
+      });
+      if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+      const file = await canvasToCompressedFile(canvas, baseName);
       setBgDataUrl(await fileToDataUrl(file));
       setError(null);
       closeCropper();
@@ -145,7 +144,7 @@ export function UploadBgPanel({
             <Button
               type="button"
               size="sm"
-              disabled={processing || !areaPixels}
+              disabled={processing}
               onClick={confirmCrop}
             >
               {processing ? "กำลังประมวลผล…" : "ยืนยัน"}
@@ -153,33 +152,22 @@ export function UploadBgPanel({
           </>
         }
       >
-        <div className="flex flex-col gap-3">
-          <div className="relative h-64 w-full overflow-hidden rounded-lg bg-black/80">
-            {src && (
-              <Cropper
-                image={src}
-                crop={crop}
-                zoom={zoom}
-                aspect={aspect}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-              />
-            )}
-          </div>
-          <label className="flex items-center gap-2 text-xs text-muted">
-            ซูม
-            <input
-              type="range"
-              min={1}
-              max={3}
-              step={0.01}
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="flex-1 accent-brand-500"
-            />
-          </label>
-        </div>
+        {src && (
+          <Cropper
+            ref={cropperRef}
+            src={src}
+            className="h-72 w-full"
+            aspectRatio={aspect}
+            viewMode={1}
+            dragMode="move"
+            autoCropArea={1}
+            background={false}
+            responsive
+            restore
+            checkOrientation
+            guides
+          />
+        )}
       </Modal>
     </div>
   );

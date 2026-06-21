@@ -44,6 +44,7 @@ export function LeadPhotoUpload({
         <ImageCropField
           name="photo"
           aspect={null}
+          allowRatioChange
           label={hasPhoto ? "เลือกรูปใหม่" : "เลือกรูปร้าน"}
           onReadyChange={setReady}
         />
