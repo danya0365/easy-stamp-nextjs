@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { ScanLine, Download, Printer } from "lucide-react";
+import { ScanLine, Stamp, Download, Printer } from "lucide-react";
 
 import { Button } from "@/src/presentation/components/ui/Button";
 
@@ -29,8 +29,12 @@ export function ShopQrPoster({
         id="shop-qr-poster"
         className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl bg-white p-8 text-center ring-1 ring-brand-100"
       >
-        <p className="text-sm font-medium text-brand-600">สะสมแสตมป์</p>
+        <p className="text-sm font-medium text-brand-600">ร้านนี้สะสมแสตมป์</p>
         <h2 className="text-2xl font-bold text-foreground">{shopName}</h2>
+        <p className="inline-flex items-center gap-1.5 text-lg font-semibold text-brand-700">
+          <Stamp className="size-5" />
+          ซื้อรับแสตมป์ที่ร้าน สะสมครบแลกฟรี
+        </p>
         <img
           src={qrImageUrl}
           alt={`QR ร้าน ${shopName}`}
@@ -38,9 +42,9 @@ export function ShopQrPoster({
           height={256}
           className="h-64 w-64 object-contain"
         />
-        <p className="inline-flex items-center gap-1.5 text-lg font-semibold text-brand-700">
-          <ScanLine className="size-5" />
-          สแกนเพื่อสมัคร / เปิดบัตรสะสมแต้ม
+        <p className="inline-flex items-center gap-1.5 text-sm text-muted">
+          <ScanLine className="size-4" />
+          สแกนดูร้าน · ของรางวัล · เช็คแต้มสะสม
         </p>
         <p className="text-xs break-all text-muted">{url}</p>
       </div>

@@ -10,6 +10,17 @@ import { getCroppedImageFile, type CropPixels } from "@/src/presentation/lib/cro
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
+/** Measure a free-crop image's natural ratio so `aspect` is fixed up front. */
+function measureAspect(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () =>
+      resolve(img.naturalHeight ? img.naturalWidth / img.naturalHeight : 4 / 3);
+    img.onerror = () => resolve(4 / 3);
+    img.src = url;
+  });
+}
+
 /**
  * File picker that lets the user crop + zoom a photo to a fixed aspect ratio,
  * then stages a downscaled JPEG into a hidden `<input name={name}>` so the
@@ -39,8 +50,13 @@ export function ImageCropField({
   const [baseName, setBaseName] = useState("image");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [effectiveAspect, setEffectiveAspect] = useState(aspect ?? 4 / 3);
+  // The crop ratio is decided BEFORE the cropper mounts and never changes while
+  // it's open — mutating react-easy-crop's `aspect` mid-session retriggers its
+  // internal recompute and feeds an infinite re-render loop on mobile.
+  const [cropAspect, setCropAspect] = useState(aspect ?? 4 / 3);
   const [areaPixels, setAreaPixels] = useState<CropPixels | null>(null);
+  // Mirror of `areaPixels` for change-detection without re-running callbacks.
+  const areaRef = useRef<CropPixels | null>(null);
 
   const [preview, setPreview] = useState<string | null>(null);
   const [sizeKb, setSizeKb] = useState<number | null>(null);
@@ -52,34 +68,56 @@ export function ImageCropField({
     [onReadyChange],
   );
 
-  function onPickRaw(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError(null);
-    setBaseName(file.name);
-    setEffectiveAspect(aspect ?? 4 / 3);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setSrc(URL.createObjectURL(file));
-    // Picker only feeds the cropper — clear it so the raw file is never submitted.
-    if (pickRef.current) pickRef.current.value = "";
-  }
+  const onPickRaw = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // Picker only feeds the cropper — clear it so the raw file is never submitted.
+      if (pickRef.current) pickRef.current.value = "";
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      setError(null);
+      setBaseName(file.name);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setAreaPixels(null);
+      areaRef.current = null;
+      // Lock the ratio first; only then mount the cropper (open the modal).
+      setCropAspect(aspect ?? (await measureAspect(url)));
+      setSrc(url);
+    },
+    [aspect],
+  );
 
   const onCropComplete = useCallback((_area: Area, pixels: Area) => {
+    // react-easy-crop re-emits the same crop on every resize/recompute tick;
+    // skip the state update when nothing actually changed to stop render churn.
+    const prev = areaRef.current;
+    if (
+      prev &&
+      prev.x === pixels.x &&
+      prev.y === pixels.y &&
+      prev.width === pixels.width &&
+      prev.height === pixels.height
+    ) {
+      return;
+    }
+    areaRef.current = pixels;
     setAreaPixels(pixels);
   }, []);
 
-  function closeCropper() {
-    if (src) URL.revokeObjectURL(src);
-    setSrc(null);
-  }
+  const closeCropper = useCallback(() => {
+    setSrc((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, []);
 
-  async function confirmCrop() {
-    if (!src || !areaPixels) return;
+  const confirmCrop = useCallback(async () => {
+    if (!src || !areaRef.current) return;
     setProcessing(true);
     setReady(false);
     try {
-      const file = await getCroppedImageFile(src, areaPixels, baseName);
+      const file = await getCroppedImageFile(src, areaRef.current, baseName);
       const dt = new DataTransfer();
       dt.items.add(file);
       if (fileRef.current) fileRef.current.files = dt.files;
@@ -97,7 +135,7 @@ export function ImageCropField({
     } finally {
       setProcessing(false);
     }
-  }
+  }, [src, baseName, setReady, closeCropper]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -165,15 +203,10 @@ export function ImageCropField({
                 image={src}
                 crop={crop}
                 zoom={zoom}
-                aspect={effectiveAspect}
+                aspect={cropAspect}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
-                onMediaLoaded={(media) => {
-                  if (aspect === null) {
-                    setEffectiveAspect(media.naturalWidth / media.naturalHeight);
-                  }
-                }}
               />
             )}
           </div>

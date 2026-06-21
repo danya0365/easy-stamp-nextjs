@@ -12,7 +12,7 @@
 
 /** The marketing intent the owner is creating a poster for. */
 export type PromoGoal =
-  | "new_customer" // ดึงลูกค้าใหม่ / สมัครสมาชิก
+  | "new_customer" // ดึงลูกค้าใหม่
   | "reward_highlight" // โปรโมทของรางวัล
   | "festival" // เทศกาล / วันสำคัญ
   | "weekday_boost" // กระตุ้นยอดวันธรรมดา

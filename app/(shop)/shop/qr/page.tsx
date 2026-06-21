@@ -20,7 +20,7 @@ export default async function ShopQrPage() {
       <Card>
         <CardHeader
           title="ป้าย QR ร้าน"
-          subtitle="พิมพ์ติดหน้าเคาน์เตอร์ ให้ลูกค้าสแกนเพื่อสมัครและเช็คแต้ม"
+          subtitle="พิมพ์ติดหน้าเคาน์เตอร์ ให้ลูกค้าสแกนดูร้านและเช็คแต้มสะสม"
         />
         <ShopQrPoster shopName={shop.name} url={url} qrImageUrl={qrImageUrl} />
       </Card>
