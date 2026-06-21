@@ -103,6 +103,32 @@ export async function createShopAction(
   }
 }
 
+/**
+ * Build the credentials handoff for an EXISTING shop (no password — only a hash
+ * is stored, so the sheet shows a placeholder for the admin to fill in by hand).
+ */
+export async function getShopHandoffAction(
+  shopId: string,
+): Promise<{ handoff?: ShopHandoff; error?: string }> {
+  try {
+    await requireRole("platform_admin");
+    const shop = await container.shopRepository.findById(shopId);
+    if (!shop) throw new Error("ไม่พบร้านค้า");
+    const members = await container.userRepository.listByShop(shopId);
+    const owner = members.find((u) => u.role === "shop_owner");
+    if (!owner) throw new Error("ไม่พบบัญชีเจ้าของร้าน");
+    const handoff = await buildShopHandoff({
+      shopName: shop.name,
+      slug: shop.slug,
+      ownerEmail: owner.email,
+      ownerPassword: "", // placeholder — real password is not retrievable
+    });
+    return { handoff };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 /** Helper: attach shop names to a page of reviews for the admin list. */
 async function toReviewRows(reviews: ShopReview[]): Promise<AdminReviewRow[]> {
   const shops = await container.shopRepository.list();

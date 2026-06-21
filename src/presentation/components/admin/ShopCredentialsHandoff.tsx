@@ -11,12 +11,23 @@ import type { ShopHandoff } from "@/src/presentation/lib/shop-handoff";
 type CopyKey = "email" | "password" | "all";
 
 /**
- * Shown ONCE right after a shop is created (admin form / lead convert): the new
- * owner's login URL + QR, email, and password — formatted so the admin can copy,
- * download as an image, or print and hand it over. The password is not stored;
- * if lost, the admin resets it from the shop page.
+ * Owner login URL + QR, email, and password — formatted so the admin can copy,
+ * download as an image, or print and hand it over.
+ *
+ * Two modes:
+ *  - default: right after a shop is created, with the plaintext password (shown
+ *    once, not stored).
+ *  - `passwordPlaceholder`: for an EXISTING shop, where the password can't be
+ *    shown (only a hash is stored). The password becomes a blank line to write
+ *    by hand, and the copy-password / copy-all buttons are hidden.
  */
-export function ShopCredentialsHandoff({ handoff }: { handoff: ShopHandoff }) {
+export function ShopCredentialsHandoff({
+  handoff,
+  passwordPlaceholder = false,
+}: {
+  handoff: ShopHandoff;
+  passwordPlaceholder?: boolean;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState<CopyKey | null>(null);
   const [busy, setBusy] = useState(false);
@@ -92,15 +103,25 @@ export function ShopCredentialsHandoff({ handoff }: { handoff: ShopHandoff }) {
           </div>
           <div className="flex flex-col gap-0.5 px-4 py-3">
             <dt className="text-xs font-medium text-muted">รหัสผ่าน</dt>
-            <dd className="break-all font-mono text-sm text-foreground">
-              {handoff.ownerPassword}
-            </dd>
+            {passwordPlaceholder ? (
+              <dd className="mt-1 h-6 border-b border-dashed border-muted" />
+            ) : (
+              <dd className="break-all font-mono text-sm text-foreground">
+                {handoff.ownerPassword}
+              </dd>
+            )}
           </div>
         </dl>
 
         <p className="text-xs text-muted">
-          <strong className="text-foreground">บันทึกข้อมูลนี้ไว้</strong> —
-          แสดงครั้งเดียว เปลี่ยนรหัสภายหลังได้ในแอป (ถ้าหาย แอดมินรีเซ็ตรหัสที่หน้าร้านค้า)
+          {passwordPlaceholder ? (
+            "รหัสผ่านไม่ได้ถูกเก็บไว้ — เขียนรหัสที่ตั้งให้ลูกค้าในช่องด้านบน หรือกด “รีเซ็ตรหัส” เพื่อตั้งรหัสใหม่"
+          ) : (
+            <>
+              <strong className="text-foreground">บันทึกข้อมูลนี้ไว้</strong> —
+              แสดงครั้งเดียว เปลี่ยนรหัสภายหลังได้ในแอป (ถ้าหาย แอดมินรีเซ็ตรหัสที่หน้าร้านค้า)
+            </>
+          )}
         </p>
       </div>
       </div>
@@ -115,18 +136,22 @@ export function ShopCredentialsHandoff({ handoff }: { handoff: ShopHandoff }) {
           {copied === "email" ? <Check className="size-4" /> : <Copy className="size-4" />}
           อีเมล
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => copy("password", handoff.ownerPassword)}
-        >
-          {copied === "password" ? <Check className="size-4" /> : <Copy className="size-4" />}
-          รหัสผ่าน
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => copy("all", allText)}>
-          {copied === "all" ? <Check className="size-4" /> : <Copy className="size-4" />}
-          คัดลอกทั้งหมด
-        </Button>
+        {!passwordPlaceholder && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copy("password", handoff.ownerPassword)}
+            >
+              {copied === "password" ? <Check className="size-4" /> : <Copy className="size-4" />}
+              รหัสผ่าน
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => copy("all", allText)}>
+              {copied === "all" ? <Check className="size-4" /> : <Copy className="size-4" />}
+              คัดลอกทั้งหมด
+            </Button>
+          </>
+        )}
         <Button variant="outline" size="sm" disabled={busy} onClick={download}>
           <Download className="size-4" />
           {busy ? "กำลังสร้าง…" : "ดาวน์โหลด PNG"}

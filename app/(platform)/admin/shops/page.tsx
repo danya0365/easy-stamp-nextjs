@@ -14,6 +14,7 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopForm";
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
 import { PauseShopToggle } from "@/src/presentation/components/admin/PauseShopToggle";
+import { ShopHandoffButton } from "@/src/presentation/components/admin/ShopHandoffButton";
 import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,7 @@ export default async function AdminShopsPage() {
                     </form>
                     {owner && (
                       <>
+                        <ShopHandoffButton shopId={shop.id} />
                         <ResetPasswordControl kind="owner" userId={owner.id} />
                         <form
                           action={async () => {
