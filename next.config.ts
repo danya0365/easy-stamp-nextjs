@@ -1,5 +1,19 @@
 import { execSync } from "child_process";
+import os from "node:os";
 import type { NextConfig } from "next";
+
+// Every non-internal IPv4 of this machine, so a phone on the same Wi-Fi can hit
+// the dev server (http://<lan-ip>:3000) without Next blocking it as a cross-origin
+// request. Auto-detected → survives the LAN IP changing (just restart dev).
+const lanDevOrigins = (): string[] => {
+  const ips: string[] = [];
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const net of list ?? []) {
+      if (net.family === "IPv4" && !net.internal) ips.push(net.address);
+    }
+  }
+  return ips;
+};
 
 const getCommitSha = () => {
   try {
@@ -42,11 +56,18 @@ const nextConfig: NextConfig = {
   experimental: {
     // Slip uploads (submitSlipAction) accept up to 5MB; phone photos routinely
     // exceed Next's 1MB server-action default, which silently breaks uploads.
-    serverActions: { bodySizeLimit: "6mb" },
+    serverActions: {
+      bodySizeLimit: "6mb",
+      // Let Server Actions fired from the LAN-IP dev URL pass the origin/host
+      // CSRF check. Dev-only IPs — harmless in prod (requests never originate there).
+      allowedOrigins: lanDevOrigins(),
+    },
   },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },
+  // Allow the dev server's own assets/HMR to be requested from the phone's LAN URL.
+  allowedDevOrigins: lanDevOrigins(),
 };
 
 export default nextConfig;
