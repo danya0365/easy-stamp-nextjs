@@ -162,8 +162,8 @@ export function UploadBgPanel({
             dragMode="move"
             autoCropArea={1}
             background={false}
-            responsive
-            restore
+            responsive={false}
+            restore={false}
             checkOrientation
             guides
           />
