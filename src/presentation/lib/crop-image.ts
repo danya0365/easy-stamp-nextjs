@@ -1,7 +1,7 @@
 /**
  * Downscale an already-cropped canvas into a JPEG upload File.
  *
- * cropperjs hands us the cropped region as a `<canvas>`, so we only need to
+ * The cropper hands us the cropped region as a `<canvas>`, so we only need to
  * re-encode + shrink it: `browser-image-compression` caps it to ≤1MB at 2000px
  * so large phone photos stay well under the server-action body limit and don't
  * silently fail to upload on mobile.
