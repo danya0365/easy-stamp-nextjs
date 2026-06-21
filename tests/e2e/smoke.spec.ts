@@ -20,3 +20,8 @@ test("unauthenticated /shop redirects to /login", async ({ page }) => {
   await page.goto("/shop");
   await expect(page).toHaveURL(/\/login/);
 });
+
+test("unauthenticated /shop/promote redirects to /login", async ({ page }) => {
+  await page.goto("/shop/promote");
+  await expect(page).toHaveURL(/\/login/);
+});
