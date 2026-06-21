@@ -22,6 +22,8 @@ import { SetReviewHiddenUseCase } from "@/src/application/use-cases/review/SetRe
 import { AUDIT_ACTIONS } from "@/src/application/services/AuditLogger";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 import { bahtToSatang, satangToBaht } from "@/src/presentation/lib/money";
+import { buildShopHandoff } from "@/src/presentation/lib/build-shop-handoff";
+import type { ShopHandoff } from "@/src/presentation/lib/shop-handoff";
 import type { Page } from "@/src/application/repositories/pagination";
 import type { ShopReview } from "@/src/domain/entities";
 import type { PendingPaymentRow } from "@/src/presentation/components/admin/AdminPaymentQueue";
@@ -35,6 +37,8 @@ export interface AdminReviewRow {
 export interface AdminFormState {
   error?: string;
   success?: string;
+  /** Present after a successful create — credentials to hand the owner (once). */
+  handoff?: ShopHandoff;
 }
 
 /** Next page of the pending-payment review queue (admin "load more"). */
@@ -63,8 +67,9 @@ export async function createShopAction(
   try {
     await requireRole("platform_admin");
     const ownerPassword = String(formData.get("ownerPassword") ?? "");
+    const ownerEmail = String(formData.get("ownerEmail") ?? "");
     await assertPasswordAcceptable(ownerPassword, container.passwordBreachChecker);
-    await new CreateShopUseCase(
+    const shop = await new CreateShopUseCase(
       container.shopRepository,
       container.userRepository,
       container.subscriptionRepository,
@@ -74,7 +79,7 @@ export async function createShopAction(
     ).execute({
       name: String(formData.get("name") ?? ""),
       slug: String(formData.get("slug") ?? ""),
-      ownerEmail: String(formData.get("ownerEmail") ?? ""),
+      ownerEmail,
       ownerPassword,
       pricePerDaySatang: bahtToSatang(
         Number(formData.get("pricePerDayBaht") ?? 0),
@@ -84,7 +89,15 @@ export async function createShopAction(
       rewardText: String(formData.get("rewardText") ?? ""),
     });
     revalidatePath("/admin/shops");
-    return { success: "สร้างร้านค้าและบัญชีเจ้าของร้านแล้ว" };
+    return {
+      success: "สร้างร้านค้าและบัญชีเจ้าของร้านแล้ว",
+      handoff: await buildShopHandoff({
+        shopName: shop.name,
+        slug: shop.slug,
+        ownerEmail,
+        ownerPassword,
+      }),
+    };
   } catch (e) {
     return { error: (e as Error).message };
   }

@@ -6,16 +6,7 @@ import { adminResetOwnerPasswordAction } from "@/src/presentation/actions/admin-
 import { resetStaffPasswordAction } from "@/src/presentation/actions/shop-actions";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
-
-/** Suggest an easy-to-read password (no ambiguous characters). */
-function genPassword(): string {
-  const chars = "abcdefghijkmnpqrstuvwxyz23456789";
-  let s = "";
-  for (let i = 0; i < 8; i++) {
-    s += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return s;
-}
+import { genPassword } from "@/src/presentation/lib/gen-password";
 
 /**
  * Lets a privileged user (admin → shop owner, owner → staff) set a NEW password

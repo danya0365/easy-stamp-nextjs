@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Phone, Store } from "lucide-react";
+import { ArrowLeft, Phone } from "lucide-react";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -136,19 +136,12 @@ export default async function AdminLeadDetailPage({
 
       <Card>
         <CardHeader title="แปลงเป็นร้านจริง" />
-        {convertedShop ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="success">แปลงเป็นร้านแล้ว</Badge>
-            <Link
-              href={`/s/${convertedShop.slug}`}
-              className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
-            >
-              <Store size={14} />/s/{convertedShop.slug}
-            </Link>
-          </div>
-        ) : (
-          <ConvertLeadButton lead={lead} />
-        )}
+        {/* Always mounted (even after conversion) so the post-create credentials
+            handoff survives the action's page refresh. */}
+        <ConvertLeadButton
+          lead={lead}
+          convertedSlug={convertedShop?.slug ?? null}
+        />
       </Card>
     </div>
   );
