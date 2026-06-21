@@ -33,9 +33,24 @@ test("every preset is resolvable and has non-empty copy + prompt seeds", () => {
     const p = getPromoPreset(goal);
     assert.ok(p.label.length > 0, `${goal} label`);
     assert.ok(p.headline.length > 0, `${goal} headline`);
-    assert.ok(p.ctaText.length > 0, `${goal} cta`);
+    assert.ok(p.valueLine.length > 0, `${goal} valueLine`);
     assert.ok(p.promptMood.length > 0, `${goal} mood`);
     assert.ok(p.promptVibeSeed.length > 0, `${goal} vibe`);
+  }
+});
+
+test("customer copy never implies signup/login to earn stamps", () => {
+  // Easy Stamp: customers earn at the shop with no account. Guard the copy so a
+  // future edit can't reintroduce the wrong "register / log in" framing.
+  // (Negated reassurances like "ไม่ต้องสมัคร" use "สมัคร" not "สมัครสมาชิก".)
+  for (const goal of ALL_GOALS) {
+    const copy = buildTemplateCopy(goal, CTX);
+    for (const line of [copy.headline, copy.subcopy, copy.valueLine]) {
+      assert.ok(
+        !/สมัครสมาชิก|เข้าสู่ระบบ|ล็อกอิน|login/i.test(line),
+        `forbidden signup wording in "${line}"`,
+      );
+    }
   }
 });
 
@@ -47,7 +62,7 @@ test("unknown goal / size throw", () => {
 test("template copy substitutes every placeholder (no stray braces)", () => {
   for (const goal of ALL_GOALS) {
     const copy = buildTemplateCopy(goal, CTX);
-    for (const line of [copy.headline, copy.subcopy, copy.ctaText]) {
+    for (const line of [copy.headline, copy.subcopy, copy.valueLine]) {
       assert.ok(!/[{}]/.test(line), `unsubstituted placeholder in: ${line}`);
     }
   }
@@ -58,11 +73,8 @@ test("template copy actually injects shop data", () => {
   const copy = buildTemplateCopy("reward_highlight", CTX);
   assert.ok(copy.headline.includes("10"), "threshold injected");
   assert.ok(copy.headline.includes("กาแฟร้อน 1 แก้ว"), "reward injected");
-  // new_customer headline references the shop name.
-  assert.ok(
-    buildTemplateCopy("new_customer", CTX).headline.includes("ร้านกาแฟดีดี"),
-    "shopName injected",
-  );
+  // reward_highlight subcopy = "ที่ {shopName} ..." → references the shop name.
+  assert.ok(copy.subcopy.includes("ร้านกาแฟดีดี"), "shopName injected");
 });
 
 test("AI prompt aspect segment matches each size", () => {

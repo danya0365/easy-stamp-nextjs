@@ -82,8 +82,11 @@ export interface PromoGoalPreset {
   headline: string;
   /** Path A — supporting line under the headline. */
   subcopy: string;
-  /** Path A — call-to-action line above the QR. */
-  ctaText: string;
+  /**
+   * Path A — reassurance line above the QR. Emphasizes that customers earn
+   * stamps automatically at the shop — NO signup / login / app / scan-to-earn.
+   */
+  valueLine: string;
   /** Path B — LOCKED mood segment of the AI prompt. */
   promptMood: string;
   /** Path B — EDITABLE default "vibe/detail" the owner can tweak. */
@@ -93,15 +96,19 @@ export interface PromoGoalPreset {
 /**
  * The five presets. Each one feeds template copy (A) AND the AI prompt vibe (B)
  * from a single selection, which is what keeps the concept consistent.
+ *
+ * Copy reflects how Easy Stamp actually works: the customer buys at the shop and
+ * staff add stamps on the spot. Customers do NOT register, log in, install an
+ * app, or scan to earn — so copy never says "สมัครสมาชิก / สแกนเพื่อสมัคร".
  */
 export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
   {
     goal: "new_customer",
     label: "ดึงลูกค้าใหม่",
-    hint: "ชวนสมัครสมาชิก เริ่มสะสมแต้ม",
-    headline: "สมัครสมาชิกวันนี้ รับสิทธิ์สะสมแต้มที่ {shopName}",
+    hint: "ชวนลูกค้าใหม่มาสะสมแสตมป์",
+    headline: "ซื้อที่ร้าน รับแสตมป์ทันที",
     subcopy: "สะสมครบ {threshold} ดวง แลกฟรี {reward}",
-    ctaText: "สแกนเพื่อสมัคร / เปิดบัตรสะสมแต้ม",
+    valueLine: "ไม่ต้องสมัคร ไม่ต้องโหลดแอป — รับแสตมป์ที่ร้านได้เลย",
     promptMood: "warm, welcoming, friendly mood",
     promptVibeSeed: "ภาพต้อนรับอบอุ่น บรรยากาศเป็นมิตร ชวนเข้าร้าน",
   },
@@ -110,8 +117,8 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
     label: "โปรโมทของรางวัล",
     hint: "เน้นของรางวัลที่แลกได้",
     headline: "สะสม {threshold} ดวง แลกฟรี {reward}",
-    subcopy: "ที่ {shopName} — ยิ่งสะสม ยิ่งคุ้ม",
-    ctaText: "สแกนเช็กแต้มของคุณ",
+    subcopy: "ที่ {shopName} — ยิ่งซื้อ ยิ่งคุ้ม",
+    valueLine: "ซื้อรับแสตมป์ทุกครั้ง สะสมครบแลกได้เลย",
     promptMood: "appetizing, premium, eye-catching mood",
     promptVibeSeed: "ของรางวัลเด่นกลางภาพ ดูน่ารับประทาน/น่าใช้ แสงสวย",
   },
@@ -120,18 +127,18 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
     label: "เทศกาล / วันสำคัญ",
     hint: "โปรช่วงเทศกาล",
     headline: "ฉลองเทศกาลกับ {shopName}",
-    subcopy: "รับแต้มพิเศษ สะสมครบ {threshold} ดวง แลกฟรี {reward}",
-    ctaText: "สแกนรับสิทธิ์ช่วงเทศกาล",
+    subcopy: "ซื้อรับแสตมป์ สะสมครบ {threshold} ดวง แลกฟรี {reward}",
+    valueLine: "รับแสตมป์ทันทีหน้าร้าน ช่วงเทศกาลนี้",
     promptMood: "festive, celebratory, vibrant mood",
     promptVibeSeed: "บรรยากาศเทศกาล โทนสีสดใส มีของตกแต่งตามฤดูกาล",
   },
   {
     goal: "weekday_boost",
     label: "กระตุ้นวันธรรมดา",
-    hint: "เพิ่มยอดวันคนน้อย",
-    headline: "วันธรรมดารับแต้มพิเศษที่ {shopName}",
-    subcopy: "แวะเติมความสุข สะสมครบ {threshold} ดวง แลกฟรี {reward}",
-    ctaText: "สแกนรับแต้มวันนี้",
+    hint: "เพิ่มลูกค้าวันคนน้อย",
+    headline: "วันธรรมดาแวะรับแสตมป์ที่ {shopName}",
+    subcopy: "สะสมครบ {threshold} ดวง แลกฟรี {reward}",
+    valueLine: "ซื้อรับแสตมป์ทันที ง่ายๆ ที่ร้าน",
     promptMood: "relaxed, cozy, easygoing mood",
     promptVibeSeed: "ภาพสบายๆ ผ่อนคลายกลางสัปดาห์ บรรยากาศนั่งชิล",
   },
@@ -139,9 +146,9 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
     goal: "reopen_news",
     label: "เปิดใหม่ / ข่าวสาร",
     hint: "ประกาศข่าว เปิดร้าน/สาขาใหม่",
-    headline: "{shopName} กลับมาแล้ว!",
-    subcopy: "มาสะสมแต้มกันต่อ ครบ {threshold} ดวง แลกฟรี {reward}",
-    ctaText: "สแกนติดตามร้านของเรา",
+    headline: "{shopName} เปิดให้สะสมแสตมป์แล้ว!",
+    subcopy: "ซื้อรับแสตมป์ สะสมครบ {threshold} ดวง แลกฟรี {reward}",
+    valueLine: "รับแสตมป์ที่ร้านได้เลย ไม่ต้องสมัคร ไม่ต้องสแกน",
     promptMood: "fresh, exciting, announcement mood",
     promptVibeSeed: "ภาพประกาศข่าว สดใหม่ น่าตื่นเต้น ดูเป็นทางการนิดๆ",
   },
@@ -173,7 +180,8 @@ function fill(template: string, ctx: PromoCopyContext): string {
 export interface TemplateCopy {
   headline: string;
   subcopy: string;
-  ctaText: string;
+  /** Reassurance line above the QR (earn-at-shop, no signup). */
+  valueLine: string;
 }
 
 /** Path A: resolve a preset's copy block against the shop's data. */
@@ -185,7 +193,7 @@ export function buildTemplateCopy(
   return {
     headline: fill(preset.headline, ctx),
     subcopy: fill(preset.subcopy, ctx),
-    ctaText: fill(preset.ctaText, ctx),
+    valueLine: fill(preset.valueLine, ctx),
   };
 }
 

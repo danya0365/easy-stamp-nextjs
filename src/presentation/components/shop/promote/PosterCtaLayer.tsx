@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { ScanLine } from "lucide-react";
+import { ScanLine, Stamp } from "lucide-react";
 
 import type { TemplateCopy } from "@/src/domain/services/promo-poster";
 import type { PromoSeedData } from "./types";
@@ -42,7 +42,7 @@ export function PosterCtaLayer({
         className="font-semibold text-brand-600"
         style={{ fontSize: px(30), lineHeight: 1.2 }}
       >
-        สะสมแสตมป์ · {seed.shopName}
+        ร้านนี้สะสมแสตมป์ · {seed.shopName}
       </p>
       <h2
         className="font-bold text-foreground"
@@ -53,22 +53,31 @@ export function PosterCtaLayer({
       <p className="text-muted" style={{ fontSize: px(30), lineHeight: 1.3 }}>
         {copy.subcopy}
       </p>
+      {/* Reassurance: stamps are earned at the shop, no signup/scan needed. */}
+      <p
+        className="inline-flex items-center font-semibold text-brand-700"
+        style={{ fontSize: px(28), gap: px(8), lineHeight: 1.25 }}
+      >
+        <Stamp style={{ width: px(30), height: px(30) }} />
+        {copy.valueLine}
+      </p>
       <img
         src={seed.qrDataUrl}
-        alt="QR สมัครสมาชิก"
+        alt={`QR ร้าน ${seed.shopName}`}
         style={{
-          width: px(280),
-          height: px(280),
+          width: px(260),
+          height: px(260),
           objectFit: "contain",
           borderRadius: px(16),
         }}
       />
+      {/* QR is optional/info only — see the shop, rewards, or your balance. */}
       <p
-        className="inline-flex items-center font-semibold text-brand-700"
-        style={{ fontSize: px(30), gap: px(8), lineHeight: 1.2 }}
+        className="inline-flex items-center text-muted"
+        style={{ fontSize: px(24), gap: px(8), lineHeight: 1.2 }}
       >
-        <ScanLine style={{ width: px(32), height: px(32) }} />
-        {copy.ctaText}
+        <ScanLine style={{ width: px(26), height: px(26) }} />
+        สแกนดูร้าน · ของรางวัล · เช็คแต้มสะสม
       </p>
       <p
         className="break-all text-muted"
