@@ -46,11 +46,12 @@ export async function requireRole(...roles: Role[]): Promise<User> {
   return user;
 }
 
-// Read-only admin impersonation ("view as shop"). Stored in its own short-lived
-// httpOnly cookie and honored ONLY for a platform_admin session. It NEVER grants
-// write access: every mutating action still calls requireRole("shop_owner") (or
-// ownerShopId), which a platform_admin fails — so writes are blocked by
-// construction. Impersonation only changes which shop READ pages render.
+// Admin impersonation ("login as shop"). Stored in its own short-lived httpOnly
+// cookie and honored ONLY for a platform_admin session. It is READ-WRITE: shop
+// READ pages resolve via requireShopAccess() and shop WRITE actions via
+// requireShopWrite(), both of which accept an impersonating admin as the acting
+// owner of that shop. Accountability is preserved — `actor` stays the real admin
+// (audit logs attribute changes to them) and start/stop is audit-logged.
 const IMPERSONATE_COOKIE = "es_impersonate";
 const IMPERSONATE_TTL_MS = 30 * 60_000; // 30 นาที
 
@@ -116,8 +117,7 @@ export async function getImpersonation(): Promise<Impersonation | null> {
 /**
  * Read access to a shop's screens: the owner's own shop, or a platform_admin
  * impersonating one. Use in shop READ pages + the (shop) layout instead of
- * requireRole("shop_owner"). Mutating actions keep requireRole("shop_owner") so
- * an impersonating admin can view but never write.
+ * requireRole("shop_owner"). For WRITES use requireShopWrite() below.
  */
 export async function requireShopAccess(): Promise<ShopAccess> {
   const user = await getSession();
@@ -132,6 +132,42 @@ export async function requireShopAccess(): Promise<ShopAccess> {
     redirect("/admin/shops");
   }
   redirect("/login");
+}
+
+export interface ShopWriteAccess {
+  /**
+   * The real authenticated user performing the write — the shop owner, or the
+   * impersonating platform_admin (NEVER a synthesized owner). Use for audit
+   * actorUserId/actorRole so logs attribute the change to the real actor.
+   */
+  actor: User;
+  /** The shop being written to (the owner's shop, or the impersonated shop). */
+  shopId: string;
+  /** True when a platform_admin is acting via impersonation. */
+  impersonating: boolean;
+}
+
+/**
+ * Authorize a WRITE to a shop's data: the shop_owner of that shop, or a
+ * platform_admin actively impersonating it ("login as shop" → act on their
+ * behalf). Replaces requireRole("shop_owner")/ownerShopId in shop-scoped
+ * mutating actions. Impersonation is now read-write (admins can fix a shop's
+ * data for them); accountability is preserved because `actor` stays the real
+ * admin and impersonation start/stop is audit-logged. Throws (not redirect) so
+ * the calling action returns a clean { error } instead of swallowing a redirect.
+ */
+export async function requireShopWrite(): Promise<ShopWriteAccess> {
+  const user = await getSession();
+  if (!user) throw new Error("กรุณาเข้าสู่ระบบ");
+  if (user.role === "shop_owner") {
+    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    return { actor: user, shopId: user.shopId, impersonating: false };
+  }
+  if (user.role === "platform_admin") {
+    const imp = await getImpersonation();
+    if (imp) return { actor: user, shopId: imp.shopId, impersonating: true };
+  }
+  throw new Error("ไม่มีสิทธิ์แก้ไขข้อมูลร้านนี้");
 }
 
 /** Assert the user owns the given shop (platform_admin bypasses). */

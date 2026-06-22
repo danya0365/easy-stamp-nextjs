@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { getSession, requireShopWrite } from "@/src/infrastructure/auth/session";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { GetCustomerCardUseCase } from "@/src/application/use-cases/stamp/GetCustomerCardUseCase";
 import { GetCardByPublicCodeUseCase } from "@/src/application/use-cases/stamp/GetCardByPublicCodeUseCase";
@@ -37,11 +37,24 @@ export interface StampActionState {
   searched?: boolean;
 }
 
-/** Resolve the operating shop/branch from the authenticated operator. */
+/**
+ * Resolve the operating shop/branch from the authenticated operator: the shop
+ * owner, a branch_staff (scoped to their branch), or a platform_admin
+ * impersonating the shop (acts shop-wide, like the owner — no branch).
+ */
 async function operatorContext() {
-  const user = await requireRole("shop_owner", "branch_staff");
-  if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
-  return { user, shopId: user.shopId, branchId: user.branchId ?? null };
+  const session = await getSession();
+  if (session?.role === "branch_staff") {
+    if (!session.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    return {
+      user: session,
+      shopId: session.shopId,
+      branchId: session.branchId ?? null,
+    };
+  }
+  // shop_owner, or a platform_admin impersonating this shop.
+  const { actor, shopId } = await requireShopWrite();
+  return { user: actor, shopId, branchId: actor.branchId ?? null };
 }
 
 export async function lookupCardAction(
@@ -203,8 +216,7 @@ export async function redeemRewardAction(
 export async function loadMoreShopRedemptionsAction(
   cursor: string,
 ): Promise<Page<RedemptionItem>> {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopWrite();
   const page = await container.rewardRedemptionRepository.pageByShop(shopId, {
     cursor,
   });

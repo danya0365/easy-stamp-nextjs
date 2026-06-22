@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopWrite } from "@/src/infrastructure/auth/session";
 import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
 import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/UpdateShopSettingsUseCase";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
@@ -37,21 +37,19 @@ export interface FormState {
 
 /** Owner temporarily closes their shop (freezes billing days). */
 export async function pauseMyShopAction(): Promise<void> {
-  const user = await requireRole("shop_owner");
+  const { shopId } = await requireShopWrite();
   await new PauseShopUseCase(
     container.shopRepository,
     container.subscriptionRepository,
-  ).execute(user.shopId!);
+  ).execute(shopId);
   revalidatePath("/shop");
   revalidatePath("/shop/settings");
 }
 
 /** Owner reopens their shop (resumes billing; remaining days unchanged). */
 export async function resumeMyShopAction(): Promise<void> {
-  const user = await requireRole("shop_owner");
-  await new ResumeShopUseCase(container.subscriptionRepository).execute(
-    user.shopId!,
-  );
+  const { shopId } = await requireShopWrite();
+  await new ResumeShopUseCase(container.subscriptionRepository).execute(shopId);
   revalidatePath("/shop");
   revalidatePath("/shop/settings");
 }
@@ -61,8 +59,7 @@ export async function loadMoreCustomersAction(
   search: string,
   cursor: string,
 ): Promise<Page<CustomerRow>> {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopWrite();
   const page = await container.customerRepository.pageByShop(shopId, {
     cursor,
     search: search || undefined,
@@ -87,10 +84,9 @@ function parsePriceSatang(raw: string): number | null {
 }
 
 async function ownerShopId(): Promise<string> {
-  const user = await requireRole("shop_owner");
-  if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
-  await assertShopActive(user.shopId);
-  return user.shopId;
+  const { shopId } = await requireShopWrite();
+  await assertShopActive(shopId);
+  return shopId;
 }
 
 export async function updateSettingsAction(
@@ -197,10 +193,9 @@ export async function replyToReviewAction(
   formData: FormData,
 ): Promise<FormState> {
   try {
-    const user = await requireRole("shop_owner");
-    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    const { shopId } = await requireShopWrite();
     await new ReplyToReviewUseCase(container.shopReviewRepository).execute(
-      user.shopId,
+      shopId,
       String(formData.get("reviewId") ?? ""),
       String(formData.get("reply") ?? ""),
     );
@@ -215,8 +210,8 @@ export async function replyToReviewAction(
 export async function loadMoreShopReviewsAction(
   cursor: string,
 ): Promise<Page<ShopReview>> {
-  const user = await requireRole("shop_owner");
-  return container.shopReviewRepository.pageByShop(user.shopId!, {
+  const { shopId } = await requireShopWrite();
+  return container.shopReviewRepository.pageByShop(shopId, {
     cursor,
     includeHidden: true,
   });
@@ -343,8 +338,8 @@ export async function createStaffAction(
   formData: FormData,
 ): Promise<FormState> {
   try {
-    const owner = await requireRole("shop_owner");
-    const shopId = await ownerShopId();
+    const { actor, shopId } = await requireShopWrite();
+    await assertShopActive(shopId);
     const password = String(formData.get("password") ?? "");
     await assertPasswordAcceptable(password, container.passwordBreachChecker);
     const staff = await new CreateStaffUseCase(
@@ -358,8 +353,8 @@ export async function createStaffAction(
       password,
     });
     await container.auditLogger.record({
-      actorUserId: owner.id,
-      actorRole: owner.role,
+      actorUserId: actor.id,
+      actorRole: actor.role,
       action: AUDIT_ACTIONS.staffCreated,
       targetType: "user",
       targetId: staff.id,
@@ -392,19 +387,19 @@ export async function forceLogoutStaffAction(
   userId: string,
 ): Promise<{ error?: string }> {
   try {
-    const owner = await requireRole("shop_owner");
+    const { actor, shopId } = await requireShopWrite();
     const target = await container.userRepository.findById(userId);
-    if (!target || target.shopId !== owner.shopId || target.role !== "branch_staff") {
+    if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
       throw new Error("ไม่พบพนักงานในร้านนี้");
     }
     await container.sessionRepository.deleteAllForUser(userId);
     await container.auditLogger.record({
-      actorUserId: owner.id,
-      actorRole: owner.role,
+      actorUserId: actor.id,
+      actorRole: actor.role,
       action: AUDIT_ACTIONS.forceLogout,
       targetType: "user",
       targetId: userId,
-      shopId: owner.shopId,
+      shopId,
       ip: await getClientIp(),
       metadata: { email: target.email },
     });
@@ -419,8 +414,8 @@ export async function forceLogoutStaffAction(
 export async function loadMoreShopAuditAction(
   cursor: string,
 ): Promise<Page<AuditLog>> {
-  const owner = await requireRole("shop_owner");
-  return container.auditLogRepository.pageByShop(owner.shopId!, { cursor });
+  const { shopId } = await requireShopWrite();
+  return container.auditLogRepository.pageByShop(shopId, { cursor });
 }
 
 /** Owner sets a new password for one of their staff (e.g. they forgot it). */
@@ -429,8 +424,7 @@ export async function resetStaffPasswordAction(
   newPassword: string,
 ): Promise<{ error?: string }> {
   try {
-    const owner = await requireRole("shop_owner");
-    const shopId = owner.shopId;
+    const { actor, shopId } = await requireShopWrite();
     const target = await container.userRepository.findById(userId);
     if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
       throw new Error("ไม่พบพนักงานในร้านนี้");
@@ -442,8 +436,8 @@ export async function resetStaffPasswordAction(
       container.passwordBreachChecker,
     ).execute(userId, newPassword);
     await container.auditLogger.record({
-      actorUserId: owner.id,
-      actorRole: owner.role,
+      actorUserId: actor.id,
+      actorRole: actor.role,
       action: AUDIT_ACTIONS.passwordResetByAdmin,
       targetType: "user",
       targetId: userId,
