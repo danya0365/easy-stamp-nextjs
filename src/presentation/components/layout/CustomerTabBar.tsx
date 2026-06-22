@@ -14,19 +14,21 @@ interface Tab {
   active: (pathname: string) => boolean;
 }
 
+// Order = frequency of use: map is the discovery home; returning customers open
+// "บัตรของฉัน" most → keep it second; help/about are rarely used → last.
 const TABS: Tab[] = [
   { href: "/", label: "แผนที่", icon: Map, active: (p) => p === "/" },
-  {
-    href: "/shops",
-    label: "ร้านค้า",
-    icon: Store,
-    active: (p) => p.startsWith("/shops"),
-  },
   {
     href: "/me",
     label: "บัตรของฉัน",
     icon: Wallet,
     active: (p) => p === "/me" || p.startsWith("/me/"),
+  },
+  {
+    href: "/shops",
+    label: "ร้านค้า",
+    icon: Store,
+    active: (p) => p.startsWith("/shops"),
   },
   {
     href: "/tutorial",

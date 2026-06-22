@@ -36,35 +36,39 @@ interface NavItem {
 
 // Nav config lives in this client component because lucide icons are functions
 // and cannot be passed as props across the Server→Client boundary (same reason
-// CustomerTabBar hardcodes its tabs). Order matters: the first 4 shop links are
-// the primary tabs; the rest fold into the "เพิ่มเติม" sheet.
+// CustomerTabBar hardcodes its tabs). Order = frequency of use: the first 4 links
+// are the always-visible primary tabs; the rest fold into the "เพิ่มเติม" sheet.
 const NAVS = {
   shop: [
-    { href: "/shop", label: "แดชบอร์ด", icon: LayoutDashboard },
+    // Primary (daily): the stamp station is the core counter action.
     { href: "/shop/stamps", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },
+    { href: "/shop", label: "แดชบอร์ด", icon: LayoutDashboard },
     { href: "/shop/customers", label: "ลูกค้า", icon: Users },
-    { href: "/shop/redemptions", label: "ประวัติแลกรางวัล", icon: History },
-    { href: "/shop/reviews", label: "รีวิว", icon: Star },
-    { href: "/shop/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/shop/notifications", label: "แจ้งเตือน", icon: Bell },
-    { href: "/shop/branches", label: "สาขา", icon: Building2 },
-    { href: "/shop/staff", label: "พนักงาน", icon: UserCog },
+    // Overflow (periodic → setup → rare)
+    { href: "/shop/redemptions", label: "ประวัติแลกรางวัล", icon: History },
+    { href: "/shop/analytics", label: "สถิติ", icon: BarChart3 },
+    { href: "/shop/reviews", label: "รีวิว", icon: Star },
+    { href: "/shop/billing", label: "ชำระเงิน", icon: CreditCard },
     { href: "/shop/qr", label: "ป้าย QR", icon: QrCode },
     { href: "/shop/promote", label: "โปสเตอร์โปรโมท", icon: Megaphone },
+    { href: "/shop/branches", label: "สาขา", icon: Building2 },
+    { href: "/shop/staff", label: "พนักงาน", icon: UserCog },
     { href: "/shop/settings", label: "ตั้งค่า", icon: Settings },
     { href: "/shop/security", label: "ความปลอดภัย", icon: ShieldAlert },
-    { href: "/shop/billing", label: "ชำระเงิน", icon: CreditCard },
     { href: "/shop/contact", label: "ติดต่อผู้ดูแล", icon: LifeBuoy },
   ],
   admin: [
+    // Primary: shop management + payment-slip approval are the daily admin tasks.
     { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },
     { href: "/admin/shops", label: "ร้านค้า", icon: Store },
-    { href: "/admin/leads", label: "ลีด", icon: MapPinned },
-    { href: "/admin/reviews", label: "รีวิว", icon: Star },
     { href: "/admin/payments", label: "การชำระเงิน", icon: CreditCard },
-    { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
+    { href: "/admin/leads", label: "ลีด", icon: MapPinned },
+    // Overflow
     { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },
+    { href: "/admin/reviews", label: "รีวิว", icon: Star },
     { href: "/admin/contacts", label: "ติดต่อ", icon: MessageSquare },
+    { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
     { href: "/admin/security", label: "ความปลอดภัย", icon: ShieldAlert },
   ],
   staff: [
