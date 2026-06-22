@@ -6,11 +6,12 @@ export const dynamic = "force-dynamic";
 
 export default async function StaffHomePage() {
   const user = await requireRole("branch_staff");
-  const [branch, stampTypes] = await Promise.all([
+  const [branch, stampTypes, customers] = await Promise.all([
     user.branchId
       ? container.branchRepository.findById(user.branchId)
       : Promise.resolve(null),
     container.stampTypeRepository.listByShop(user.shopId!, { activeOnly: true }),
+    container.customerRepository.listByShop(user.shopId!),
   ]);
 
   return (
@@ -21,7 +22,14 @@ export default async function StaffHomePage() {
           {branch ? `สาขา: ${branch.name}` : "พนักงานสาขา"}
         </p>
       </div>
-      <StampStation stampTypes={stampTypes} />
+      <StampStation
+        stampTypes={stampTypes}
+        customers={customers.map((c) => ({
+          id: c.id,
+          phone: c.phone,
+          name: c.displayName,
+        }))}
+      />
     </div>
   );
 }
