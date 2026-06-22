@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
@@ -40,9 +41,8 @@ export async function submitReviewAction(
       throw new Error("ต้องผูกบัตรสมาชิกกับร้านนี้ก่อนจึงจะรีวิวได้");
     }
 
-    await new SubmitReviewUseCase(
+    const { review, isNewReview } = await new SubmitReviewUseCase(
       container.shopReviewRepository,
-      container.notificationService,
     ).execute({
       shopId: shop.id,
       customerId: customer.id,
@@ -51,6 +51,21 @@ export async function submitReviewAction(
     });
 
     revalidatePath(`/s/${slug}`);
+
+    // Notify the shop owner AFTER the response is sent, so the customer's submit
+    // never waits on an in-app write + LINE push (the cause of the hang).
+    if (isNewReview) {
+      const { rating, comment } = review;
+      after(() =>
+        container.notificationService.notifyShopOwner(shop.id, {
+          type: "shop_received_review",
+          title: "ได้รับรีวิวใหม่ ⭐",
+          body: `ลูกค้าให้คะแนน ${rating} ดาว${comment ? ` — "${comment.slice(0, 60)}"` : ""}`,
+          linkUrl: "/shop/reviews",
+        }),
+      );
+    }
+
     return { success: "ขอบคุณสำหรับรีวิว 🙏" };
   } catch (e) {
     return { error: (e as Error).message };

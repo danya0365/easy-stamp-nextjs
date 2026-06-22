@@ -33,6 +33,8 @@ export class LineMessagingPusher implements IMessagePusher {
           to: channelUserId,
           messages: [{ type: "text", text }],
         }),
+        // Never let a slow/hanging LINE API block the triggering request.
+        signal: AbortSignal.timeout(5000),
       });
       if (!res.ok) {
         console.error(

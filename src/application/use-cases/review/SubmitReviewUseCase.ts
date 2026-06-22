@@ -1,6 +1,5 @@
 import type { ShopReview } from "@/src/domain/entities";
 import type { IShopReviewRepository } from "@/src/application/repositories/IShopReviewRepository";
-import type { NotificationService } from "@/src/application/services/NotificationService";
 
 export interface SubmitReviewInput {
   shopId: string;
@@ -9,14 +8,21 @@ export interface SubmitReviewInput {
   comment: string | null;
 }
 
-/** Create/update a customer's review and notify the shop owner. */
-export class SubmitReviewUseCase {
-  constructor(
-    private readonly reviews: IShopReviewRepository,
-    private readonly notifications: NotificationService,
-  ) {}
+export interface SubmitReviewResult {
+  review: ShopReview;
+  /** True only for a brand-new review (not an edit) — caller notifies the owner. */
+  isNewReview: boolean;
+}
 
-  async execute(input: SubmitReviewInput): Promise<ShopReview> {
+/**
+ * Create/update a customer's review. Returns whether it's brand-new so the
+ * caller can notify the shop owner — deferred (not awaited inline) so the
+ * customer's submit never waits on an owner notification / LINE push.
+ */
+export class SubmitReviewUseCase {
+  constructor(private readonly reviews: IShopReviewRepository) {}
+
+  async execute(input: SubmitReviewInput): Promise<SubmitReviewResult> {
     const rating = Math.round(input.rating);
     if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
       throw new Error("กรุณาให้ดาว 1–5");
@@ -38,16 +44,6 @@ export class SubmitReviewUseCase {
       comment,
     });
 
-    // Notify only on a brand-new review (not every edit), best-effort.
-    if (!existed) {
-      await this.notifications.notifyShopOwner(input.shopId, {
-        type: "shop_received_review",
-        title: "ได้รับรีวิวใหม่ ⭐",
-        body: `ลูกค้าให้คะแนน ${rating} ดาว${comment ? ` — "${comment.slice(0, 60)}"` : ""}`,
-        linkUrl: "/shop/reviews",
-      });
-    }
-
-    return review;
+    return { review, isNewReview: !existed };
   }
 }
