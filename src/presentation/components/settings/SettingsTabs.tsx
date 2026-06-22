@@ -3,6 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { ImageIcon, Info, ShieldCheck, Stamp } from "lucide-react";
 
+import { TabSelect } from "@/src/presentation/components/ui/TabSelect";
+
 // Icons are referenced by string key because functions (component refs) can't
 // be passed from a server component into this client component as props.
 const ICONS = { stamp: Stamp, shield: ShieldCheck, image: ImageIcon, info: Info };
@@ -33,9 +35,27 @@ export function SettingsTabs({
 
   return (
     <div>
+      {/* Mobile (<lg): custom dropdown instead of a cramped horizontal strip. */}
+      <div className="mb-4 lg:hidden">
+        <TabSelect
+          ariaLabel="หมวดการตั้งค่า"
+          value={current?.id ?? ""}
+          onChange={setActive}
+          options={tabs.map((tab) => {
+            const Icon = tab.icon ? ICONS[tab.icon] : null;
+            return {
+              id: tab.id,
+              label: tab.label,
+              icon: Icon ? <Icon className="size-4 shrink-0" /> : undefined,
+            };
+          })}
+        />
+      </div>
+
       <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-6">
+        {/* Desktop (lg+): left sidebar tab nav. */}
         <nav
-          className="mb-4 flex gap-1 overflow-x-auto pb-1 lg:mb-0 lg:flex-col lg:overflow-visible lg:pb-0"
+          className="hidden lg:flex lg:flex-col lg:gap-1"
           aria-label="หมวดการตั้งค่า"
         >
           {tabs.map((tab) => {
@@ -47,7 +67,7 @@ export function SettingsTabs({
                 type="button"
                 onClick={() => setActive(tab.id)}
                 aria-current={isActive}
-                className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition lg:w-full ${
+                className={`inline-flex w-full shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
                   isActive
                     ? "bg-brand-600 text-on-brand"
                     : "text-muted hover:bg-muted-surface hover:text-foreground"

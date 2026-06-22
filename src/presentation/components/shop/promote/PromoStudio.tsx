@@ -10,6 +10,7 @@ import {
   type PosterSize,
 } from "@/src/domain/services/promo-poster";
 import { cn } from "@/src/presentation/components/ui/cn";
+import { TabSelect } from "@/src/presentation/components/ui/TabSelect";
 import { PromoGoalSelector } from "./PromoGoalSelector";
 import { PosterSizeSwitcher } from "./PosterSizeSwitcher";
 import { TemplatePosterPanel } from "./TemplatePosterPanel";
@@ -74,8 +75,16 @@ export function PromoStudio({ seed }: { seed: PromoSeedData }) {
 
       <PosterSizeSwitcher value={sizeId} onChange={setSizeId} />
 
-      {/* Path tabs */}
-      <div className="flex gap-1 rounded-full bg-muted-surface p-1">
+      {/* Path tabs — dropdown on phones, pill toggle on sm+. */}
+      <div className="sm:hidden">
+        <TabSelect
+          ariaLabel="วิธีสร้างโปสเตอร์"
+          options={PATHS}
+          value={path}
+          onChange={(id) => setPath(id as PromoPath)}
+        />
+      </div>
+      <div className="hidden gap-1 rounded-full bg-muted-surface p-1 sm:flex">
         {PATHS.map((p) => {
           const active = p.id === path;
           return (
