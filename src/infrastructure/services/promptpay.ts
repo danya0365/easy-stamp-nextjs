@@ -21,10 +21,14 @@ function crc16(input: string): string {
   return crc.toString(16).toUpperCase().padStart(4, "0");
 }
 
+// PromptPay Merchant Account Info (tag 29) sub-tags per the Thai QR standard:
+//   01 = mobile number (13 digits, 0066xxxxxxxxx)
+//   02 = national ID / tax ID (13 digits)
+//   03 = e-wallet ID (15 digits)
 function formatTarget(id: string): { tag: string; value: string } {
   const numbers = id.replace(/[^0-9]/g, "");
-  if (numbers.length >= 15) return { tag: "02", value: numbers }; // tax id
-  if (numbers.length >= 13) return { tag: "03", value: numbers }; // e-wallet
+  if (numbers.length >= 15) return { tag: "03", value: numbers }; // e-wallet
+  if (numbers.length >= 13) return { tag: "02", value: numbers }; // national/tax id
   // mobile: 0812345678 -> 0066812345678
   const value = ("0000000000000" + numbers.replace(/^0/, "66")).slice(-13);
   return { tag: "01", value };
