@@ -28,6 +28,7 @@ import { Button } from "@/src/presentation/components/ui/Button";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { Modal } from "@/src/presentation/components/ui/Modal";
 import { useToast } from "@/src/presentation/components/ui/Toast";
+import { cn } from "@/src/presentation/components/ui/cn";
 import { CardBalance } from "@/src/presentation/components/stamp/CardBalance";
 import { QrScanModal } from "@/src/presentation/components/stamp/QrScanModal";
 
@@ -202,23 +203,33 @@ export function StampStation({
     <div className="flex flex-col gap-4">
       <Card>
         <div className="flex flex-col gap-3">
-          {/* Stamp type (only when the shop has more than one) */}
+          {/* Stamp type (only when the shop has more than one) — chips: 1 tap */}
           {stampTypes.length > 1 && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">
                 ประเภทแสตมป์
               </label>
-              <select
-                value={typeId}
-                onChange={(e) => setTypeId(e.target.value)}
-                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-              >
-                {stampTypes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap gap-2">
+                {stampTypes.map((t) => {
+                  const active = t.id === typeId;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTypeId(t.id)}
+                      aria-pressed={active}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm transition",
+                        active
+                          ? "border-brand-500 bg-brand-50 text-brand-700"
+                          : "border-border text-muted hover:text-foreground",
+                      )}
+                    >
+                      {t.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
