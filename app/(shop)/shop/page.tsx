@@ -41,7 +41,7 @@ export default async function ShopDashboardPage() {
           <a href={`/s/${shop.slug}`} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm">
               <ExternalLink size={14} />
-              เปิดหน้าร้าน
+              หน้าร้านของฉัน (แตะรูปเพื่อแก้)
             </Button>
           </a>
         )}

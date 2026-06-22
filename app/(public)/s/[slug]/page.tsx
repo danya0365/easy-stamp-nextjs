@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Camera, PauseCircle, Smartphone, TriangleAlert } from "lucide-react";
+import { Camera, PauseCircle, Pencil, Smartphone, TriangleAlert } from "lucide-react";
 
 import { container } from "@/src/infrastructure/di/container";
 import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { getSession } from "@/src/infrastructure/auth/session";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -17,6 +18,10 @@ import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
 import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
+import {
+  ShopImageEditButton,
+  EditableShopGallery,
+} from "@/src/presentation/components/shop/ShopImageEditor";
 import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 
@@ -85,6 +90,13 @@ export default async function PublicShopCheckPage({
       ).forCustomer(shop.id, historyPage.items)
     : [];
 
+  // Owner-of-this-shop viewing their own page → show Facebook-style inline image
+  // edit overlays. Writes are still guarded server-side (uploadShopImageAction
+  // scopes to the session's own shop), so this only gates the UI affordance.
+  const sessionUser = await getSession();
+  const isOwner =
+    sessionUser?.role === "shop_owner" && sessionUser.shopId === shop.id;
+
   // Shop imagery + reviews (public).
   const images = await container.shopImageRepository.listByShop(shop.id);
   const coverImage = images.find((i) => i.kind === "cover") ?? null;
@@ -119,14 +131,35 @@ export default async function PublicShopCheckPage({
         </p>
       )}
 
+      {isOwner && (
+        <p className="rounded-xl bg-brand-50 px-4 py-2.5 text-center text-sm text-brand-700 ring-1 ring-brand-100">
+          <Pencil className="mr-1 inline size-4 align-text-bottom" />
+          นี่คือมุมมองที่ลูกค้าเห็น — แตะรูปเพื่อเปลี่ยนได้เลย
+        </p>
+      )}
+
       <ShopHero
         coverImage={coverImage}
         profileImage={profileImage}
         shopName={shop.name}
         categoryName={category?.name ?? null}
         rating={reviewSummary}
+        coverOverlay={
+          isOwner ? (
+            <ShopImageEditButton kind="cover" imageId={coverImage?.id} />
+          ) : undefined
+        }
+        profileOverlay={
+          isOwner ? (
+            <ShopImageEditButton kind="profile" imageId={profileImage?.id} />
+          ) : undefined
+        }
       />
-      <ShopGallery images={gallery} />
+      {isOwner ? (
+        <EditableShopGallery images={gallery} />
+      ) : (
+        <ShopGallery images={gallery} />
+      )}
 
       {view ? (
         <>
@@ -168,7 +201,7 @@ export default async function PublicShopCheckPage({
           title="QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
           description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตรใหม่ แล้วสแกนด้วยกล้องมือถือของคุณ"
         />
-      ) : (
+      ) : isOwner ? null : (
         <Card className="bg-brand-50 ring-brand-100">
           <p className="flex items-center gap-2 text-sm text-brand-700">
             <Smartphone className="size-5 shrink-0" />

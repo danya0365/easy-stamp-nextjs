@@ -114,7 +114,19 @@ export default async function ShopSettingsPage() {
             <Card>
               <CardHeader
                 title="รูปโปรไฟล์ & แกลเลอรี่"
-                subtitle={`รูปจะแสดงบนหน้าร้านสาธารณะ /s/${shop.slug}`}
+                subtitle={
+                  <>
+                    รูปจะแสดงบนหน้าร้านสาธารณะ · หรือแก้แบบเห็นภาพจริงได้ที่{" "}
+                    <a
+                      href={`/s/${shop.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-brand-700 hover:underline"
+                    >
+                      หน้าร้านของฉัน (แตะรูปเพื่อแก้) ↗
+                    </a>
+                  </>
+                }
               />
               <ShopImagesManager images={shopImages} />
             </Card>
