@@ -16,6 +16,7 @@ import {
   type BillingFormState,
 } from "@/src/presentation/actions/billing-actions";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { useActionToast } from "@/src/presentation/hooks/useActionToast";
 import {
   TOPUP_PRESETS,
   TOPUP_PROMO,
@@ -58,6 +59,7 @@ export function TopupForm({
     submitSlipAction,
     {},
   );
+  useActionToast(state);
   const slipRef = useRef<HTMLInputElement>(null);
   const [compressing, setCompressing] = useState(false);
   const [slipNote, setSlipNote] = useState<string | null>(null);
@@ -351,7 +353,7 @@ export function TopupForm({
             )}
             <Button
               type="submit"
-              disabled={pending || compressing}
+              loading={pending || compressing}
               className="mt-3 w-full"
             >
               {pending

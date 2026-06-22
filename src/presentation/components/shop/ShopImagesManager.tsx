@@ -12,6 +12,9 @@ import {
 import type { ShopImage } from "@/src/domain/entities";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { ImageCropField } from "@/src/presentation/components/ui/ImageCropField";
+import { useToast } from "@/src/presentation/components/ui/Toast";
+import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
+import { useActionToast } from "@/src/presentation/hooks/useActionToast";
 
 // Lock the crop ratio to how each image renders on the public shop page:
 // cover is a wide banner, profile/gallery are squares.
@@ -32,6 +35,7 @@ function UploadForm({
     uploadShopImageAction,
     {},
   );
+  useActionToast(state);
   const [ready, setReady] = useState(false);
   return (
     <form action={action} className="flex flex-col gap-2">
@@ -48,7 +52,8 @@ function UploadForm({
         type="submit"
         size="sm"
         variant="outline"
-        disabled={pending || !ready}
+        loading={pending}
+        disabled={!ready}
       >
         {pending ? "กำลังอัปโหลด…" : label}
       </Button>
@@ -58,19 +63,34 @@ function UploadForm({
 
 function DeleteButton({ imageId }: { imageId: string }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  async function onClick() {
+    const ok = await confirm({
+      title: "ลบรูปนี้?",
+      message: "รูปจะถูกลบออกจากหน้าร้านถาวร",
+      confirmLabel: "ลบรูป",
+      tone: "danger",
+    });
+    if (!ok) return;
+    start(async () => {
+      const res = await deleteShopImageAction(imageId);
+      if (res.error) {
+        setError(res.error);
+        toast.error(res.error);
+      } else {
+        toast.success("ลบรูปแล้ว");
+        router.refresh();
+      }
+    });
+  }
   return (
     <button
       type="button"
       disabled={pending}
-      onClick={() =>
-        start(async () => {
-          const res = await deleteShopImageAction(imageId);
-          if (res.error) setError(res.error);
-          else router.refresh();
-        })
-      }
+      onClick={onClick}
       className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70 disabled:opacity-50"
       aria-label="ลบรูป"
       title={error ?? "ลบรูป"}

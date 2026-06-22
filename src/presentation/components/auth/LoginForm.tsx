@@ -242,6 +242,7 @@ export function LoginForm({
             id="otp"
             name="otp"
             inputMode="numeric"
+            pattern="[0-9]*"
             autoComplete="one-time-code"
             maxLength={6}
             required

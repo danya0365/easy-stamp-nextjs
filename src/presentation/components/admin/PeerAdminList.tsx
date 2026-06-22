@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { ShieldCheck, ShieldOff } from "lucide-react";
 
 import { Badge } from "@/src/presentation/components/ui/Badge";
+import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
+import { useToast } from "@/src/presentation/components/ui/Toast";
 import { resetPeerTwoFactorAction } from "@/src/presentation/actions/admin-actions";
 
 export interface AdminRow {
@@ -23,16 +25,27 @@ export function PeerAdminList({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [resetIds, setResetIds] = useState<Set<string>>(new Set());
+  const confirm = useConfirm();
+  const toast = useToast();
 
-  function reset(a: AdminRow) {
-    if (!confirm(`รีเซ็ต 2FA ของ ${a.email}? เขาจะต้องตั้งค่าใหม่ตอนเข้าระบบครั้งหน้า`)) {
-      return;
-    }
+  async function reset(a: AdminRow) {
+    const ok = await confirm({
+      title: "รีเซ็ต 2FA?",
+      message: `รีเซ็ต 2FA ของ ${a.email} — เขาจะต้องตั้งค่าใหม่ตอนเข้าระบบครั้งหน้า`,
+      confirmLabel: "รีเซ็ต 2FA",
+      tone: "danger",
+    });
+    if (!ok) return;
     setError(null);
     start(async () => {
       const res = await resetPeerTwoFactorAction(a.id);
-      if (res.error) setError(res.error);
-      else setResetIds((prev) => new Set(prev).add(a.id));
+      if (res.error) {
+        setError(res.error);
+        toast.error(res.error);
+      } else {
+        setResetIds((prev) => new Set(prev).add(a.id));
+        toast.success("รีเซ็ต 2FA แล้ว");
+      }
     });
   }
 

@@ -32,7 +32,7 @@ export function StarRatingInput({
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             onClick={() => setValue(n)}
-            className="p-0.5"
+            className="p-2"
           >
             <Star
               className={cn(

@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "./cn";
+import { Spinner } from "./Spinner";
 
 type Variant = "primary" | "accent" | "outline" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
@@ -22,17 +23,23 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   fullWidth?: boolean;
+  /** Show a spinner + disable while an async action is in flight. */
+  loading?: boolean;
 }
 
 export function Button({
   variant = "primary",
   size = "md",
   fullWidth,
+  loading = false,
+  disabled,
   className,
+  children,
   ...props
 }: ButtonProps) {
   return (
     <button
+      disabled={loading || disabled}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60",
         VARIANTS[variant],
@@ -41,6 +48,9 @@ export function Button({
         className,
       )}
       {...props}
-    />
+    >
+      {loading && <Spinner className="size-4" />}
+      {children}
+    </button>
   );
 }

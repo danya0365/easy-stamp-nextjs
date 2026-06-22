@@ -10,6 +10,7 @@ import type { ShopReview } from "@/src/domain/entities";
 import { StarRatingInput } from "@/src/presentation/components/ui/StarRatingInput";
 import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { useActionToast } from "@/src/presentation/hooks/useActionToast";
 
 /** Customer review form (bound members only). Shows existing review for editing. */
 export function ReviewForm({
@@ -23,6 +24,7 @@ export function ReviewForm({
     submitReviewAction,
     {},
   );
+  useActionToast(state);
 
   return (
     <form action={action} className="flex flex-col gap-3">
@@ -40,7 +42,7 @@ export function ReviewForm({
       />
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" loading={pending}>
         {pending ? "กำลังส่ง…" : existing ? "บันทึกรีวิว" : "ส่งรีวิว"}
       </Button>
     </form>

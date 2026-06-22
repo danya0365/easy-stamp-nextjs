@@ -7,10 +7,12 @@ import {
   resumeMyShopAction,
 } from "@/src/presentation/actions/shop-actions";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
 
 /** Owner toggle to temporarily close / reopen the shop (freezes billing days). */
 export function PauseShopControl({ paused }: { paused: boolean }) {
   const [pending, start] = useTransition();
+  const confirm = useConfirm();
 
   if (paused) {
     return (
@@ -19,7 +21,7 @@ export function PauseShopControl({ paused }: { paused: boolean }) {
           ร้านกำลังปิดชั่วคราว — วันใช้งานถูกหยุดไว้ ไม่ถูกหักจนกว่าจะเปิดอีกครั้ง
         </p>
         <Button
-          disabled={pending}
+          loading={pending}
           onClick={() => start(async () => void (await resumeMyShopAction()))}
         >
           {pending ? "กำลังเปิด…" : "เปิดร้านอีกครั้ง"}
@@ -37,15 +39,16 @@ export function PauseShopControl({ paused }: { paused: boolean }) {
       </p>
       <Button
         variant="outline"
-        disabled={pending}
-        onClick={() => {
-          if (
-            confirm(
-              "ปิดร้านชั่วคราว? พนักงานจะกดแสตมป์/แลกรางวัลไม่ได้ และร้านจะถูกซ่อนจากแผนที่ จนกว่าจะเปิดอีกครั้ง",
-            )
-          ) {
-            start(async () => void (await pauseMyShopAction()));
-          }
+        loading={pending}
+        onClick={async () => {
+          const ok = await confirm({
+            title: "ปิดร้านชั่วคราว?",
+            message:
+              "พนักงานจะกดแสตมป์/แลกรางวัลไม่ได้ และร้านจะถูกซ่อนจากแผนที่ จนกว่าจะเปิดอีกครั้ง",
+            confirmLabel: "ปิดร้านชั่วคราว",
+            tone: "danger",
+          });
+          if (ok) start(async () => void (await pauseMyShopAction()));
         }}
       >
         {pending ? "กำลังปิด…" : "ปิดร้านชั่วคราว"}

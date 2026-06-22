@@ -6,6 +6,8 @@ import {
   ThemeProvider,
   ThemeScript,
 } from "@/src/presentation/providers/theme-provider";
+import { ToastProvider } from "@/src/presentation/components/ui/Toast";
+import { ConfirmProvider } from "@/src/presentation/components/ui/ConfirmDialog";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
@@ -76,7 +78,11 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

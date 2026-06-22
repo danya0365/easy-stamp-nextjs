@@ -6,6 +6,7 @@ import { adminResetOwnerPasswordAction } from "@/src/presentation/actions/admin-
 import { resetStaffPasswordAction } from "@/src/presentation/actions/shop-actions";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
+import { useToast } from "@/src/presentation/components/ui/Toast";
 import { genPassword } from "@/src/presentation/lib/gen-password";
 
 /**
@@ -24,6 +25,7 @@ export function ResetPasswordControl({
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const toast = useToast();
 
   function toggle() {
     setError(null);
@@ -42,10 +44,13 @@ export function ResetPasswordControl({
         kind === "owner"
           ? await adminResetOwnerPasswordAction(userId, pwd)
           : await resetStaffPasswordAction(userId, pwd);
-      if (res.error) setError(res.error);
-      else {
+      if (res.error) {
+        setError(res.error);
+        toast.error(res.error);
+      } else {
         setDone(pwd);
         setOpen(false);
+        toast.success("ตั้งรหัสผ่านใหม่แล้ว");
       }
     });
   }
@@ -81,7 +86,8 @@ export function ResetPasswordControl({
               type="button"
               size="sm"
               onClick={submit}
-              disabled={pending || pwd.length < 6}
+              loading={pending}
+              disabled={pwd.length < 6}
             >
               ยืนยัน
             </Button>

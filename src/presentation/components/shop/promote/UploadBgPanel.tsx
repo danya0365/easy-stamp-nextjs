@@ -37,18 +37,22 @@ export function UploadBgPanel({
   size,
   copy,
   seed,
+  bgDataUrl,
+  onBgChange,
 }: {
   size: PosterDimensions;
   copy: TemplateCopy;
   seed: PromoSeedData;
+  /** Lifted to PromoStudio so the upload survives switching path tabs. */
+  bgDataUrl: string | null;
+  onBgChange: (dataUrl: string | null) => void;
 }) {
   const cropperRef = useRef<SimpleCropperHandle>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
+  // Cropper-transient state stays local; the processed background is lifted.
   const [src, setSrc] = useState<string | null>(null);
   const [baseName, setBaseName] = useState("ai-image");
-
-  const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,7 +82,7 @@ export function UploadBgPanel({
       const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 });
       if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
       const file = await canvasToCompressedFile(canvas, baseName);
-      setBgDataUrl(await fileToDataUrl(file));
+      onBgChange(await fileToDataUrl(file));
       setError(null);
       closeCropper();
     } catch (e) {

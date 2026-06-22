@@ -29,6 +29,8 @@ export function PromoStudio({ seed }: { seed: PromoSeedData }) {
   const [sizeId, setSizeId] = useState<PosterSize>("ig_square");
   const [rewardIdx, setRewardIdx] = useState(0);
   const [path, setPath] = useState<PromoPath>("template");
+  // Lifted so the uploaded background survives switching path tabs.
+  const [uploadBg, setUploadBg] = useState<string | null>(null);
 
   const size = getPosterSize(sizeId);
   const reward = seed.rewardOptions[rewardIdx] ?? seed.rewardOptions[0];
@@ -103,7 +105,13 @@ export function PromoStudio({ seed }: { seed: PromoSeedData }) {
           <AiPromptPanel key={goal} goal={goal} size={sizeId} ctx={ctx} />
         )}
         {path === "upload" && (
-          <UploadBgPanel size={size} copy={copy} seed={seed} />
+          <UploadBgPanel
+            size={size}
+            copy={copy}
+            seed={seed}
+            bgDataUrl={uploadBg}
+            onBgChange={setUploadBg}
+          />
         )}
       </div>
     </div>

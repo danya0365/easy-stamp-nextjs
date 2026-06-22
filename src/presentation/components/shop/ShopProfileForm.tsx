@@ -11,12 +11,14 @@ import { Input } from "@/src/presentation/components/ui/Input";
 import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
+import { useActionToast } from "@/src/presentation/hooks/useActionToast";
 
 export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateShopProfileAction,
     {},
   );
+  useActionToast(state);
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -88,7 +90,7 @@ export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "กำลังบันทึก…" : "บันทึก"}
       </Button>
     </form>

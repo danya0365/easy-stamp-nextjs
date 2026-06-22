@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { AddStaffForm } from "@/src/presentation/components/shop/AddStaffForm";
 import { ToggleActiveButton } from "@/src/presentation/components/shop/ToggleActiveButton";
+import { ConfirmSubmitButton } from "@/src/presentation/components/ui/ConfirmDialog";
 import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
@@ -51,21 +52,20 @@ export default async function ShopStaffPage() {
                     isActive={s.isActive}
                   />
                   <ResetPasswordControl kind="staff" userId={s.id} />
-                  <form
+                  <ConfirmSubmitButton
                     action={async () => {
                       "use server";
                       await forceLogoutStaffAction(s.id);
                     }}
+                    title="บังคับออกจากระบบ?"
+                    message="อุปกรณ์ทั้งหมดของพนักงานคนนี้จะถูกออกจากระบบทันที"
+                    confirmLabel="เตะออก"
+                    buttonTitle="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
                   >
-                    <button
-                      type="submit"
-                      title="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
-                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
-                    >
-                      <LogOut className="size-3.5" />
-                      เตะออก
-                    </button>
-                  </form>
+                    <LogOut className="size-3.5" />
+                    เตะออก
+                  </ConfirmSubmitButton>
                 </div>
               </li>
             ))}

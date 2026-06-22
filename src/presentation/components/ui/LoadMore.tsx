@@ -68,7 +68,7 @@ export function LoadMore<T>({
             variant="ghost"
             size="sm"
             onClick={onLoad}
-            disabled={pending}
+            loading={pending}
           >
             {pending ? "กำลังโหลด…" : "โหลดเพิ่ม"}
           </Button>

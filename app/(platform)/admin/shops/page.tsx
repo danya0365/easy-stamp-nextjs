@@ -15,6 +15,7 @@ import { CreateShopForm } from "@/src/presentation/components/admin/CreateShopFo
 import { ShopStatusToggle } from "@/src/presentation/components/admin/ShopStatusToggle";
 import { PauseShopToggle } from "@/src/presentation/components/admin/PauseShopToggle";
 import { ShopHandoffButton } from "@/src/presentation/components/admin/ShopHandoffButton";
+import { ConfirmSubmitButton } from "@/src/presentation/components/ui/ConfirmDialog";
 import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
@@ -119,21 +120,20 @@ export default async function AdminShopsPage() {
                       <>
                         <ShopHandoffButton shopId={shop.id} />
                         <ResetPasswordControl kind="owner" userId={owner.id} />
-                        <form
+                        <ConfirmSubmitButton
                           action={async () => {
                             "use server";
                             await forceLogoutUserAction(owner.id);
                           }}
+                          title="บังคับออกจากระบบ?"
+                          message="อุปกรณ์ทั้งหมดของเจ้าของร้านจะถูกออกจากระบบทันที"
+                          confirmLabel="เตะออก"
+                          buttonTitle="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
                         >
-                          <button
-                            type="submit"
-                            title="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
-                            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
-                          >
-                            <LogOut className="size-3.5" />
-                            เตะออก
-                          </button>
-                        </form>
+                          <LogOut className="size-3.5" />
+                          เตะออก
+                        </ConfirmSubmitButton>
                       </>
                     )}
                   </div>

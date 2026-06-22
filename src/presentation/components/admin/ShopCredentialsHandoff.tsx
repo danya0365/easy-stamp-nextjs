@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Copy, Check, Download, Printer, KeyRound } from "lucide-react";
 
 import { Button } from "@/src/presentation/components/ui/Button";
+import { useToast } from "@/src/presentation/components/ui/Toast";
 import { exportPosterPng } from "@/src/presentation/lib/poster-export";
 import type { ShopHandoff } from "@/src/presentation/lib/shop-handoff";
 
@@ -32,6 +33,7 @@ export function ShopCredentialsHandoff({
   const [copied, setCopied] = useState<CopyKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const allText = [
     `ร้าน: ${handoff.shopName}`,
@@ -44,9 +46,11 @@ export function ShopCredentialsHandoff({
     try {
       await navigator.clipboard.writeText(text);
       setCopied(key);
+      toast.success("คัดลอกแล้ว");
       setTimeout(() => setCopied(null), 1500);
     } catch {
       setError("คัดลอกไม่สำเร็จ — กรุณาคัดลอกด้วยตนเอง");
+      toast.error("คัดลอกไม่สำเร็จ");
     }
   }
 

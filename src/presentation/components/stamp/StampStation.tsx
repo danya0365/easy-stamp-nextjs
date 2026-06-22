@@ -17,8 +17,8 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
-import { Spinner } from "@/src/presentation/components/ui/Spinner";
 import { Modal } from "@/src/presentation/components/ui/Modal";
+import { useToast } from "@/src/presentation/components/ui/Toast";
 import { CardBalance } from "@/src/presentation/components/stamp/CardBalance";
 import { QrScanModal } from "@/src/presentation/components/stamp/QrScanModal";
 
@@ -34,6 +34,12 @@ export function StampStation({ stampTypes }: { stampTypes: StampType[] }) {
   const [bindImg, setBindImg] = useState<string | null>(null);
   const [bindError, setBindError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const toast = useToast();
+
+  function notify(next: StampActionState) {
+    if (next.success) toast.success(next.success);
+    if (next.error) toast.error(next.error);
+  }
 
   function run(action: Action, opts?: { stampTypeId?: string }) {
     const fd = new FormData();
@@ -44,29 +50,37 @@ export function StampStation({ stampTypes }: { stampTypes: StampType[] }) {
     startTransition(async () => {
       const next = await action(result ?? {}, fd);
       setResult(next);
+      notify(next);
       if (next.phone) setPhone(next.phone);
     });
   }
 
   // Resolve a scanned personal QR → customer (fills phone for add/redeem).
-  const handleScan = useCallback((scanned: string) => {
-    setScanOpen(false);
-    const fd = new FormData();
-    fd.set("code", extractCustomerCode(scanned));
-    startTransition(async () => {
-      const next = await lookupByCodeAction({}, fd);
-      setResult(next);
-      if (next.phone) setPhone(next.phone);
-    });
-  }, []);
+  const handleScan = useCallback(
+    (scanned: string) => {
+      setScanOpen(false);
+      const fd = new FormData();
+      fd.set("code", extractCustomerCode(scanned));
+      startTransition(async () => {
+        const next = await lookupByCodeAction({}, fd);
+        setResult(next);
+        notify(next);
+        if (next.phone) setPhone(next.phone);
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   function openBind() {
     setBindError(null);
     setBindImg(null);
     startTransition(async () => {
       const res = await generateBindCodeAction(phone);
-      if (res.error) setBindError(res.error);
-      else setBindImg(res.imageUrl ?? null);
+      if (res.error) {
+        setBindError(res.error);
+        toast.error(res.error);
+      } else setBindImg(res.imageUrl ?? null);
     });
   }
 
@@ -151,9 +165,10 @@ export function StampStation({ stampTypes }: { stampTypes: StampType[] }) {
             </div>
             <Button
               onClick={() => run(addStampsAction)}
-              disabled={pending || !phone || !typeId}
+              loading={pending}
+              disabled={!phone || !typeId}
             >
-              {pending ? <Spinner /> : <Plus className="size-4" />} เพิ่มแสตมป์
+              <Plus className="size-4" /> เพิ่มแสตมป์
             </Button>
           </div>
         </div>
