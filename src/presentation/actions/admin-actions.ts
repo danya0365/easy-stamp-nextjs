@@ -69,13 +69,14 @@ export async function createShopAction(
     const ownerPassword = String(formData.get("ownerPassword") ?? "");
     const ownerEmail = String(formData.get("ownerEmail") ?? "");
     await assertPasswordAcceptable(ownerPassword, container.passwordBreachChecker);
-    const shop = await new CreateShopUseCase(
+    const { shop } = await new CreateShopUseCase(
       container.shopRepository,
       container.userRepository,
       container.subscriptionRepository,
       container.passwordHasher,
       container.shopCategoryRepository,
       container.stampTypeRepository,
+      container.branchRepository,
     ).execute({
       name: String(formData.get("name") ?? ""),
       slug: String(formData.get("slug") ?? ""),

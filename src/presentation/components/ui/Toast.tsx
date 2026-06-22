@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -60,10 +59,6 @@ const DURATION_MS = 3000;
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
-  // Render the portal only after mount so SSR and first client render match
-  // (both empty) — avoids a hydration mismatch against <body>.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   const remove = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -94,7 +89,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      {mounted &&
+      {/* Empty until a toast is pushed (post-interaction): SSR and first client
+          render both produce nothing, so there's no hydration mismatch. */}
+      {toasts.length > 0 &&
+        typeof document !== "undefined" &&
         createPortal(
           <div
             className="pointer-events-none fixed inset-x-0 z-60 mx-auto flex max-w-sm flex-col gap-2 px-4 print:hidden bottom-[calc(env(safe-area-inset-bottom)+5rem)] sm:bottom-6"
