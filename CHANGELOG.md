@@ -5,6 +5,25 @@
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-06-23
+
+ปิด milestone **เตรียมโปรเจคให้เป็นต้นแบบ SaaS (template-readiness)** — เน้น ops/security พื้นฐาน + โครงสร้างสำหรับ clone ไปทำ product อื่น (โดยไม่กระทบฟีเจอร์ผู้ใช้เดิม)
+
+### Added
+- **เอกสารต้นแบบ SaaS** — audit + roadmap ([docs/TEMPLATE_AUDIT.md](docs/TEMPLATE_AUDIT.md)), แผนที่ generic-vs-domain บอกว่าตอน clone เก็บอะไร/เขียนใหม่อะไร ([docs/REUSE_MAP.md](docs/REUSE_MAP.md)), และคู่มือ fork (DEPLOYMENT/TESTING/EXTENDING) + ดัชนีเอกสารใน README
+- **i18n (next-intl)** — วางโครงรองรับหลายภาษาแบบ single-locale (`th`) ไม่มี routing: message catalog (`messages/*.json`), `getTranslations`/`useTranslations`, keys ตรวจชนิดอัตโนมัติ, และส่งเฉพาะ namespace ที่ client ใช้เพื่อไม่ให้ bundle บวม — นำร่องหน้า error/not-found
+- **`/api/health`** — endpoint ตรวจสุขภาพ (ping ฐานข้อมูล) สำหรับ uptime monitor
+- **ตรวจ environment ตอนบูต** — `instrumentation.ts` → `validateEnv()` fail-fast บน Vercel เมื่อ config ฐานข้อมูลผิด (กันข้อมูลหายตอน deploy)
+- **`app/global-error.tsx`** — error boundary ระดับรากแบบมีแบรนด์
+
+### Changed
+- **รวม brand identity ไว้ที่เดียว** — [`src/config/brand.ts`](src/config/brand.ts) (ชื่อแอป/tagline/ฯลฯ) แทนการ hardcode "Easy Stamp" กระจายหลายไฟล์ → เปลี่ยนชื่อ product ที่เดียวจบ
+- **รวม cron เหลือ schedule เดียว** — `/api/cron` dispatcher ให้พอดีโควตา Vercel free (1 cron); เปิด/ปิดงานย่อยด้วย env และแยก schedule ได้เมื่ออัปเกรดแพ็กเกจ
+
+### Security
+- **rate-limit ขั้นยืนยัน 2FA** (`verifyLoginTwoFactorAction`) — กัน brute-force โค้ด 2FA
+- **ล้าง session หมดอายุอัตโนมัติ** ผ่าน cron cleanup (กันตารางโตไม่จำกัด)
+
 ## [1.17.0] - 2026-06-23
 
 ### Added
