@@ -17,4 +17,6 @@ export interface ISessionRepository {
   listByUser(userId: string, now: Date): Promise<Session[]>;
   /** Delete one session by id, scoped to its owner (can't revoke someone else's). */
   deleteById(id: string, userId: string): Promise<void>;
+  /** Purge all sessions whose expiry has passed. Returns the number removed. */
+  deleteExpired(now: Date): Promise<number>;
 }
