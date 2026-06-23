@@ -23,6 +23,9 @@ export function PausedBanner({
           <span>
             ร้านปิดชั่วคราวอยู่ — วันใช้งานถูกหยุดไว้ ({status.daysUntilDue} วัน)
             ไม่ถูกหักระหว่างปิด
+            {status.frozenDaysSoFar >= 1
+              ? ` · กดเปิดจะคืน ${status.frozenDaysSoFar} วัน`
+              : " · ยังไม่ครบ 1 วัน (กดเปิดตอนนี้ยังไม่ได้วันคืน)"}
           </span>
         </span>
         {resumable && <ResumeShopButton />}

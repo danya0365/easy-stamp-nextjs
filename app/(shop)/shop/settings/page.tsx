@@ -8,6 +8,8 @@ import {
   getCurrentSessionToken,
 } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
+import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
+import { PAUSE_MAX_PER_30D } from "@/src/domain/services/subscription-status";
 import { signOutEverywhereAction } from "@/src/presentation/actions/auth-actions";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
@@ -26,18 +28,42 @@ export default async function ShopSettingsPage() {
   const { user, shopId, impersonating } = await requireShopAccess();
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
-  const [stampTypes, subscription, shopImages, shopProfile, sessions, currentToken] =
-    await Promise.all([
-      container.stampTypeRepository.listByShop(shop.id),
-      container.subscriptionRepository.findByShop(shop.id),
-      container.shopImageRepository.listByShop(shop.id),
-      container.shopProfileRepository.get(shop.id),
-      // Device list is the owner's own account; skip while an admin impersonates.
-      impersonating
-        ? Promise.resolve([])
-        : container.sessionRepository.listByUser(user.id, new Date()),
-      impersonating ? Promise.resolve(null) : getCurrentSessionToken(),
-    ]);
+  const [
+    stampTypes,
+    subscription,
+    shopImages,
+    shopProfile,
+    sessions,
+    currentToken,
+    billing,
+    pauseCapPeek,
+    pauseCdPeek,
+  ] = await Promise.all([
+    container.stampTypeRepository.listByShop(shop.id),
+    container.subscriptionRepository.findByShop(shop.id),
+    container.shopImageRepository.listByShop(shop.id),
+    container.shopProfileRepository.get(shop.id),
+    // Device list is the owner's own account; skip while an admin impersonates.
+    impersonating
+      ? Promise.resolve([])
+      : container.sessionRepository.listByUser(user.id, new Date()),
+    impersonating ? Promise.resolve(null) : getCurrentSessionToken(),
+    getBillingState(shop.id),
+    container.rateLimitRepository.peek(`shop_pause_cap:${shop.id}`),
+    container.rateLimitRepository.peek(`shop_pause_cd:${shop.id}`),
+  ]);
+
+  // Pause quota/cooldown snapshot for the UI (read-only — does not consume).
+  const pausesUsed = pauseCapPeek?.count ?? 0;
+  const cooldownRemainingSec = pauseCdPeek
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(pauseCdPeek.resetAt).getTime() - new Date().getTime()) /
+            1000,
+        ),
+      )
+    : 0;
   const devices = sessions.map((s) => ({
     id: s.id,
     userAgent: s.userAgent,
@@ -87,7 +113,14 @@ export default async function ShopSettingsPage() {
                   title="ปิดร้านชั่วคราว"
                   subtitle="หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ"
                 />
-                <PauseShopControl paused={!!subscription?.pausedAt} />
+                <PauseShopControl
+                  paused={!!subscription?.pausedAt}
+                  daysUntilDue={billing.status.daysUntilDue}
+                  frozenDaysSoFar={billing.status.frozenDaysSoFar}
+                  pausesUsed={pausesUsed}
+                  pauseCap={PAUSE_MAX_PER_30D}
+                  cooldownRemainingSec={cooldownRemainingSec}
+                />
               </Card>
             </>
           ),

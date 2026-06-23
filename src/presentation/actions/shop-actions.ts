@@ -8,6 +8,11 @@ import {
   assertShopActive,
   getBillingState,
 } from "@/src/infrastructure/auth/billing-guard";
+import {
+  PAUSE_MAX_PER_30D,
+  PAUSE_CAP_WINDOW_MS,
+  PAUSE_COOLDOWN_MS,
+} from "@/src/domain/services/subscription-status";
 import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/UpdateShopSettingsUseCase";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
@@ -38,14 +43,10 @@ export interface FormState {
   success?: string;
 }
 
-// Abuse guard-rails for "temporarily close shop": pausing freezes billing days,
-// so unbounded toggling invites gaming. Cap how often a shop may pause, and
-// enforce a cooldown between closures. (The economic loophole — stretching one
-// paid day across calendar days by closing off-hours — is already neutralized by
-// whole-day-floor crediting in resumeDueDate; these add visibility + churn limits.)
-const PAUSE_MAX_PER_30D = 8;
-const PAUSE_CAP_WINDOW_MS = 30 * 24 * 60 * 60_000; // 30 วัน
-const PAUSE_COOLDOWN_MS = 24 * 60 * 60_000; // 24 ชม.
+// Abuse guard-rails for "temporarily close shop" — cap + cooldown are shared
+// with the UI (PAUSE_* live in the domain). The economic loophole (stretching one
+// paid day across calendar days by closing off-hours) is already neutralized by
+// whole-day-floor crediting in resumeDueDate; these add visibility + churn limits.
 
 /** Owner temporarily closes their shop (freezes billing days). */
 export async function pauseMyShopAction(): Promise<{ error?: string }> {

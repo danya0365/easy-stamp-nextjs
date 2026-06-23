@@ -11,4 +11,11 @@ export interface IRateLimitRepository {
    * always allowed.
    */
   hit(key: string, limit: number, windowMs: number): Promise<RateLimitResult>;
+
+  /**
+   * Read the current window for `key` WITHOUT recording a hit. Returns null when
+   * there is no row or the window has already elapsed (i.e. effectively count 0).
+   * Used to display remaining quota / cooldown to the user.
+   */
+  peek(key: string): Promise<{ count: number; resetAt: string } | null>;
 }

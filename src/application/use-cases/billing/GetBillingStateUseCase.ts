@@ -45,6 +45,7 @@ export class GetBillingStateUseCase {
           preExpiryBannerLevel: 0,
           graceDaysLeft: 7,
           suspendReason: shop.status === "suspended_by_admin" ? "admin" : "none",
+          frozenDaysSoFar: 0,
         };
 
     return { shop, subscription, status };
