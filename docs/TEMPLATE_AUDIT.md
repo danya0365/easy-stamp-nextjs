@@ -62,8 +62,9 @@ checkboxes as items land.
   prose in privacy/tutorial pages.
 - [ ] **i18n scaffold** — UI text is 100% hardcoded Thai, no message catalog. Introduce `next-intl`
   (or similar) and extract strings in phases. Needed for multi-product/multi-language.
-- [ ] **Fork docs** — add `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist), `docs/TESTING.md`,
-  `docs/EXTENDING.md` (how to add a use case/repo/route). README/ARCHITECTURE/VERSIONING already good.
+- [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
+  `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
+  entity/repo/use-case/action + the enforced rules). Indexed from the README.
 - [ ] **Separate generic vs domain** — generic infra (auth, billing-topup, notifications, audit,
   rate-limit, storage, theming, impersonation ≈ 40%) is reusable; stamp/shop/lead/customer-binding
   is product-specific. Make the split explicit (folders/package boundary) so a clone keeps the
