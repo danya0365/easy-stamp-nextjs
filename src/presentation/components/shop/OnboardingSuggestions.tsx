@@ -15,6 +15,7 @@ import {
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { useOnboardingStore } from "@/src/presentation/stores/onboarding.store";
+import { BRAND } from "@/src/config/brand";
 
 type Item = {
   key: string;
@@ -105,7 +106,7 @@ export function OnboardingSuggestions({
     <Card>
       <CardHeader
         title="เริ่มต้นใช้งาน"
-        subtitle="ทำให้ครบเพื่อใช้ Easy Stamp ได้เต็มที่"
+        subtitle={`ทำให้ครบเพื่อใช้ ${BRAND.name} ได้เต็มที่`}
         action={<Badge tone="brand">เหลือ {visible.length} ข้อ</Badge>}
       />
       <ul className="flex flex-col divide-y divide-border">

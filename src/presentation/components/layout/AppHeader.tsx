@@ -4,10 +4,11 @@ import { Bell, LogOut } from "lucide-react";
 import { logoutAction } from "@/src/presentation/actions/auth-actions";
 import { ThemeSwitcher } from "@/src/presentation/components/ThemeSwitcher";
 import { Logo } from "@/src/presentation/components/layout/Logo";
+import { BRAND } from "@/src/config/brand";
 
 interface AppHeaderProps {
-  /** App name, always shown (e.g. "Easy Stamp"). */
-  brand: string;
+  /** App name, always shown. Defaults to the central brand name. */
+  brand?: string;
   /** Role suffix shown only on sm+ (e.g. "ร้านค้า"). */
   role?: string;
   userEmail: string;
@@ -21,7 +22,7 @@ interface AppHeaderProps {
  * On mobile the role suffix, email, and logout label collapse to save space.
  */
 export function AppHeader({
-  brand,
+  brand = BRAND.name,
   role,
   userEmail,
   notifications,

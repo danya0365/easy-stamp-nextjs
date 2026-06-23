@@ -54,9 +54,12 @@ checkboxes as items land.
 
 ## P1 — template-ization (do before forking Easy Queue)
 
-- [ ] **Central brand/product config** — `src/config/brand.ts` (APP_NAME, logo, support contact,
-  default theme). Today "Easy Stamp" + meta is hardcoded across layouts/`app/layout.tsx`/
-  `AppHeader`/og-image — cloning means find-replace. Centralize it.
+- [x] **Central brand/product config** — `src/config/brand.ts` (`name`, `tagline`, `description`,
+  `totpIssuer`, `userAgent`) is the single place to rename the product. Wired into layout metadata,
+  `AppHeader` (default), page `<title>`s, `AppVersion`, `Logo` alt, manifest, TOTP issuer, OTP/2FA/
+  LINE messages, geocoder UA. **Still per-clone (by design):** logo image files under
+  `public/icons/*`, the static `app/*-image.alt.txt`, `package.json` "name", and long marketing
+  prose in privacy/tutorial pages.
 - [ ] **i18n scaffold** — UI text is 100% hardcoded Thai, no message catalog. Introduce `next-intl`
   (or similar) and extract strings in phases. Needed for multi-product/multi-language.
 - [ ] **Fork docs** — add `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist), `docs/TESTING.md`,

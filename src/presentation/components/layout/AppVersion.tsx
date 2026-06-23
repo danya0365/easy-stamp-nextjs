@@ -1,5 +1,6 @@
 import { useAppVersion } from "@/src/presentation/hooks/useAppVersion";
 import { cn } from "@/src/presentation/components/ui/cn";
+import { BRAND } from "@/src/config/brand";
 
 /**
  * Subtle build-version caption. Sits at the end of a shell's content, above the
@@ -14,7 +15,7 @@ export function AppVersion({ className }: { className?: string }) {
         className,
       )}
     >
-      Easy Stamp {displayVersion}
+      {BRAND.name} {displayVersion}
     </p>
   );
 }

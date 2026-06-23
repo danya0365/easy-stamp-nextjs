@@ -11,9 +11,10 @@ import { DevLoginPanel } from "@/src/presentation/components/auth/DevLoginPanel"
 import { PublicContactButton } from "@/src/presentation/components/auth/PublicContactButton";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { Logo } from "@/src/presentation/components/layout/Logo";
+import { BRAND } from "@/src/config/brand";
 
 export const metadata: Metadata = {
-  title: "เข้าสู่ระบบ | Easy Stamp",
+  title: `เข้าสู่ระบบ | ${BRAND.name}`,
   // Auth page — keep it out of search indexes.
   robots: { index: false, follow: false },
 };

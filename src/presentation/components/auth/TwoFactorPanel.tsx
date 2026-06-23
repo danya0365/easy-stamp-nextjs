@@ -10,6 +10,7 @@ import {
   regenerateRecoveryCodesAction,
   type TwoFactorSetupState,
 } from "@/src/presentation/actions/auth-actions";
+import { BRAND } from "@/src/config/brand";
 
 const inputCls =
   "rounded-lg border border-border px-3 py-2 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200";
@@ -53,7 +54,7 @@ export function TwoFactorPanel({
   if (setup?.recoveryCodes) {
     const codes = setup.recoveryCodes;
     const asText =
-      `Easy Stamp — รหัสกู้คืน 2FA (recovery codes)\n` +
+      `${BRAND.name} — รหัสกู้คืน 2FA (recovery codes)\n` +
       `เก็บไว้ในที่ปลอดภัย · แต่ละรหัสใช้ได้ครั้งเดียว\n\n` +
       codes.join("\n") +
       `\n`;

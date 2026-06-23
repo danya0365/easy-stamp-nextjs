@@ -37,7 +37,6 @@ export default async function ShopLayout({
         <ImpersonationBanner shopName={shop?.name ?? "—"} />
       )}
       <AppHeader
-        brand="Easy Stamp"
         role={impersonating ? "ดูแบบร้าน" : "ร้านค้า"}
         userEmail={user.email}
         notifications={{ href: "/shop/notifications", unread }}

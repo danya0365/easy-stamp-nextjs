@@ -1,7 +1,9 @@
+import { BRAND } from "@/src/config/brand";
+
 // Manifest for the "My Cards" app — install once, see every shop's card.
 export function GET() {
   const manifest = {
-    name: "Easy Stamp · บัตรของฉัน",
+    name: `${BRAND.name} · บัตรของฉัน`,
     short_name: "บัตรของฉัน",
     start_url: "/me",
     scope: "/",

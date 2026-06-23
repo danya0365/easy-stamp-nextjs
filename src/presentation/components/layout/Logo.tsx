@@ -1,15 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { BRAND } from "@/src/config/brand";
+
 /**
  * Brand logo. `mark` = the square stamp-card mark (compact, for headers/tiles);
- * `wordmark` = the horizontal "Easy Stamp" lockup (for the login/hero). The
- * source images have an opaque light background, so callers place them on a
+ * `wordmark` = the horizontal brand lockup (for the login/hero). The source
+ * images have an opaque light background, so callers place them on a
  * light/rounded tile to look intentional in dark mode.
  */
 export function Logo({
   variant = "mark",
   className,
-  alt = "Easy Stamp",
+  alt = BRAND.name,
 }: {
   variant?: "mark" | "wordmark";
   className?: string;

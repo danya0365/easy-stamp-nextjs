@@ -25,7 +25,6 @@ export default async function PlatformLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader
-        brand="Easy Stamp"
         role="Admin"
         userEmail={user.email}
         notifications={{ href: "/admin/notifications", unread }}

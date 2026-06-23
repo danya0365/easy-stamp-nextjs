@@ -4,6 +4,7 @@ import { container } from "@/src/infrastructure/di/container";
 import { lineConfigFromEnv } from "@/src/infrastructure/services/LineMessagingPusher";
 import { LinkLineAccountUseCase } from "@/src/application/use-cases/line/LinkLineAccountUseCase";
 import { isLineLinkCodeShape } from "@/src/application/use-cases/line/GenerateLineLinkCodeUseCase";
+import { BRAND } from "@/src/config/brand";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
         await reply(
           config.channelAccessToken,
           event.replyToken,
-          "ขอบคุณที่เพิ่มเพื่อน 🎉\nพิมพ์โค้ดเชื่อมต่อจากแอป Easy Stamp เพื่อเชื่อมบัญชี (รับการแจ้งเตือน + เข้าสู่ระบบด้วย OTP)",
+          `ขอบคุณที่เพิ่มเพื่อน 🎉\nพิมพ์โค้ดเชื่อมต่อจากแอป ${BRAND.name} เพื่อเชื่อมบัญชี (รับการแจ้งเตือน + เข้าสู่ระบบด้วย OTP)`,
         );
       }
     } catch (e) {

@@ -6,6 +6,7 @@ import {
   RESEND_COOLDOWN_MS,
   generateOtp,
 } from "./login-otp";
+import { BRAND } from "@/src/config/brand";
 
 export type RequestOtpResult =
   // OTP sent / on cooldown. passwordAllowed=false ⇒ linked owner/staff (must use
@@ -76,7 +77,7 @@ export class RequestLoginOtpUseCase {
     const minutes = Math.round(OTP_TTL_MS / 60_000);
     await this.pusher.pushText(
       user.lineUserId,
-      `รหัสเข้าสู่ระบบ Easy Stamp ของคุณคือ ${code} (ใช้ได้ ${minutes} นาที)\nหากคุณไม่ได้พยายามเข้าสู่ระบบ โปรดอย่าบอกรหัสนี้กับผู้ใด`,
+      `รหัสเข้าสู่ระบบ ${BRAND.name} ของคุณคือ ${code} (ใช้ได้ ${minutes} นาที)\nหากคุณไม่ได้พยายามเข้าสู่ระบบ โปรดอย่าบอกรหัสนี้กับผู้ใด`,
     );
     return { status: "otp_sent", passwordAllowed };
   }

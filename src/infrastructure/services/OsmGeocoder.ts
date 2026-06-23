@@ -13,6 +13,7 @@ import {
   type OsmPoi,
   type OsmTags,
 } from "@/src/domain/services/osm-poi";
+import { BRAND } from "@/src/config/brand";
 
 interface GeocoderConfig {
   overpassUrl: string;
@@ -27,7 +28,7 @@ export function geocoderConfigFromEnv(): GeocoderConfig {
       process.env.OSM_OVERPASS_URL ?? "https://overpass-api.de/api/interpreter",
     nominatimUrl:
       process.env.OSM_NOMINATIM_URL ?? "https://nominatim.openstreetmap.org",
-    userAgent: process.env.GEO_USER_AGENT ?? "EasyStamp/1.0 (+admin lead tool)",
+    userAgent: process.env.GEO_USER_AGENT ?? BRAND.userAgent,
   };
 }
 

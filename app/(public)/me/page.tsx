@@ -16,11 +16,12 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { StampDots } from "@/src/presentation/components/ui/StampDots";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
+import { BRAND } from "@/src/config/brand";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "บัตรของฉัน · Easy Stamp",
+  title: `บัตรของฉัน · ${BRAND.name}`,
   manifest: "/me/site.webmanifest",
 };
 

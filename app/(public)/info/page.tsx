@@ -22,9 +22,10 @@ import {
 import { Card } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { StampDots } from "@/src/presentation/components/ui/StampDots";
+import { BRAND } from "@/src/config/brand";
 
 export const metadata: Metadata = {
-  title: "Easy Stamp · ระบบบัตรสะสมแสตมป์",
+  title: `${BRAND.name} · ${BRAND.tagline}`,
   description:
     "บัตรสะสมแสตมป์ออนไลน์สำหรับร้านค้าหลายสาขา — ลูกค้าสะสมแต้มไม่ต้องพกบัตร ร้านค้าจัดการง่ายในที่เดียว",
 };
@@ -130,7 +131,7 @@ export default function InfoPage() {
       {/* Hero */}
       <header className="flex flex-col items-center gap-4 text-center">
         <Coffee className="size-10 text-brand-500" />
-        <h1 className="text-3xl font-bold text-brand-700">Easy Stamp</h1>
+        <h1 className="text-3xl font-bold text-brand-700">{BRAND.name}</h1>
         <p className="max-w-md text-muted">
           บัตรสะสมแสตมป์ออนไลน์สำหรับร้านค้าหลายสาขา — ลูกค้าสะสมแต้มไม่ต้องพกบัตร
           ร้านค้าจัดการง่ายในที่เดียว

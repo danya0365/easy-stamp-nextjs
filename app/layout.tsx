@@ -8,6 +8,7 @@ import {
 } from "@/src/presentation/providers/theme-provider";
 import { ToastProvider } from "@/src/presentation/components/ui/Toast";
 import { ConfirmProvider } from "@/src/presentation/components/ui/ConfirmDialog";
+import { BRAND } from "@/src/config/brand";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
@@ -28,9 +29,8 @@ const notoSerifThai = Noto_Serif_Thai({
 // Set APP_URL to the deployed domain in production.
 const siteUrl = process.env.APP_URL ?? "http://localhost:3000";
 
-const title = "Easy Stamp — ระบบบัตรสะสมแสตมป์";
-const description =
-  "บัตรสะสมแสตมป์ดิจิทัลสำหรับร้านค้าหลายสาขา ลูกค้าสะสมแต้มผ่านการสแกน QR ไม่ต้องพกบัตร ร้านจัดการง่ายในที่เดียว";
+const title = `${BRAND.name} — ${BRAND.tagline}`;
+const description = BRAND.description;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -39,13 +39,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Easy Stamp",
+    title: BRAND.name,
   },
   // og:image / twitter:image are added automatically from app/opengraph-image.png
   // and app/twitter-image.png (file-based metadata).
   openGraph: {
     type: "website",
-    siteName: "Easy Stamp",
+    siteName: BRAND.name,
     locale: "th_TH",
     url: siteUrl,
     title,

@@ -6,6 +6,7 @@ import { ROLE_HOME } from "@/src/domain/types/roles";
 import { StoreMap } from "@/src/presentation/components/map/StoreMap";
 import { AdminEntryButton } from "@/src/presentation/components/auth/AdminEntryButton";
 import { Logo } from "@/src/presentation/components/layout/Logo";
+import { BRAND } from "@/src/config/brand";
 
 // Reads the live set of mapped shops on each request; revalidated when an owner
 // updates a branch location (see updateBranchLocationAction).
@@ -43,7 +44,7 @@ export default async function HomePage() {
           <Logo className="size-10 shrink-0 rounded-xl sm:size-12" />
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-              Easy Stamp
+              {BRAND.name}
             </h1>
             <p className="truncate text-xs text-muted sm:text-sm">
               ระบบบัตรสะสมแสตมป์สำหรับร้านค้าหลายสาขา

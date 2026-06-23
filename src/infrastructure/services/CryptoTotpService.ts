@@ -3,11 +3,12 @@ import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import type { ITotpService } from "@/src/application/services/ITotpService";
+import { BRAND } from "@/src/config/brand";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"; // RFC 4648 base32
 const PERIOD = 30;
 const DIGITS = 6;
-const ISSUER = "Easy Stamp";
+const ISSUER = BRAND.totpIssuer;
 
 function base32Encode(buf: Buffer): string {
   let bits = 0;
