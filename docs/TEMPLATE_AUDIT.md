@@ -84,8 +84,10 @@ checkboxes as items land.
   export or hard-delete of personal data (Thai PDPA).
 - [ ] **Action/API-route tests** — 78 server actions + ~8 API routes have no tests (auth, billing,
   LINE webhook). Add integration coverage at the action layer.
-- [ ] **Negative tenant-isolation tests** — assert shop A cannot read/write shop B's data; add a
-  coverage threshold gate in CI.
+- [x] **Negative tenant-isolation tests** — `tenant-isolation.integration.test.ts` asserts shop B
+  can't see shop A's customers/cards/ledgers/reviews (4 cases). ⏳ **Coverage gate still deferred** —
+  Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22 `--test-coverage-lines`
+  or `c8 --check-coverage` later (see TESTING.md).
 - [ ] **Retry / circuit-breaker** — external calls fail-open but never retry; if R2 is down, slip
   upload fails silently. Add bounded retry + degrade messaging.
 - [ ] **Backup/DR docs + migration rollback** — document Turso backup/restore (RPO/RTO), add

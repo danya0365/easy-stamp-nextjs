@@ -45,9 +45,22 @@ test("adds a stamp scoped to the shop", async () => {
 - **Domain/unit tests** (pure functions in `src/domain/**`) need no DB — just import and assert.
 - Prefer asserting on **observable state** (repo reads) over implementation details.
 
+## Tenant isolation
+[`tenant-isolation.integration.test.ts`](../src/infrastructure/repositories/drizzle/tenant-isolation.integration.test.ts)
+seeds two shops and asserts shop B can't see/touch shop A's customers, cards, ledgers, or reviews —
+the safety net for the "every query is scoped by `shopId`" rule. Extend it whenever you add a
+tenant-scoped repo/use case (drop a `shopId` filter and a test here should go red).
+
+## Coverage gate (target, not yet enforced)
+`npm run test:cov` prints a coverage report but **no hard threshold is enforced** — Node 20's
+`node:test` lacks the `--test-coverage-*` threshold flags (added in Node 22). To enforce a gate:
+upgrade to Node 22 and add `--test-coverage-lines=NN` to `scripts/test.mjs`, **or** wrap the runner
+with [`c8`](https://github.com/bcoe/c8) (`c8 --check-coverage --lines NN node scripts/test.mjs`),
+tuning `NN` to current coverage so CI doesn't go red. Target: ~70% lines on `src/` once added.
+
 ## What to cover when extending (see [TEMPLATE_AUDIT.md](TEMPLATE_AUDIT.md) P2)
 - Each new use case: happy path + the key guard (e.g. wrong tenant, expired, over-limit).
-- **Tenant isolation**: a negative test that shop A cannot read/write shop B's data.
+- **Tenant isolation**: add a negative case (shop A cannot read/write shop B's data) to the file above.
 - Server actions / API routes currently lack tests — add them as you touch them.
 
 ## E2E
