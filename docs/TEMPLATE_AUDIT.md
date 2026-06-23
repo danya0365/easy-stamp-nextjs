@@ -72,10 +72,11 @@ checkboxes as items land.
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.
-- [ ] **Separate generic vs domain** — generic infra (auth, billing-topup, notifications, audit,
-  rate-limit, storage, theming, impersonation ≈ 40%) is reusable; stamp/shop/lead/customer-binding
-  is product-specific. Make the split explicit (folders/package boundary) so a clone keeps the
-  generic half and swaps the domain half.
+- [x] **Separate generic vs domain** — documented as a boundary map in
+  [REUSE_MAP.md](REUSE_MAP.md) (every module classified 🟢 keep / 🟡 configure / 🔴 rewrite + a fork
+  procedure). Physical folder split deliberately deferred — a bulk move would churn imports repo-wide
+  for little gain; the map is the practical fork checklist. (Optional later: a dependency-cruiser
+  rule flagging generic→domain imports, once the container/shells are untangled.)
 
 ## P2 — before scale (data lifecycle, deeper tests, resilience)
 

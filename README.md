@@ -51,6 +51,7 @@ Deliberate (approved) deviations from the base init SKILL: **Turso instead of Su
 | --- | --- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layering diagram + enforced rules |
 | [docs/EXTENDING.md](docs/EXTENDING.md) | How to add an entity / repo / use case / action |
+| [docs/REUSE_MAP.md](docs/REUSE_MAP.md) | Generic vs domain — what to keep/rewrite when forking |
 | [docs/TESTING.md](docs/TESTING.md) | Test runner, in-memory DB, helpers, e2e |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel / Turso / R2 / LINE setup + env + cron |
 | [docs/TEMPLATE_AUDIT.md](docs/TEMPLATE_AUDIT.md) | Template-readiness audit + P0/P1/P2 roadmap |
