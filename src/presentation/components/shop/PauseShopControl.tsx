@@ -47,11 +47,13 @@ export function PauseShopControl({
     return (
       <div className="flex flex-col gap-3">
         <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          <p>ร้านกำลังปิดชั่วคราว — วันใช้งานถูกหยุดไว้ ไม่ถูกหักระหว่างปิด</p>
+          <p>ร้านกำลังปิดชั่วคราว — ระบบหยุดนับวันใช้งานไว้</p>
           <p className="mt-1 font-medium">
             {frozenDaysSoFar >= 1
-              ? `ตอนนี้ปิดมาแล้ว ${frozenDaysSoFar} วันเต็ม — กดเปิดจะคืนให้ ${frozenDaysSoFar} วัน`
-              : "ยังปิดไม่ครบ 1 วัน — กดเปิดตอนนี้ยังไม่ได้วันคืน (ต้องปิดครบวันถึงจะคืน)"}
+              ? `ปิดมาแล้ว ${frozenDaysSoFar} วัน ระบบไม่หักวันช่วงนี้ · เปิดแล้ววันคงเหลือยังเท่าเดิม${
+                  typeof daysUntilDue === "number" ? ` (${daysUntilDue} วัน)` : ""
+                }`
+              : "ยังปิดไม่ครบ 1 วัน — ช่วงสั้นกว่า 1 วันยังนับเป็นวันใช้งานตามปกติ (ปิดให้ครบวันถึงจะหยุดนับ)"}
           </p>
         </div>
         <Button loading={pending} onClick={resume}>
