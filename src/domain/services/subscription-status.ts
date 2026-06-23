@@ -43,7 +43,10 @@ export interface BillingInput {
 
 /**
  * New due date after resuming from a pause: push the original due date forward
- * by however long the shop was paused, so no paid day is consumed.
+ * by the paused duration — but credited only in WHOLE days (floor). Pausing for
+ * less than a full day (overnight, rapid toggle) refunds nothing, so a shop
+ * can't stretch one paid day across many calendar days by closing off-hours;
+ * pausing only pays off for genuine multi-day closures (holidays/renovation).
  */
 export function resumeDueDate(
   dueISO: string,
@@ -51,8 +54,10 @@ export function resumeDueDate(
   now: Date,
 ): string {
   const pausedMs = now.getTime() - new Date(pausedAtISO).getTime();
-  const span = pausedMs > 0 ? pausedMs : 0;
-  return new Date(new Date(dueISO).getTime() + span).toISOString();
+  const wholeDays = pausedMs > 0 ? Math.floor(pausedMs / DAY_MS) : 0;
+  return new Date(
+    new Date(dueISO).getTime() + wholeDays * DAY_MS,
+  ).toISOString();
 }
 
 /**

@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
 import { requireShopWrite } from "@/src/infrastructure/auth/session";
-import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
+import {
+  assertShopActive,
+  getBillingState,
+} from "@/src/infrastructure/auth/billing-guard";
 import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/UpdateShopSettingsUseCase";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
@@ -35,23 +38,106 @@ export interface FormState {
   success?: string;
 }
 
+// Abuse guard-rails for "temporarily close shop": pausing freezes billing days,
+// so unbounded toggling invites gaming. Cap how often a shop may pause, and
+// enforce a cooldown between closures. (The economic loophole — stretching one
+// paid day across calendar days by closing off-hours — is already neutralized by
+// whole-day-floor crediting in resumeDueDate; these add visibility + churn limits.)
+const PAUSE_MAX_PER_30D = 8;
+const PAUSE_CAP_WINDOW_MS = 30 * 24 * 60 * 60_000; // 30 วัน
+const PAUSE_COOLDOWN_MS = 24 * 60 * 60_000; // 24 ชม.
+
 /** Owner temporarily closes their shop (freezes billing days). */
-export async function pauseMyShopAction(): Promise<void> {
-  const { shopId } = await requireShopWrite();
-  await new PauseShopUseCase(
-    container.shopRepository,
-    container.subscriptionRepository,
-  ).execute(shopId);
-  revalidatePath("/shop");
-  revalidatePath("/shop/settings");
+export async function pauseMyShopAction(): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+
+    // Only enforce quotas on a real active→paused transition (skip no-ops).
+    const { status } = await getBillingState(shopId);
+    if (status.isPaused) return {}; // already closed — nothing to do
+    if (status.isSuspended) {
+      return { error: "ร้านถูกระงับอยู่ ไม่สามารถปิดชั่วคราวได้" };
+    }
+
+    // Cooldown: at most one closure per 24h (no admin alert — just "wait").
+    const cd = await container.rateLimitRepository.hit(
+      `shop_pause_cd:${shopId}`,
+      1,
+      PAUSE_COOLDOWN_MS,
+    );
+    if (!cd.allowed) {
+      const hrs = Math.max(1, Math.ceil(cd.retryAfterSec / 3600));
+      return {
+        error: `เพิ่งปิด/เปิดร้านไปไม่นาน กรุณารออีกประมาณ ${hrs} ชม. ก่อนปิดอีกครั้ง`,
+      };
+    }
+
+    // Monthly cap: alerts admins + owner once when the threshold trips.
+    const ip = await getClientIp();
+    const cap = await container.sensitiveActionGuard.check({
+      key: `shop_pause_cap:${shopId}`,
+      limit: PAUSE_MAX_PER_30D,
+      windowMs: PAUSE_CAP_WINDOW_MS,
+      shopId,
+      actorUserId: actor.id,
+      ip,
+      alertTitle: "⚠️ ร้านปิดชั่วคราวบ่อยผิดปกติ",
+      alertBody: `ร้านหนึ่งปิดชั่วคราวเกิน ${PAUSE_MAX_PER_30D} ครั้งใน 30 วัน — อาจกำลังเลี่ยงการนับวันใช้งาน`,
+    });
+    if (!cap.allowed) {
+      return {
+        error: `เดือนนี้ปิดร้านครบ ${PAUSE_MAX_PER_30D} ครั้งแล้ว ระบบแจ้งผู้ดูแลแล้ว หากจำเป็นโปรดติดต่อผู้ดูแล`,
+      };
+    }
+
+    await new PauseShopUseCase(
+      container.shopRepository,
+      container.subscriptionRepository,
+    ).execute(shopId);
+
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.shopPaused,
+      targetType: "shop",
+      targetId: shopId,
+      shopId,
+      ip,
+    });
+
+    revalidatePath("/shop");
+    revalidatePath("/shop/settings");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
-/** Owner reopens their shop (resumes billing; remaining days unchanged). */
-export async function resumeMyShopAction(): Promise<void> {
-  const { shopId } = await requireShopWrite();
-  await new ResumeShopUseCase(container.subscriptionRepository).execute(shopId);
-  revalidatePath("/shop");
-  revalidatePath("/shop/settings");
+/** Owner reopens their shop (resumes billing; remaining whole days unchanged). */
+export async function resumeMyShopAction(): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    const changed = await new ResumeShopUseCase(
+      container.subscriptionRepository,
+    ).execute(shopId);
+
+    if (changed) {
+      await container.auditLogger.record({
+        actorUserId: actor.id,
+        actorRole: actor.role,
+        action: AUDIT_ACTIONS.shopResumed,
+        targetType: "shop",
+        targetId: shopId,
+        shopId,
+        ip: await getClientIp(),
+      });
+      revalidatePath("/shop");
+      revalidatePath("/shop/settings");
+    }
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /** Next page of the shop's customer list (optionally filtered by search). */
