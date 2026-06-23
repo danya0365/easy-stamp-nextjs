@@ -38,6 +38,25 @@ Example: a `Coupon` owned by a shop.
 - **Business logic lives in the use case**, not the action or component.
 - **Abuse-prone actions** go through `container.sensitiveActionGuard` / `rateLimitRepository` (see the pause + 2FA-verify examples).
 
+## i18n (next-intl, single-locale `th`, no routing)
+User-facing strings live in [`messages/th.json`](../messages/th.json) (grouped by namespace), wired
+via [`src/i18n/request.ts`](../src/i18n/request.ts) + the `createNextIntlPlugin` in `next.config.ts`.
+- **Server component:** `const t = await getTranslations("namespace")` → `t("key")`.
+- **Client component:** `const t = useTranslations("namespace")` → `t("key")` (works because the root
+  layout wraps everything in `NextIntlClientProvider`).
+- Add a string → add the key to `messages/th.json` (and `en.json` for parity); keys are
+  type-checked (`global.d.ts`), so a typo/missing key fails `tsc`.
+- Exception: `app/global-error.tsx` replaces the root layout, so it can't use the provider — keep
+  its few strings inline.
+- New surfaces should use `t()` instead of hardcoding; migrate existing Thai strings page-by-page.
+
+**Client bundle scoping (important):** only the namespaces listed in
+[`src/i18n/client-messages.ts`](../src/i18n/client-messages.ts) are sent to the browser — server
+components translate via `getTranslations` at zero client cost (per Next's i18n guide). So:
+- A **client** component (`useTranslations`) may only use a namespace that's in `getClientMessages()`.
+  Add yours there (keys are type-checked) — otherwise it throws "missing messages" at runtime.
+- A **server** component may use any namespace freely; don't add server-only ones to the client list.
+
 ## UI / theming / brand
 - Use **semantic theme tokens** only (`bg-brand-500`, `text-muted`, `bg-card`, `border-border`). Hardcoded hex / `gray-*` palettes are blocked by ESLint + stylelint. Add a theme by copying `public/styles/themes/*.css`.
 - Product name/identity comes from [`src/config/brand.ts`](../src/config/brand.ts) — don't hardcode the app name.

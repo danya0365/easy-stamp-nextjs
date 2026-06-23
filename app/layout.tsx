@@ -6,9 +6,13 @@ import {
   ThemeProvider,
   ThemeScript,
 } from "@/src/presentation/providers/theme-provider";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
+
 import { ToastProvider } from "@/src/presentation/components/ui/Toast";
 import { ConfirmProvider } from "@/src/presentation/components/ui/ConfirmDialog";
 import { BRAND } from "@/src/config/brand";
+import { getClientMessages } from "@/src/i18n/client-messages";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
@@ -62,14 +66,18 @@ export const viewport: Viewport = {
   themeColor: "#f97316",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  // Only client-needed namespaces reach the browser bundle (see getClientMessages);
+  // server components translate via getTranslations at no client cost.
+  const messages = await getClientMessages();
   return (
     <html
-      lang="th"
+      lang={locale}
       data-theme="cafe"
       className={`${notoSansThai.variable} ${notoSerifThai.variable} h-full antialiased`}
       suppressHydrationWarning
@@ -78,11 +86,13 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <ThemeProvider>
-          <ToastProvider>
-            <ConfirmProvider>{children}</ConfirmProvider>
-          </ToastProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider>
+            <ToastProvider>
+              <ConfirmProvider>{children}</ConfirmProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

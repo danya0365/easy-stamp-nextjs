@@ -1,6 +1,11 @@
 import { execSync } from "child_process";
 import os from "node:os";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+// Wires next-intl (single-locale, no i18n routing) — points at the request
+// config that loads the message catalog. See src/i18n/request.ts.
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 // Every non-internal IPv4 of this machine, so a phone on the same Wi-Fi can hit
 // the dev server (http://<lan-ip>:3000) without Next blocking it as a cross-origin
@@ -70,4 +75,4 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: lanDevOrigins(),
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

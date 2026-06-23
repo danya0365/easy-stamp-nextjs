@@ -60,8 +60,15 @@ checkboxes as items land.
   LINE messages, geocoder UA. **Still per-clone (by design):** logo image files under
   `public/icons/*`, the static `app/*-image.alt.txt`, `package.json` "name", and long marketing
   prose in privacy/tutorial pages.
-- [ ] **i18n scaffold** — UI text is 100% hardcoded Thai, no message catalog. Introduce `next-intl`
-  (or similar) and extract strings in phases. Needed for multi-product/multi-language.
+- [~] **i18n scaffold (done; string migration is ongoing)** — `next-intl` v4 wired in the
+  **no-routing** single-locale (`th`) mode: `next.config.ts` plugin → `src/i18n/request.ts` →
+  `messages/th.json` (+ `en.json` placeholder), `NextIntlClientProvider` in the root layout, and
+  type-safe keys via `global.d.ts`. Pilot-migrated `app/not-found.tsx` (server: `getTranslations`)
+  and `app/error.tsx` (client: `useTranslations`). **Client bundle is scoped** — only namespaces in
+  `src/i18n/client-messages.ts` reach the browser; server components translate via `getTranslations`
+  at zero client cost (per Next's i18n guide). **Remaining (incremental):** move the rest of the
+  hardcoded Thai strings into the catalog page-by-page. (`app/global-error.tsx` can't use it — it
+  replaces the root layout/provider — so it stays literal.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.
