@@ -7,6 +7,7 @@ import {
   extForContentType,
   shopImageKey,
 } from "@/src/application/services/slip-media";
+import { isSupportedImage } from "@/src/domain/services/image-signature";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic"];
@@ -37,6 +38,11 @@ export class SaveShopImageUseCase {
     if (input.bytes.byteLength === 0) throw new Error("ไม่พบไฟล์รูป");
     if (input.bytes.byteLength > MAX_IMAGE_BYTES) {
       throw new Error("ไฟล์ใหญ่เกิน 5MB");
+    }
+    // Magic-byte check: the bytes must really be a supported image, not just a
+    // disguised file with an image MIME/extension.
+    if (!isSupportedImage(input.bytes)) {
+      throw new Error("ไฟล์ไม่ใช่รูปภาพที่รองรับ (PNG/JPG/WEBP/HEIC)");
     }
 
     const existing = await this.images.listByShop(input.shopId);

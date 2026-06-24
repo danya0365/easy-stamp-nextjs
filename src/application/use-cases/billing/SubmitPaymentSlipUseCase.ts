@@ -8,6 +8,7 @@ import {
 import type { IPaymentRepository } from "@/src/application/repositories/IPaymentRepository";
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
+import { isSupportedImage } from "@/src/domain/services/image-signature";
 
 const MAX_SLIP_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic"];
@@ -39,6 +40,9 @@ export class SubmitPaymentSlipUseCase {
     if (input.bytes.byteLength === 0) throw new Error("ไม่พบไฟล์สลิป");
     if (input.bytes.byteLength > MAX_SLIP_BYTES) {
       throw new Error("ไฟล์ใหญ่เกิน 5MB");
+    }
+    if (!isSupportedImage(input.bytes)) {
+      throw new Error("ไฟล์สลิปไม่ใช่รูปภาพที่รองรับ (PNG/JPG/WEBP/HEIC)");
     }
 
     const sub = await this.subscriptions.findByShop(input.shopId);

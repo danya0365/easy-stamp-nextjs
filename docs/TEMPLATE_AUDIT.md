@@ -93,7 +93,9 @@ checkboxes as items land.
 - [ ] **Backup/DR docs + migration rollback** — document Turso backup/restore (RPO/RTO), add
   down-migration/preview policy. (Turso is managed but undocumented here.)
 - [ ] **Mandatory 2FA for `platform_admin`** — admins can impersonate read-write; require 2FA.
-- [ ] **File upload magic-byte check** — uploads validate MIME + size only; verify header bytes.
+- [x] **File upload magic-byte check** — `src/domain/services/image-signature.ts` (`sniffImageType`/
+  `isSupportedImage`) verifies real PNG/JPEG/WEBP/HEIC headers; wired into the shop-image, payment-slip,
+  and lead-photo upload use cases (rejects disguised html/js/svg/pdf renamed as images). Unit-tested.
 - [ ] **lead-follow-ups cron idempotency** — add `leads.lastNotifiedAt` (migration) so a cron retry
   doesn't double-notify. (Held out of P0 to avoid a schema change.)
 - [ ] **Orphaned-file cleanup** — R2 objects of deleted payments/photos aren't reclaimed.

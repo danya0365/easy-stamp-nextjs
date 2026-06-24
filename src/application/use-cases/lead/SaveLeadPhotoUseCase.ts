@@ -5,6 +5,7 @@ import {
   extForContentType,
   leadPhotoKey,
 } from "@/src/application/services/slip-media";
+import { isSupportedImage } from "@/src/domain/services/image-signature";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic"];
@@ -30,6 +31,9 @@ export class SaveLeadPhotoUseCase {
     if (input.bytes.byteLength === 0) throw new Error("ไม่พบไฟล์รูป");
     if (input.bytes.byteLength > MAX_PHOTO_BYTES) {
       throw new Error("ไฟล์ใหญ่เกิน 5MB");
+    }
+    if (!isSupportedImage(input.bytes)) {
+      throw new Error("ไฟล์ไม่ใช่รูปภาพที่รองรับ (PNG/JPG/WEBP/HEIC)");
     }
 
     const lead = await this.leads.findById(input.leadId);
