@@ -82,8 +82,9 @@ checkboxes as items land.
 
 - [ ] **PDPA: data export + account/tenant erase** — only soft-delete (`isActive`) exists today; no
   export or hard-delete of personal data (Thai PDPA).
-- [ ] **Action/API-route tests** — 78 server actions + ~8 API routes have no tests (auth, billing,
-  LINE webhook). Add integration coverage at the action layer.
+- [~] **Action/API-route tests** — money path now covered: `billing-flow.integration.test.ts`
+  (approve credits exact days + ledger; double-verify guarded; reject doesn't extend). **Remaining:**
+  action-layer tests need session/cookie mocking — add per route as touched (auth, LINE webhook).
 - [x] **Negative tenant-isolation tests** — `tenant-isolation.integration.test.ts` asserts shop B
   can't see shop A's customers/cards/ledgers/reviews (4 cases). ⏳ **Coverage gate still deferred** —
   Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22 `--test-coverage-lines`
@@ -92,7 +93,8 @@ checkboxes as items land.
   upload fails silently. Add bounded retry + degrade messaging.
 - [ ] **Backup/DR docs + migration rollback** — document Turso backup/restore (RPO/RTO), add
   down-migration/preview policy. (Turso is managed but undocumented here.)
-- [ ] **Mandatory 2FA for `platform_admin`** — admins can impersonate read-write; require 2FA.
+- [x] **Mandatory 2FA for `platform_admin`** — already enforced: `MandatoryTwoFactorGate` renders in
+  place of all admin content until the admin enrolls 2FA (`app/(platform)/layout.tsx`); DEV bypass only.
 - [x] **File upload magic-byte check** — `src/domain/services/image-signature.ts` (`sniffImageType`/
   `isSupportedImage`) verifies real PNG/JPEG/WEBP/HEIC headers; wired into the shop-image, payment-slip,
   and lead-photo upload use cases (rejects disguised html/js/svg/pdf renamed as images). Unit-tested.
