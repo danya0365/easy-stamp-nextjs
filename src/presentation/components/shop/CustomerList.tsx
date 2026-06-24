@@ -1,5 +1,7 @@
 "use client";
 
+import { Download } from "lucide-react";
+
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
 import { formatPhone } from "@/src/domain/services/phone";
@@ -27,11 +29,22 @@ export function CustomerList({
           <span className="text-foreground">
             {customer.displayName || formatPhone(customer.phone)}
           </span>
-          {eligible > 0 && (
-            <Badge tone="success">
-              ครบ แลกได้{eligible > 1 ? ` ${eligible} ประเภท` : ""}
-            </Badge>
-          )}
+          <span className="flex shrink-0 items-center gap-2">
+            {eligible > 0 && (
+              <Badge tone="success">
+                ครบ แลกได้{eligible > 1 ? ` ${eligible} ประเภท` : ""}
+              </Badge>
+            )}
+            <a
+              href={`/api/shop/customers/${customer.id}/data-export`}
+              download
+              aria-label="ดาวน์โหลดข้อมูลลูกค้า (PDPA)"
+              title="ดาวน์โหลดข้อมูลลูกค้า (PDPA)"
+              className="inline-flex size-8 items-center justify-center rounded-lg text-muted transition hover:bg-muted-surface hover:text-foreground"
+            >
+              <Download className="size-4" />
+            </a>
+          </span>
         </li>
       )}
     />

@@ -2,6 +2,8 @@ import type { Customer } from "@/src/domain/entities";
 import type { Page, PageOpts } from "./pagination";
 
 export interface ICustomerRepository {
+  /** Resolve a customer by id, scoped to the shop (returns null cross-tenant). */
+  findById(shopId: string, id: string): Promise<Customer | null>;
   findByPhone(shopId: string, phone: string): Promise<Customer | null>;
   /** Resolve a customer from the opaque QR code, scoped to the shop. */
   findByPublicCode(shopId: string, code: string): Promise<Customer | null>;

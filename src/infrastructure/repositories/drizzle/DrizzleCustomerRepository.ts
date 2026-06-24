@@ -23,6 +23,16 @@ function toCustomer(r: Row): Customer {
 }
 
 export class DrizzleCustomerRepository implements ICustomerRepository {
+  async findById(shopId: string, id: string): Promise<Customer | null> {
+    const r = await db.query.customers.findFirst({
+      where: and(
+        eq(schema.customers.shopId, shopId),
+        eq(schema.customers.id, id),
+      ),
+    });
+    return r ? toCustomer(r) : null;
+  }
+
   async findByPhone(shopId: string, phone: string): Promise<Customer | null> {
     const r = await db.query.customers.findFirst({
       where: and(

@@ -49,5 +49,37 @@ Pairs with [`.env.example`](../.env.example) (every variable is documented there
 - If LINE is configured: confirm the webhook shows "Verified" in the LINE console and an OTP arrives.
 - Trigger the cron once: `curl -H "Authorization: Bearer $CRON_SECRET" https://<domain>/api/cron`.
 
-## 6. Backups / DR (todo — see [TEMPLATE_AUDIT.md](TEMPLATE_AUDIT.md) P2)
-Turso provides managed backups; document your restore procedure (RPO/RTO) and R2 lifecycle/retention before scaling.
+## 6. Backups & disaster recovery
+
+> Verify the exact features/retention against your current Turso & Cloudflare plans — specifics differ
+> by tier. The procedures below are the policy this project assumes.
+
+### Database (Turso / libSQL)
+- **Managed backups:** Turso keeps automatic backups / point-in-time restore on its platform — confirm
+  the retention window for your plan and that it's enabled for the prod DB.
+- **Own off-platform snapshot (recommended weekly):** dump the DB so a restore never depends solely on
+  the provider:
+  ```bash
+  turso db shell <db-name> ".dump" > backup-$(date +%F).sql        # via Turso CLI
+  # or, against the libsql URL, export with sqlite3 from a local replica
+  ```
+  Store dumps in a separate bucket/account (not the same R2 as the app data).
+- **Restore drill (do once, before you need it):** create a scratch DB, import a dump
+  (`turso db shell <scratch> < backup.sql`), point a preview deploy's `TURSO_DATABASE_URL` at it, smoke-test.
+- **Targets:** RPO ≈ last daily backup (≤24h); RTO ≈ minutes (repoint env + redeploy). Tighten with
+  point-in-time restore if the plan supports it.
+
+### Object storage (Cloudflare R2)
+- Enable **bucket versioning** (or a lifecycle rule keeping deleted/overwritten objects N days) so a bad
+  delete/overwrite of a slip/image is recoverable.
+- Slips and shop/lead images are **referenced by DB rows** — a DB restore must be paired with the
+  matching R2 state, so keep their backup cadence aligned.
+
+### Migrations (forward-only — there are no down-migrations)
+- Migrations in `drizzle/` are append-only and auto-applied on the Vercel prod build
+  (`scripts/vercel-migrate.mjs`). There is **no automatic rollback.**
+- **To revert a bad migration:** ship a NEW migration that undoes it (`npm run db:generate` after editing
+  the schema back), don't hand-edit history. For a destructive change, **take a fresh dump first** (above)
+  so you can restore if the revert loses data.
+- **Before a risky migration:** snapshot the DB, and prefer additive changes (new nullable columns/tables)
+  over drops/renames — SQLite makes column drops painful and they can't be cleanly reverted.

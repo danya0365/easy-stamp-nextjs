@@ -80,8 +80,10 @@ checkboxes as items land.
 
 ## P2 — before scale (data lifecycle, deeper tests, resilience)
 
-- [ ] **PDPA: data export + account/tenant erase** — only soft-delete (`isActive`) exists today; no
-  export or hard-delete of personal data (Thai PDPA).
+- [~] **PDPA: data export + erase** — **export done** (admin-assisted): a shop owner downloads a
+  customer's full data as JSON via `GET /api/shop/customers/[customerId]/data-export`
+  (`ExportCustomerDataUseCase`, shop-scoped), button in the customer list. **Remaining:** erase via
+  **anonymize** (strip PII, keep aggregates/financials) — decided, not yet built.
 - [~] **Action/API-route tests** — money path now covered: `billing-flow.integration.test.ts`
   (approve credits exact days + ledger; double-verify guarded; reject doesn't extend). **Remaining:**
   action-layer tests need session/cookie mocking — add per route as touched (auth, LINE webhook).
@@ -93,8 +95,9 @@ checkboxes as items land.
   unit-tested) applied to the LINE push `fetch`. R2/S3 already retries transient errors via the AWS
   SDK (verified — not double-wrapped). **Remaining (optional):** retry OSM/HIBP fetches; a real
   circuit-breaker if external flakiness becomes a problem.
-- [ ] **Backup/DR docs + migration rollback** — document Turso backup/restore (RPO/RTO), add
-  down-migration/preview policy. (Turso is managed but undocumented here.)
+- [x] **Backup/DR docs + migration rollback** — documented in [DEPLOYMENT.md](DEPLOYMENT.md) §6: Turso
+  dump/restore + restore drill + RPO/RTO, R2 versioning, and the forward-only migration revert policy
+  (ship a new migration; snapshot before risky/destructive changes).
 - [x] **Mandatory 2FA for `platform_admin`** — already enforced: `MandatoryTwoFactorGate` renders in
   place of all admin content until the admin enrolls 2FA (`app/(platform)/layout.tsx`); DEV bypass only.
 - [x] **File upload magic-byte check** — `src/domain/services/image-signature.ts` (`sniffImageType`/
