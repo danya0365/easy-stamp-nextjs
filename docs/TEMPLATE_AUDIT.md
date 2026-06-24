@@ -89,8 +89,10 @@ checkboxes as items land.
   can't see shop A's customers/cards/ledgers/reviews (4 cases). ⏳ **Coverage gate still deferred** —
   Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22 `--test-coverage-lines`
   or `c8 --check-coverage` later (see TESTING.md).
-- [ ] **Retry / circuit-breaker** — external calls fail-open but never retry; if R2 is down, slip
-  upload fails silently. Add bounded retry + degrade messaging.
+- [~] **Retry for external calls** — generic `retry()` helper (`src/infrastructure/services/retry.ts`,
+  unit-tested) applied to the LINE push `fetch`. R2/S3 already retries transient errors via the AWS
+  SDK (verified — not double-wrapped). **Remaining (optional):** retry OSM/HIBP fetches; a real
+  circuit-breaker if external flakiness becomes a problem.
 - [ ] **Backup/DR docs + migration rollback** — document Turso backup/restore (RPO/RTO), add
   down-migration/preview policy. (Turso is managed but undocumented here.)
 - [x] **Mandatory 2FA for `platform_admin`** — already enforced: `MandatoryTwoFactorGate` renders in

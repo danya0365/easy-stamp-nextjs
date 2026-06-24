@@ -73,6 +73,9 @@ export class R2SlipStorage implements ISlipStorage {
   }
 
   async saveObject(input: SaveObjectInput): Promise<{ url: string }> {
+    // No app-level retry here: the AWS SDK S3Client already retries transient
+    // errors (maxAttempts, adaptive backoff). Wrapping again would just compound
+    // latency. (Plain fetch callers like LineMessagingPusher use retry() instead.)
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
