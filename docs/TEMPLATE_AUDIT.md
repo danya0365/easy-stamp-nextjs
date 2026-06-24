@@ -45,7 +45,8 @@ checkboxes as items land.
   Runs as a job under the single cron dispatcher (below).
 - [x] **Single-cron dispatcher** — `app/api/cron/route.ts` + `app/api/cron/jobs.ts`: one
   `vercel.json` schedule (`/api/cron`) runs every enabled job (Hobby tier = 1 cron slot). Each job
-  is isolated, toggleable via env (`CRON_LEAD_FOLLOWUPS`, `CRON_CLEANUP` = off/false/0), and
+  is isolated, toggleable via env (`CRON_LEAD_FOLLOWUPS`, `CRON_CLEANUP`, `CRON_ORPHANED_FILES` =
+  off/false/0), and
   individually triggerable via `/api/cron?job=<id>`. **Upgrade path:** on a paid plan, add
   `/api/cron?job=<id>` entries to `vercel.json` on separate schedules and disable them from the
   run-all via env.
@@ -80,10 +81,13 @@ checkboxes as items land.
 
 ## P2 — before scale (data lifecycle, deeper tests, resilience)
 
-- [~] **PDPA: data export + erase** — **export done** (admin-assisted): a shop owner downloads a
+- [x] **PDPA: data export + erase** — **export** (admin-assisted): a shop owner downloads a
   customer's full data as JSON via `GET /api/shop/customers/[customerId]/data-export`
-  (`ExportCustomerDataUseCase`, shop-scoped), button in the customer list. **Remaining:** erase via
-  **anonymize** (strip PII, keep aggregates/financials) — decided, not yet built.
+  (`ExportCustomerDataUseCase`, shop-scoped). **Erase** via **anonymize**
+  (`AnonymizeCustomerUseCase` + `anonymizeCustomerAction`): strips PII (phone/name/QR code, synthetic
+  per-customer unique values keep the constraints) and drops device bindings, keeping
+  cards/balances/transactions so the shop's aggregates/financials stay consistent. Irreversible,
+  shop-scoped, audited (`customer_erased`). Both wired into the customer-list row actions.
 - [~] **Action/API-route tests** — money path now covered: `billing-flow.integration.test.ts`
   (approve credits exact days + ledger; double-verify guarded; reject doesn't extend). **Remaining:**
   action-layer tests need session/cookie mocking — add per route as touched (auth, LINE webhook).
@@ -103,9 +107,15 @@ checkboxes as items land.
 - [x] **File upload magic-byte check** — `src/domain/services/image-signature.ts` (`sniffImageType`/
   `isSupportedImage`) verifies real PNG/JPEG/WEBP/HEIC headers; wired into the shop-image, payment-slip,
   and lead-photo upload use cases (rejects disguised html/js/svg/pdf renamed as images). Unit-tested.
-- [ ] **lead-follow-ups cron idempotency** — add `leads.lastNotifiedAt` (migration) so a cron retry
-  doesn't double-notify. (Held out of P0 to avoid a schema change.)
-- [ ] **Orphaned-file cleanup** — R2 objects of deleted payments/photos aren't reclaimed.
+- [x] **lead-follow-ups cron idempotency** — `leads.follow_up_notified_at` (migration 0017) stamps the
+  reminder *after* a successful notify; `listDueFollowUps` skips leads whose stamp is ≥ the current
+  `nextFollowUpAt`, so a cron retry can't double-notify and rescheduling re-arms the reminder
+  (at-least-once, announced once per due date).
+- [x] **Orphaned-file cleanup** — `CleanOrphanedFilesUseCase` (cron job `orphaned-files`,
+  `CRON_ORPHANED_FILES`) lists every blob under the managed prefixes (`slips/`, `leads/`, `shops/`)
+  via `ISlipStorage.list` and deletes those not referenced by any DB row
+  (payments/leads/shop_images keys). Fails closed (reference set gathered up front) and spares files
+  newer than a 24h grace window so it can't race in-flight uploads.
 
 ---
 

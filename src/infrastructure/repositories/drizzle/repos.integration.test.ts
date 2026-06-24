@@ -46,6 +46,29 @@ test("lead status filter + listDueFollowUps excludes won/lost & future", async (
   assert.equal(due.status, "new");
 });
 
+test("listDueFollowUps is idempotent per due date, re-arming on reschedule", async () => {
+  const daysAgo = (n: number) =>
+    new Date(Date.now() - n * 86400_000).toISOString();
+  const lead = await container.leadRepository.create({
+    name: "idem",
+    nextFollowUpAt: daysAgo(3),
+  });
+  const isDue = async () =>
+    (
+      await container.leadRepository.listDueFollowUps(new Date().toISOString())
+    ).some((l) => l.id === lead.id);
+
+  assert.ok(await isDue(), "due and not yet notified");
+
+  // Stamp a reminder *after* the due date → suppressed on the next run.
+  await container.leadRepository.markFollowUpsNotified([lead.id], daysAgo(2));
+  assert.ok(!(await isDue()), "already announced for this due date");
+
+  // Reschedule to a later (still-past) date — the stamp is now stale → re-armed.
+  await container.leadRepository.update(lead.id, { nextFollowUpAt: daysAgo(1) });
+  assert.ok(await isDue(), "new due date re-arms the reminder");
+});
+
 test("customer device token resolves to its customer", async () => {
   const { shop } = await seedShop("repo-dev");
   const c = await container.customerRepository.findOrCreate(

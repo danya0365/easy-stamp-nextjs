@@ -124,4 +124,11 @@ export class DrizzlePaymentRepository implements IPaymentRepository {
       .returning();
     return toPayment(r);
   }
+
+  async allSlipKeys(): Promise<string[]> {
+    const rows = await db
+      .select({ key: schema.payments.slipUrl })
+      .from(schema.payments);
+    return rows.map((r) => r.key).filter(Boolean);
+  }
 }

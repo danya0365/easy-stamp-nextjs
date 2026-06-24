@@ -56,6 +56,10 @@ export const leads = sqliteTable(
     lostReason: text({ enum: LEAD_LOST_REASONS }),
     // ISO-8601; when this passes the daily cron reminds admins to follow up.
     nextFollowUpAt: text(),
+    // ISO-8601 of the last follow-up reminder sent for the *current* due date.
+    // The cron only reminds when this is null or older than nextFollowUpAt, so a
+    // lead is announced once per due date (idempotent) — rescheduling re-arms it.
+    followUpNotifiedAt: text(),
     notes: text(),
     // Set on conversion: links to the real shop that was created from this lead.
     convertedShopId: text().references(() => shops.id, { onDelete: "set null" }),

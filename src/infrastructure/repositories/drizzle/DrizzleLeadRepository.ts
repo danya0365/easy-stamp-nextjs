@@ -5,10 +5,13 @@ import {
   asc,
   desc,
   eq,
+  inArray,
   isNotNull,
   isNull,
+  lt,
   lte,
   notInArray,
+  or,
 } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type {
@@ -42,6 +45,7 @@ function toLead(r: Row): Lead {
     status: r.status,
     lostReason: r.lostReason,
     nextFollowUpAt: r.nextFollowUpAt,
+    followUpNotifiedAt: r.followUpNotifiedAt,
     notes: r.notes,
     convertedShopId: r.convertedShopId,
     convertedAt: r.convertedAt,
@@ -185,9 +189,31 @@ export class DrizzleLeadRepository implements ILeadRepository {
         isNotNull(schema.leads.nextFollowUpAt),
         lte(schema.leads.nextFollowUpAt, now),
         notInArray(schema.leads.status, ["won", "lost"]),
+        // Idempotent: skip leads already announced for the *current* due date.
+        // A reschedule pushes nextFollowUpAt past the stamp, re-arming the lead.
+        or(
+          isNull(schema.leads.followUpNotifiedAt),
+          lt(schema.leads.followUpNotifiedAt, schema.leads.nextFollowUpAt),
+        ),
       ),
       orderBy: asc(schema.leads.nextFollowUpAt),
     });
     return rows.map(toLead);
+  }
+
+  async markFollowUpsNotified(ids: string[], at: string): Promise<void> {
+    if (ids.length === 0) return;
+    await db
+      .update(schema.leads)
+      .set({ followUpNotifiedAt: at })
+      .where(inArray(schema.leads.id, ids));
+  }
+
+  async allPhotoKeys(): Promise<string[]> {
+    const rows = await db
+      .select({ key: schema.leads.photoUrl })
+      .from(schema.leads)
+      .where(isNotNull(schema.leads.photoUrl));
+    return rows.map((r) => r.key!).filter(Boolean);
   }
 }

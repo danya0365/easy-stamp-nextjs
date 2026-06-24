@@ -17,4 +17,6 @@ export interface IShopImageRepository {
   /** Batched profile image ids for many shops (shopId → imageId). */
   profilesByShop(shopIds: string[]): Promise<Record<string, string>>;
   delete(id: string): Promise<void>;
+  /** Every image storage key — for orphaned-file cleanup. */
+  allStorageKeys(): Promise<string[]>;
 }

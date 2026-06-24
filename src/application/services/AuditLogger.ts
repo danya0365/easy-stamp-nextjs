@@ -27,6 +27,7 @@ export const AUDIT_ACTIONS = {
   twoFactorResetByAdmin: "two_factor_reset_by_admin",
   recoveryCodesRegenerated: "recovery_codes_regenerated",
   sessionRevoked: "session_revoked",
+  customerErased: "customer_erased",
 } as const;
 
 /**

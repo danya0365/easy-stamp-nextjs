@@ -1,12 +1,13 @@
 import "server-only";
 
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type {
   ISlipStorage,
   SaveObjectInput,
   SaveSlipInput,
+  StoredObject,
 } from "@/src/application/services/ISlipStorage";
 import {
   contentTypeForKey,
@@ -69,5 +70,34 @@ export class LocalSlipStorage implements ISlipStorage {
     } catch {
       /* best-effort — already gone is fine */
     }
+  }
+
+  async list(prefix: string): Promise<StoredObject[]> {
+    // Sanitize the prefix the same way keys are, so it stays under BASE_DIR.
+    const segs = prefix.split("/").map((p) => p.replace(/[^a-zA-Z0-9._-]/g, ""));
+    const root = path.join(BASE_DIR, ...segs.filter(Boolean));
+    const out: StoredObject[] = [];
+
+    const walk = async (dir: string): Promise<void> => {
+      let entries;
+      try {
+        entries = await readdir(dir, { withFileTypes: true });
+      } catch {
+        return; // prefix dir doesn't exist yet — nothing stored
+      }
+      for (const e of entries) {
+        const abs = path.join(dir, e.name);
+        if (e.isDirectory()) {
+          await walk(abs);
+        } else {
+          const rel = path.relative(BASE_DIR, abs).split(path.sep).join("/");
+          const s = await stat(abs);
+          out.push({ key: rel, lastModified: s.mtime });
+        }
+      }
+    };
+
+    await walk(root);
+    return out;
   }
 }

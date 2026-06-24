@@ -26,6 +26,7 @@ import { SetStampTypeActiveUseCase } from "@/src/application/use-cases/stamp/Set
 import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopImageUseCase";
 import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
 import { UpdateShopProfileUseCase } from "@/src/application/use-cases/shop/UpdateShopProfileUseCase";
+import { AnonymizeCustomerUseCase } from "@/src/application/use-cases/customer/AnonymizeCustomerUseCase";
 import { ReplyToReviewUseCase } from "@/src/application/use-cases/review/ReplyToReviewUseCase";
 import {
   AnnotateCustomerEligibilityUseCase,
@@ -159,6 +160,37 @@ export async function loadMoreCustomersAction(
     ).execute(shopId, page.items),
     nextCursor: page.nextCursor,
   };
+}
+
+/** PDPA erasure: strip a customer's personal data (anonymize). Irreversible. */
+export async function anonymizeCustomerAction(
+  customerId: string,
+): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    const customer = await container.customerRepository.findById(shopId, customerId);
+    if (!customer) return { error: "ไม่พบลูกค้าในร้านนี้" };
+
+    await new AnonymizeCustomerUseCase(
+      container.customerRepository,
+      container.customerDeviceRepository,
+    ).execute(shopId, customerId);
+
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.customerErased,
+      targetType: "customer",
+      targetId: customerId,
+      shopId,
+      ip: await getClientIp(),
+    });
+
+    revalidatePath("/shop/customers");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /** Parse an optional baht price field → satang or null. */

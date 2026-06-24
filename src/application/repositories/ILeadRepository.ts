@@ -51,6 +51,13 @@ export interface ILeadRepository {
   markConverted(id: string, shopId: string): Promise<Lead>;
   /** Leads with coordinates that have not been converted — for the admin map. */
   listMapLocations(): Promise<LeadMapLocation[]>;
-  /** Open leads whose follow-up date has passed — for the reminder cron. */
+  /**
+   * Open leads whose follow-up date has passed and have not yet been announced
+   * for that due date — for the reminder cron. Idempotent across cron runs.
+   */
   listDueFollowUps(now: string): Promise<Lead[]>;
+  /** Stamp `followUpNotifiedAt = at` on the given leads (after reminding). */
+  markFollowUpsNotified(ids: string[], at: string): Promise<void>;
+  /** Every non-null lead photo storage key — for orphaned-file cleanup. */
+  allPhotoKeys(): Promise<string[]>;
 }

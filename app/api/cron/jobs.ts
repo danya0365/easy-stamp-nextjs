@@ -1,5 +1,6 @@
 import { container } from "@/src/infrastructure/di/container";
 import { ListDueFollowUpsUseCase } from "@/src/application/use-cases/lead/ListDueFollowUpsUseCase";
+import { CleanOrphanedFilesUseCase } from "@/src/application/use-cases/maintenance/CleanOrphanedFilesUseCase";
 
 /**
  * A scheduled job. The registry below is run by the single `/api/cron`
@@ -23,20 +24,43 @@ export function isJobEnabled(job: CronJob): boolean {
   return !["off", "false", "0", "no"].includes(v.trim().toLowerCase());
 }
 
-/** Notify admins about leads whose follow-up date has passed. */
+/**
+ * Notify admins about leads whose follow-up date has passed. Idempotent: each
+ * due lead is announced once (the repo filters out already-notified ones), and
+ * we stamp them only AFTER a successful notify so a failure simply retries next
+ * run (at-least-once) rather than silently dropping the reminder.
+ */
 async function runLeadFollowUps(): Promise<{ processed: number }> {
+  const now = new Date().toISOString();
   const due = await new ListDueFollowUpsUseCase(
     container.leadRepository,
-  ).execute();
-  if (due.length > 0) {
-    await container.notificationService.notifyAdmins({
-      type: "lead_follow_up_due",
-      title: "ลีดถึงกำหนดติดตาม",
-      body: `มี ${due.length} ลีดถึงกำหนดติดตามแล้ว — เปิดดูเพื่อวางแผนลงพื้นที่`,
-      linkUrl: "/admin/leads",
-    });
-  }
+  ).execute(now);
+  if (due.length === 0) return { processed: 0 };
+
+  await container.notificationService.notifyAdmins({
+    type: "lead_follow_up_due",
+    title: "ลีดถึงกำหนดติดตาม",
+    body: `มี ${due.length} ลีดถึงกำหนดติดตามแล้ว — เปิดดูเพื่อวางแผนลงพื้นที่`,
+    linkUrl: "/admin/leads",
+  });
+  await container.leadRepository.markFollowUpsNotified(
+    due.map((l) => l.id),
+    now,
+  );
   return { processed: due.length };
+}
+
+/** Housekeeping: delete uploaded files no longer referenced by any DB row. */
+async function runOrphanedFiles(): Promise<{
+  scanned: number;
+  deleted: number;
+}> {
+  return new CleanOrphanedFilesUseCase(
+    container.paymentRepository,
+    container.leadRepository,
+    container.shopImageRepository,
+    container.slipStorage,
+  ).execute();
 }
 
 /** Housekeeping: purge expired sessions so the table doesn't grow unbounded. */
@@ -59,5 +83,11 @@ export const CRON_JOBS: CronJob[] = [
     envKey: "CRON_CLEANUP",
     defaultOn: true,
     run: runCleanup,
+  },
+  {
+    id: "orphaned-files",
+    envKey: "CRON_ORPHANED_FILES",
+    defaultOn: true,
+    run: runOrphanedFiles,
   },
 ];

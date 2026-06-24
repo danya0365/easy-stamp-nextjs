@@ -48,4 +48,10 @@ export class DrizzleCustomerDeviceRepository
       .where(eq(schema.customerDevices.id, token));
     return { customer: toCustomer(row.customer) };
   }
+
+  async deleteByCustomer(customerId: string): Promise<void> {
+    await db
+      .delete(schema.customerDevices)
+      .where(eq(schema.customerDevices.customerId, customerId));
+  }
 }

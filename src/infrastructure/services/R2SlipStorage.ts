@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
   NoSuchKey,
 } from "@aws-sdk/client-s3";
 
@@ -12,6 +13,7 @@ import type {
   ISlipStorage,
   SaveObjectInput,
   SaveSlipInput,
+  StoredObject,
 } from "@/src/application/services/ISlipStorage";
 import {
   contentTypeForKey,
@@ -114,5 +116,26 @@ export class R2SlipStorage implements ISlipStorage {
     } catch (e) {
       console.error("[r2] delete failed:", (e as Error).message);
     }
+  }
+
+  async list(prefix: string): Promise<StoredObject[]> {
+    const out: StoredObject[] = [];
+    let token: string | undefined;
+    do {
+      const res = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          ContinuationToken: token,
+        }),
+      );
+      for (const o of res.Contents ?? []) {
+        if (o.Key && o.LastModified) {
+          out.push({ key: o.Key, lastModified: o.LastModified });
+        }
+      }
+      token = res.IsTruncated ? res.NextContinuationToken : undefined;
+    } while (token);
+    return out;
   }
 }
