@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "crypto";
 
+import { logger } from "@/src/infrastructure/observability/logger";
 import { CRON_JOBS, isJobEnabled } from "./jobs";
 
 export const runtime = "nodejs";
@@ -54,7 +55,7 @@ export async function GET(req: Request) {
       const result = await job.run();
       ran.push({ id: job.id, status: "ok", result });
     } catch (e) {
-      console.error(`[cron] job "${job.id}" failed:`, e);
+      logger.captureException(e, { scope: "cron", job: job.id });
       ran.push({ id: job.id, status: "error", error: (e as Error).message });
     }
   }

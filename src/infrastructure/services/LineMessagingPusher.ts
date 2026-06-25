@@ -2,6 +2,7 @@ import "server-only";
 
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
 import { retry } from "@/src/infrastructure/services/retry";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 export interface LineConfig {
   channelAccessToken: string;
@@ -45,16 +46,22 @@ export class LineMessagingPusher implements IMessagePusher {
           retries: 2,
           baseDelayMs: 300,
           onRetry: (e, n) =>
-            console.warn(`[LINE] push retry #${n}: ${(e as Error).message}`),
+            logger.warn("LINE push retry", {
+              scope: "line",
+              attempt: n,
+              err: (e as Error).message,
+            }),
         },
       );
       if (!res.ok) {
-        console.error(
-          `[LINE] push failed (${res.status}): ${await res.text().catch(() => "")}`,
-        );
+        logger.error("LINE push failed", {
+          scope: "line",
+          status: res.status,
+          body: await res.text().catch(() => ""),
+        });
       }
     } catch (e) {
-      console.error("[LINE] push error:", e);
+      logger.captureException(e, { scope: "line", op: "pushText" });
     }
   }
 }

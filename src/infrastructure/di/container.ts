@@ -87,6 +87,8 @@ import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifi
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
 import type { IGeocoder } from "@/src/application/services/IGeocoder";
+import type { ILogger } from "@/src/application/services/ILogger";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 /** R2 in any environment that configures it (prod/Vercel); local disk otherwise. */
 function createSlipStorage(): ISlipStorage {
@@ -108,8 +110,9 @@ function createMessagePusher(): IMessagePusher {
 function createTurnstile(): TurnstileVerifier {
   const cfg = turnstileConfigFromEnv();
   if (!cfg && isProd) {
-    console.warn(
-      "[turnstile] NOT configured in production — the public contact form has no CAPTCHA (honeypot + rate-limit only). Set NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY to enable it.",
+    logger.warn(
+      "Turnstile NOT configured in production — the public contact form has no CAPTCHA (honeypot + rate-limit only). Set NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY to enable it.",
+      { scope: "turnstile" },
     );
   }
   return new TurnstileVerifier(cfg);
@@ -182,12 +185,17 @@ class Container {
   readonly turnstile: TurnstileVerifier = createTurnstile();
   readonly geocoder: IGeocoder = createGeocoder();
 
+  readonly logger: ILogger = logger;
   readonly notificationService: NotificationService = new NotificationService(
     this.notificationRepository,
     this.userRepository,
     this.messagePusher,
+    this.logger,
   );
-  readonly auditLogger: AuditLogger = new AuditLogger(this.auditLogRepository);
+  readonly auditLogger: AuditLogger = new AuditLogger(
+    this.auditLogRepository,
+    this.logger,
+  );
   readonly loginSecurity: LoginSecurityService = new LoginSecurityService(
     this.userRepository,
     this.auditLogRepository,

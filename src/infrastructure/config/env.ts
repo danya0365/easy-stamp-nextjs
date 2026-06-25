@@ -1,5 +1,7 @@
 import "server-only";
 
+import { logger } from "@/src/infrastructure/observability/logger";
+
 /** True in any production build (local `next start`, Vercel preview & prod). */
 export const isProd = process.env.NODE_ENV === "production";
 
@@ -97,7 +99,7 @@ export function validateEnv(): void {
     warnings.push(`Partial LINE config — set both ${line.join(" and ")} or neither.`);
   }
 
-  for (const w of warnings) console.warn(`[env] ⚠️  ${w}`);
+  for (const w of warnings) logger.warn(w, { scope: "env" });
   if (errors.length > 0) {
     throw new Error(
       `[env] Invalid environment configuration:\n  - ${errors.join("\n  - ")}`,

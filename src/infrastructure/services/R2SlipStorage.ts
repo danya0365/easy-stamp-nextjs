@@ -20,6 +20,7 @@ import {
   extFor,
   slipKey,
 } from "@/src/application/services/slip-media";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 export interface R2Config {
   accountId: string;
@@ -114,7 +115,7 @@ export class R2SlipStorage implements ISlipStorage {
         new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
       );
     } catch (e) {
-      console.error("[r2] delete failed:", (e as Error).message);
+      logger.error("R2 delete failed", { scope: "r2", err: (e as Error).message });
     }
   }
 

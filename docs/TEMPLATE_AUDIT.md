@@ -50,8 +50,16 @@ checkboxes as items land.
   individually triggerable via `/api/cron?job=<id>`. **Upgrade path:** on a paid plan, add
   `/api/cron?job=<id>` entries to `vercel.json` on separate schedules and disable them from the
   run-all via env.
-- [ ] **Error tracking (Sentry/equiv) + structured logging** — currently only `console.error`.
-  Deferred: needs an external DSN/account decision.
+- [x] **Error tracking + structured logging** — vendor-neutral `ILogger`
+  (`src/application/services/ILogger.ts`) with a structured impl
+  (`src/infrastructure/observability/logger.ts`): JSON lines in production, a compact human line in
+  dev, `LOG_LEVEL`/`LOG_FORMAT` gated, unit-tested. All server-side `console.*` now route through it
+  (infra services, cron + LINE-webhook routes, env boot warnings, audit/notification swallow-paths);
+  `captureException` also forwards to a pluggable `ErrorTracker` — a no-op until `ERROR_WEBHOOK_URL`
+  is set (then it POSTs a JSON report, fail-soft), env-gated like R2/LINE and swappable for a full
+  APM (Sentry) without touching call sites. **Remaining (optional):** route the two client error
+  boundaries (`app/error.tsx`, `app/global-error.tsx`) through a server beacon — they still
+  `console.error` because a `"use client"` component can't import the server logger.
 
 ## P1 — template-ization (do before forking Easy Queue)
 

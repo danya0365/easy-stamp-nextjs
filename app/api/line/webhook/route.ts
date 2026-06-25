@@ -5,6 +5,7 @@ import { lineConfigFromEnv } from "@/src/infrastructure/services/LineMessagingPu
 import { LinkLineAccountUseCase } from "@/src/application/use-cases/line/LinkLineAccountUseCase";
 import { isLineLinkCodeShape } from "@/src/application/use-cases/line/GenerateLineLinkCodeUseCase";
 import { BRAND } from "@/src/config/brand";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ async function reply(token: string, replyToken: string, text: string) {
       }),
     });
   } catch (e) {
-    console.error("[LINE] reply error:", e);
+    logger.captureException(e, { scope: "line", op: "reply" });
   }
 }
 
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
         );
       }
     } catch (e) {
-      console.error("[LINE] webhook event error:", e);
+      logger.captureException(e, { scope: "line", op: "webhook-event" });
       if (event.replyToken) {
         // Only the unique-constraint case means "already linked elsewhere";
         // anything else is a generic error (don't leak linkage state).

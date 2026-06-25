@@ -1,5 +1,7 @@
 import "server-only";
 
+import { logger } from "@/src/infrastructure/observability/logger";
+
 export interface TurnstileConfig {
   siteKey: string;
   secretKey: string;
@@ -44,7 +46,7 @@ export class TurnstileVerifier {
       const data = (await res.json()) as { success?: boolean };
       return data.success === true;
     } catch (e) {
-      console.error("[turnstile] verify error:", e);
+      logger.captureException(e, { scope: "turnstile" });
       return false;
     }
   }

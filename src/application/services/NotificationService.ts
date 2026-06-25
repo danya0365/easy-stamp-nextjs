@@ -2,6 +2,7 @@ import type { NotificationType } from "@/src/domain/entities";
 import type { INotificationRepository } from "@/src/application/repositories/INotificationRepository";
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
+import { type ILogger, noopLogger } from "@/src/application/services/ILogger";
 
 export interface NotifyInput {
   type: NotificationType;
@@ -20,6 +21,7 @@ export class NotificationService {
     private readonly notifications: INotificationRepository,
     private readonly users: IUserRepository,
     private readonly pusher: IMessagePusher,
+    private readonly logger: ILogger = noopLogger,
   ) {}
 
   /** Notify one user (in-app + LINE if linked). */
@@ -34,7 +36,7 @@ export class NotificationService {
         );
       }
     } catch (e) {
-      console.error("[notify] failed for user", userId, e);
+      this.logger.captureException(e, { scope: "notify", userId });
     }
   }
 
@@ -44,7 +46,7 @@ export class NotificationService {
       const admins = await this.users.listByRole("platform_admin");
       await Promise.all(admins.map((a) => this.notify(a.id, input)));
     } catch (e) {
-      console.error("[notify] notifyAdmins failed", e);
+      this.logger.captureException(e, { scope: "notify", op: "notifyAdmins" });
     }
   }
 
@@ -56,7 +58,11 @@ export class NotificationService {
       );
       await Promise.all(owners.map((o) => this.notify(o.id, input)));
     } catch (e) {
-      console.error("[notify] notifyShopOwner failed", shopId, e);
+      this.logger.captureException(e, {
+        scope: "notify",
+        op: "notifyShopOwner",
+        shopId,
+      });
     }
   }
 }

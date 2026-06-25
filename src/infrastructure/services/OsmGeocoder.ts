@@ -15,6 +15,7 @@ import {
 } from "@/src/domain/services/osm-poi";
 import { BRAND } from "@/src/config/brand";
 import { retry } from "@/src/infrastructure/services/retry";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 interface GeocoderConfig {
   overpassUrl: string;
@@ -123,7 +124,11 @@ export class OsmGeocoder implements IGeocoder {
               if (res.status >= 500 || res.status === 429) {
                 throw new Error(`${res.status} from ${url}`);
               }
-              console.error(`[geo] ${res.status} from ${url}`);
+              logger.warn("geo non-retryable response", {
+                scope: "geo",
+                status: res.status,
+                url,
+              });
               return null;
             }
             return (await res.json()) as T;
@@ -134,11 +139,18 @@ export class OsmGeocoder implements IGeocoder {
         {
           retries: 2,
           onRetry: (e, n) =>
-            console.warn(`[geo] retry #${n}: ${(e as Error).message}`),
+            logger.warn("geo retry", {
+              scope: "geo",
+              attempt: n,
+              err: (e as Error).message,
+            }),
         },
       );
     } catch (e) {
-      console.error("[geo] request failed:", (e as Error).message);
+      logger.error("geo request failed", {
+        scope: "geo",
+        err: (e as Error).message,
+      });
       return null;
     }
   }
