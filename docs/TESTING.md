@@ -11,8 +11,10 @@ npm run test:e2e    # Playwright smoke tests (starts the app on port 3100)
 ```
 
 ## How it works
-- [`scripts/test.mjs`](../scripts/test.mjs) enumerates every `src/**/*.test.ts`, then runs them with
-  `node --import tsx --test`. Each test **file** runs in its own subprocess (node:test isolation).
+- [`scripts/test.mjs`](../scripts/test.mjs) enumerates every `*.test.ts` under `src/` **and** `app/`
+  (so route handlers / error boundaries are covered too), then runs them with `node --import tsx
+  --test --experimental-test-module-mocks`. Each test **file** runs in its own subprocess (node:test
+  isolation). The runner also sets `LOG_LEVEL=silent` to mute the singleton logger on error paths.
 - It sets `TSX_TSCONFIG_PATH=tsconfig.test.json`, which maps `server-only` / `client-only` to an
   empty stub ([`src/test/empty.ts`](../src/test/empty.ts)) so server-only modules import under tsx.
 - Integration tests point the DB client at an **in-memory libSQL** (`:memory:`) DB — set for the

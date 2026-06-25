@@ -10,9 +10,10 @@ import {
 const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 } as const;
 export type Level = keyof typeof LEVELS;
 
-/** LOG_LEVEL env wins; otherwise info in production, debug elsewhere. */
+/** LOG_LEVEL env wins ("silent"/"off" mutes everything); else info in prod, debug elsewhere. */
 function resolveMinLevel(): number {
   const env = process.env.LOG_LEVEL?.toLowerCase();
+  if (env === "silent" || env === "off") return Infinity;
   if (env && env in LEVELS) return LEVELS[env as Level];
   return process.env.NODE_ENV === "production" ? LEVELS.info : LEVELS.debug;
 }

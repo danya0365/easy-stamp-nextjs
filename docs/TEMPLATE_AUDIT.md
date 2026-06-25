@@ -57,9 +57,11 @@ checkboxes as items land.
   (infra services, cron + LINE-webhook routes, env boot warnings, audit/notification swallow-paths);
   `captureException` also forwards to a pluggable `ErrorTracker` — a no-op until `ERROR_WEBHOOK_URL`
   is set (then it POSTs a JSON report, fail-soft), env-gated like R2/LINE and swappable for a full
-  APM (Sentry) without touching call sites. **Remaining (optional):** route the two client error
-  boundaries (`app/error.tsx`, `app/global-error.tsx`) through a server beacon — they still
-  `console.error` because a `"use client"` component can't import the server logger.
+  APM (Sentry) without touching call sites. **Client errors covered too:** the two error boundaries
+  (`app/error.tsx`, `app/global-error.tsx`) beacon to `POST /api/client-error` via
+  `reportClientError` (keepalive fetch, fail-soft), which forwards to the same logger/tracker; the
+  route is per-IP rate-limited + payload-clamped and integration-tested. (They also keep
+  `console.error` for the browser devtools in local dev.)
 
 ## P1 — template-ization (do before forking Easy Queue)
 

@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { reportClientError } from "@/src/presentation/lib/report-client-error";
+
 /**
  * Root error boundary — catches errors thrown by the root layout itself, which
  * the segment-level app/error.tsx cannot. It REPLACES the root layout (so the
@@ -16,6 +18,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error(error);
+    reportClientError(error, { digest: error.digest });
   }, [error]);
 
   return (

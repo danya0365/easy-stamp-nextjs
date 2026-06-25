@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Frown } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { reportClientError } from "@/src/presentation/lib/report-client-error";
+
 export default function Error({
   error,
   reset,
@@ -14,8 +16,9 @@ export default function Error({
 }) {
   const t = useTranslations("error");
   useEffect(() => {
-    // Surface the error to logs/monitoring; the UI stays friendly.
+    // Browser devtools for local dev + a beacon to server logs/error tracking.
     console.error(error);
+    reportClientError(error, { digest: error.digest });
   }, [error]);
 
   return (

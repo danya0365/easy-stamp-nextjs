@@ -22,7 +22,8 @@ function findTests(dir, acc = []) {
 }
 
 const coverage = process.argv.includes("--coverage");
-const files = findTests("src").sort();
+// Scan both the library (src/) and the route handlers / boundaries (app/).
+const files = [...findTests("src"), ...findTests("app")].sort();
 if (files.length === 0) {
   console.error("No *.test.ts files found under src/");
   process.exit(1);
@@ -44,6 +45,9 @@ const res = spawnSync(process.execPath, args, {
     // Integration tests migrate this fresh in-memory DB per subprocess.
     TURSO_DATABASE_URL: ":memory:",
     TURSO_AUTH_TOKEN: "",
+    // Mute the singleton logger so error-path tests don't flood output. Tests
+    // that assert on logging construct their own Logger with explicit options.
+    LOG_LEVEL: "silent",
   },
 });
 process.exit(res.status ?? 1);
