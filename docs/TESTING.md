@@ -45,6 +45,37 @@ test("adds a stamp scoped to the shop", async () => {
 - **Domain/unit tests** (pure functions in `src/domain/**`) need no DB — just import and assert.
 - Prefer asserting on **observable state** (repo reads) over implementation details.
 
+## Server-action tests (session/cookie mocking)
+Server actions call `requireShopWrite()`/`getSession()` which read `next/headers` `cookies()`, plus
+`revalidatePath` and sometimes `redirect`. Outside a request these don't exist, so stub them with
+`mock.module` (the runner passes `--experimental-test-module-mocks`) and seed a **real** session row —
+auth then resolves against the in-memory DB exactly like production. See
+[`shop-actions.integration.test.ts`](../src/presentation/actions/shop-actions.integration.test.ts).
+```ts
+import { before, beforeEach, mock, test } from "node:test";
+let sessionToken: string | null = null;
+const cookieStore = {
+  get: (n: string) => (n === "es_session" && sessionToken ? { value: sessionToken } : undefined),
+  set: () => {}, delete: () => {},
+};
+mock.module("next/headers", {
+  namedExports: { cookies: async () => cookieStore, headers: async () => new Map() },
+});
+mock.module("next/cache", { namedExports: { revalidatePath: () => {} } });
+mock.module("next/navigation", { namedExports: { redirect: () => { throw new Error("REDIRECT"); } } });
+
+let action: typeof import("./shop-actions").someAction;
+before(async () => {
+  await migrateTestDb();
+  ({ someAction: action } = await import("./shop-actions")); // import AFTER mocks; in before() — no top-level await under the CJS transpile
+});
+beforeEach(() => { sessionToken = null; });
+// loginAs(userId): create a session via container.sessionRepository.create(...) and set sessionToken.
+// Impersonation: also stub the es_impersonate cookie = JSON.stringify({ shopId, by, exp }).
+```
+Cover the auth matrix per action (owner / cross-shop / admin-impersonation / unauthenticated), and
+assert on observable DB state + audit rows (`container.auditLogRepository.page({ actorUserId })`).
+
 ## Tenant isolation
 [`tenant-isolation.integration.test.ts`](../src/infrastructure/repositories/drizzle/tenant-isolation.integration.test.ts)
 seeds two shops and asserts shop B can't see/touch shop A's customers, cards, ledgers, or reviews —

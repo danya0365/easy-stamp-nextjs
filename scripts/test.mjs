@@ -28,7 +28,10 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const args = ["--import", "tsx", "--test"];
+// `--experimental-test-module-mocks` enables mock.module() (used by action-layer
+// tests to stub next/headers · next/cache · next/navigation). Harmless for tests
+// that don't call it.
+const args = ["--import", "tsx", "--test", "--experimental-test-module-mocks"];
 if (coverage) args.push("--experimental-test-coverage");
 args.push(...files);
 

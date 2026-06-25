@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import type { IPasswordBreachChecker } from "@/src/application/services/IPasswordBreachChecker";
+import { retry } from "@/src/infrastructure/services/retry";
 
 const RANGE_API = "https://api.pwnedpasswords.com/range/";
 
@@ -21,11 +22,25 @@ export class HibpPasswordBreachChecker implements IPasswordBreachChecker {
         .toUpperCase();
       const prefix = sha1.slice(0, 5);
       const suffix = sha1.slice(5);
-      const res = await fetch(`${RANGE_API}${prefix}`, {
-        headers: { "Add-Padding": "true" },
-      });
-      if (!res.ok) return false;
-      const body = await res.text();
+      // Retry transient failures (network/timeout, 5xx/429). A 4xx is permanent,
+      // so we stop and fail open (null → false). The whole call also fails open.
+      const body = await retry(
+        async () => {
+          const res = await fetch(`${RANGE_API}${prefix}`, {
+            headers: { "Add-Padding": "true" },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (!res.ok) {
+            if (res.status >= 500 || res.status === 429) {
+              throw new Error(`hibp ${res.status}`);
+            }
+            return null;
+          }
+          return res.text();
+        },
+        { retries: 2 },
+      );
+      if (body == null) return false;
       for (const line of body.split("\n")) {
         const [hashSuffix, countStr] = line.trim().split(":");
         if (hashSuffix === suffix) {

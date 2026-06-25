@@ -88,17 +88,24 @@ checkboxes as items land.
   per-customer unique values keep the constraints) and drops device bindings, keeping
   cards/balances/transactions so the shop's aggregates/financials stay consistent. Irreversible,
   shop-scoped, audited (`customer_erased`). Both wired into the customer-list row actions.
-- [~] **Action/API-route tests** — money path now covered: `billing-flow.integration.test.ts`
-  (approve credits exact days + ledger; double-verify guarded; reject doesn't extend). **Remaining:**
-  action-layer tests need session/cookie mocking — add per route as touched (auth, LINE webhook).
+- [~] **Action/API-route tests** — money path covered: `billing-flow.integration.test.ts` (approve
+  credits exact days + ledger; double-verify guarded; reject doesn't extend). **Session/cookie
+  mocking solved** — `shop-actions.integration.test.ts` drives real server actions end-to-end by
+  stubbing `next/headers`·`next/cache`·`next/navigation` with `mock.module` (runner now passes
+  `--experimental-test-module-mocks`) and seeding a real session row; covers the auth matrix
+  (owner / cross-shop / admin-impersonation w/ audit accountability / admin-without-impersonation /
+  unauthenticated). Pattern documented in TESTING.md. **Remaining:** apply per route as touched
+  (LINE webhook, auth actions).
 - [x] **Negative tenant-isolation tests** — `tenant-isolation.integration.test.ts` asserts shop B
   can't see shop A's customers/cards/ledgers/reviews (4 cases). ⏳ **Coverage gate still deferred** —
   Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22 `--test-coverage-lines`
   or `c8 --check-coverage` later (see TESTING.md).
-- [~] **Retry for external calls** — generic `retry()` helper (`src/infrastructure/services/retry.ts`,
-  unit-tested) applied to the LINE push `fetch`. R2/S3 already retries transient errors via the AWS
-  SDK (verified — not double-wrapped). **Remaining (optional):** retry OSM/HIBP fetches; a real
-  circuit-breaker if external flakiness becomes a problem.
+- [x] **Retry for external calls** — generic `retry()` helper (`src/infrastructure/services/retry.ts`,
+  unit-tested) applied to the LINE push `fetch`, the OSM geocoder (`OsmGeocoder.fetchJson`), and the
+  HIBP breach check (`HibpPasswordBreachChecker`, tested). All retry network/timeout + 5xx/429 and
+  treat 4xx as permanent; OSM/HIBP stay fail-soft (null / fail-open). R2/S3 already retries transient
+  errors via the AWS SDK (verified — not double-wrapped). **Optional later:** retry the Turnstile
+  verify; a real circuit-breaker if external flakiness becomes a problem.
 - [x] **Backup/DR docs + migration rollback** — documented in [DEPLOYMENT.md](DEPLOYMENT.md) §6: Turso
   dump/restore + restore drill + RPO/RTO, R2 versioning, and the forward-only migration revert policy
   (ship a new migration; snapshot before risky/destructive changes).
