@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   pauseMyShopAction,
@@ -31,6 +32,7 @@ export function PauseShopControl({
   /** Seconds until the shop may pause again (0 = none). */
   cooldownRemainingSec?: number;
 }) {
+  const t = useTranslations("shop");
   const [pending, start] = useTransition();
   const confirm = useConfirm();
   const toast = useToast();
@@ -39,7 +41,7 @@ export function PauseShopControl({
     start(async () => {
       const res = await resumeMyShopAction();
       if (res.error) toast.error(res.error);
-      else toast.success("เปิดร้านอีกครั้งแล้ว");
+      else toast.success(t("pauseReopened"));
     });
   }
 
@@ -47,17 +49,19 @@ export function PauseShopControl({
     return (
       <div className="flex flex-col gap-3">
         <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          <p>ร้านกำลังปิดชั่วคราว — ระบบหยุดนับวันใช้งานไว้</p>
+          <p>{t("pausedTitle")}</p>
           <p className="mt-1 font-medium">
             {frozenDaysSoFar >= 1
-              ? `ปิดมาแล้ว ${frozenDaysSoFar} วัน ระบบไม่หักวันช่วงนี้ · เปิดแล้ววันคงเหลือยังเท่าเดิม${
-                  typeof daysUntilDue === "number" ? ` (${daysUntilDue} วัน)` : ""
+              ? `${t("pauseFrozenInfo", { frozen: frozenDaysSoFar })}${
+                  typeof daysUntilDue === "number"
+                    ? t("pauseDaysRemainingParen", { days: daysUntilDue })
+                    : ""
                 }`
-              : "ยังปิดไม่ครบ 1 วัน — ช่วงสั้นกว่า 1 วันยังนับเป็นวันใช้งานตามปกติ (ปิดให้ครบวันถึงจะหยุดนับ)"}
+              : t("pauseUnderOneDay")}
           </p>
         </div>
         <Button loading={pending} onClick={resume}>
-          {pending ? "กำลังเปิด…" : "เปิดร้านอีกครั้ง"}
+          {pending ? t("pauseReopening") : t("pauseReopenShop")}
         </Button>
       </div>
     );
@@ -67,33 +71,38 @@ export function PauseShopControl({
   const capReached = pausesUsed >= pauseCap;
   const blocked = cooldownRemainingSec > 0 || capReached;
   const blockNote = capReached
-    ? `เดือนนี้ปิดครบ ${pauseCap} ครั้งแล้ว หากจำเป็นโปรดติดต่อผู้ดูแล`
+    ? t("pauseCapReached", { cap: pauseCap })
     : cooldownRemainingSec > 0
-      ? `เพิ่งปิด/เปิดร้านไปไม่นาน — ปิดได้อีกครั้งในอีกประมาณ ${cooldownHrs} ชม.`
+      ? t("pauseCooldown", { hrs: cooldownHrs })
       : null;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 text-sm text-muted">
-        <p>ปิดร้านชั่วคราวเมื่อไม่เปิดให้บริการ (วันหยุดยาว/ปรับปรุงร้าน)</p>
+        <p>{t("pauseIntro")}</p>
         {typeof daysUntilDue === "number" && (
           <p className="font-medium text-foreground">
-            เหลือ {daysUntilDue} วันใช้งาน · เดือนนี้ปิดไปแล้ว {pausesUsed}/
-            {pauseCap} ครั้ง
+            {t("pauseUsage", { days: daysUntilDue, used: pausesUsed, cap: pauseCap })}
           </p>
         )}
         <ul className="flex list-disc flex-col gap-1 pl-5">
           <li>
-            หยุดนับ<strong>เฉพาะวันเต็มที่ปิด</strong> — ปิดสั้นกว่า 1
-            วันจะไม่ได้วันคืน
+            {t.rich("pauseRuleWholeDays", {
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </li>
           <li>
-            ปิดได้ไม่เกิน <strong>{pauseCap} ครั้ง/เดือน</strong>
+            {t.rich("pauseRuleMax", {
+              cap: pauseCap,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </li>
           <li>
-            เว้นอย่างน้อย <strong>24 ชม.</strong> ระหว่างการปิดแต่ละครั้ง
+            {t.rich("pauseRuleCooldown", {
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </li>
-          <li>ระหว่างปิด กดแสตมป์/แลกรางวัลไม่ได้ และร้านถูกซ่อนจากแผนที่</li>
+          <li>{t("pauseRuleWhilePaused")}</li>
         </ul>
       </div>
 
@@ -109,21 +118,20 @@ export function PauseShopControl({
         disabled={blocked}
         onClick={async () => {
           const ok = await confirm({
-            title: "ปิดร้านชั่วคราว?",
-            message:
-              "ระบบหยุดนับเฉพาะ ‘วันเต็ม’ ที่ปิด (ปิดสั้นกว่า 1 วันไม่ได้วันคืน) · ปิดได้ไม่เกิน 8 ครั้ง/เดือน เว้นอย่างน้อย 24 ชม. · ระหว่างปิด พนักงานจะกดแสตมป์/แลกรางวัลไม่ได้ และร้านจะถูกซ่อนจากแผนที่ จนกว่าจะเปิดอีกครั้ง",
-            confirmLabel: "ปิดร้านชั่วคราว",
+            title: t("pauseConfirmTitle"),
+            message: t("pauseConfirmMessage"),
+            confirmLabel: t("pauseConfirmLabel"),
             tone: "danger",
           });
           if (!ok) return;
           start(async () => {
             const res = await pauseMyShopAction();
             if (res.error) toast.error(res.error);
-            else toast.success("ปิดร้านชั่วคราวแล้ว");
+            else toast.success(t("shopPausedToast"));
           });
         }}
       >
-        {pending ? "กำลังปิด…" : "ปิดร้านชั่วคราว"}
+        {pending ? t("pausing") : t("pauseShop")}
       </Button>
     </div>
   );

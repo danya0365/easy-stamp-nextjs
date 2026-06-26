@@ -21,5 +21,6 @@ export async function getClientMessages() {
     error: messages.error,
     auth: messages.auth,
     billing: messages.billing,
+    shop: messages.shop,
   };
 }
