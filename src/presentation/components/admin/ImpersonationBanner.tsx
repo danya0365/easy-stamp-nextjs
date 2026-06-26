@@ -1,4 +1,5 @@
 import { UserCog } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { stopImpersonationAction } from "@/src/presentation/actions/admin-actions";
 
@@ -8,14 +9,17 @@ import { stopImpersonationAction } from "@/src/presentation/actions/admin-action
  * behalf); changes are audit-logged under the admin's own account. Makes the
  * state obvious and offers a one-click exit.
  */
-export function ImpersonationBanner({ shopName }: { shopName: string }) {
+export async function ImpersonationBanner({ shopName }: { shopName: string }) {
+  const t = await getTranslations("admin");
   return (
     <div className="sticky top-0 z-50 flex items-center justify-between gap-2 border-b border-warning bg-warning-surface px-4 py-2 text-sm text-warning">
       <span className="flex min-w-0 items-center gap-1.5">
         <UserCog className="size-4 shrink-0" />
         <span className="truncate">
-          กำลังทำงานในนามร้าน <strong>{shopName}</strong> · แก้ไขแทนได้
-          (บันทึกในชื่อแอดมิน)
+          {t.rich("impersonatingRich", {
+            shop: shopName,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </span>
       </span>
       <form action={stopImpersonationAction}>
@@ -23,7 +27,7 @@ export function ImpersonationBanner({ shopName }: { shopName: string }) {
           type="submit"
           className="shrink-0 rounded-md border border-warning px-2.5 py-1 text-xs font-medium hover:bg-warning/10"
         >
-          ออกจากการดูแลร้าน
+          {t("exitImpersonation")}
         </button>
       </form>
     </div>

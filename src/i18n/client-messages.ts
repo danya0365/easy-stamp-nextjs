@@ -22,5 +22,6 @@ export async function getClientMessages() {
     auth: messages.auth,
     billing: messages.billing,
     shop: messages.shop,
+    admin: messages.admin,
   };
 }

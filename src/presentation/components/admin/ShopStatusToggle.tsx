@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import { setShopStatusAction } from "@/src/presentation/actions/admin-actions";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -13,6 +14,7 @@ export function ShopStatusToggle({
   shopId: string;
   adminSuspended: boolean;
 }) {
+  const t = useTranslations("admin");
   const [pending, start] = useTransition();
   const confirm = useConfirm();
 
@@ -29,9 +31,9 @@ export function ShopStatusToggle({
     // Reactivation is safe; only confirm the destructive suspend direction.
     if (adminSuspended) return apply();
     const ok = await confirm({
-      title: "ระงับร้านนี้?",
-      message: "เจ้าของร้านจะใช้งานระบบไม่ได้จนกว่าจะเปิดใช้งานอีกครั้ง",
-      confirmLabel: "ระงับร้าน",
+      title: t("suspendConfirmTitle"),
+      message: t("suspendConfirmMessage"),
+      confirmLabel: t("suspendConfirmLabel"),
       tone: "danger",
     });
     if (ok) apply();
@@ -44,7 +46,7 @@ export function ShopStatusToggle({
       loading={pending}
       onClick={onClick}
     >
-      {adminSuspended ? "เปิดใช้งาน" : "ระงับร้าน"}
+      {adminSuspended ? t("activate") : t("suspend")}
     </Button>
   );
 }
