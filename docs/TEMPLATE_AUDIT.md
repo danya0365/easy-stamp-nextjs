@@ -93,9 +93,21 @@ checkboxes as items land.
   server components). `shop` is in the client allowlist. **Admin area done too:** the entire
   `src/presentation/components/admin/` tree is migrated into an `admin` namespace (audit timeline,
   shop/payment/2FA controls, create-shop + credentials-handoff forms, contact inbox, impersonation
-  banner). **Remaining (incremental):** inline strings still living in `app/**` page files (headings,
-  empty states) and a few smaller component areas (notifications/reviews/leads) — migrate as touched. (Leave inline: use-case/action `{ error }`
-  strings, audit text, and `app/global-error.tsx` — it replaces the root layout/provider.)
+  banner). **Reviews + stamp + leads + layout + map areas done:** `reviews` (admin/owner/public lists,
+  form, summary), `stamp` (StampStation + QrScanModal + the sync CardBalance/RedemptionHistory/
+  PhoneLookupForm/MemberQr), `leads` (the 12-component admin CRM; enum labels moved from
+  `lead-display.ts` into message-KEY maps), `layout` (AppHeader + both tab bars — nav labels are typed
+  message keys), and `map` (StoreMap + branch-location editor). `channels` (LINE connections) and
+  `analytics` (breakdown + daily-trend chart) got their own namespaces, and the shared-UI leftovers
+  (Toast/Spinner/StampDots/StarRatingInput/SimpleImageCropper/GeneratedPasswordField, plus
+  notification/settings/pwa) folded into `common` alongside shared geolocation/map-loading strings (a
+  reusable `MapLoading` placeholder lets `next/dynamic` translate its loading state). All client
+  namespaces are in `src/i18n/client-messages.ts`. **Remaining (incremental):** (1) `app/**` page files
+  — headings/empty states across ~42 routes; (2) a few still-inline component areas surfaced by a
+  full-tree sweep — `auth/` leftovers (TwoFactorPanel, MandatoryTwoFactorGate, ResetPasswordControl,
+  DevLoginPanel, PublicContactButton/Form), the whole `shop/promote/` poster-studio subtree, and
+  top-level `ThemeSwitcher`. Migrate as touched. (Leave inline: use-case/action `{ error }` strings,
+  audit text, and `app/global-error.tsx` — it replaces the root layout/provider.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.

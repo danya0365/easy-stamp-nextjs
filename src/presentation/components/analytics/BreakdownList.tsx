@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 interface BreakdownRow {
   name: string;
   stamps: number;
@@ -10,6 +12,7 @@ interface BreakdownRow {
  * (plain CSS bar, no chart lib needed for this simple view).
  */
 export function BreakdownList({ rows }: { rows: BreakdownRow[] }) {
+  const t = useTranslations("analytics");
   const max = Math.max(1, ...rows.map((r) => r.stamps));
   return (
     <ul className="flex flex-col gap-3">
@@ -18,7 +21,7 @@ export function BreakdownList({ rows }: { rows: BreakdownRow[] }) {
           <div className="flex items-baseline justify-between gap-3 text-sm">
             <span className="min-w-0 truncate text-foreground">{r.name}</span>
             <span className="shrink-0 text-muted">
-              {r.stamps} แสตมป์ · {r.redemptions} แลก
+              {t("breakdownRow", { stamps: r.stamps, redemptions: r.redemptions })}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-muted-surface">

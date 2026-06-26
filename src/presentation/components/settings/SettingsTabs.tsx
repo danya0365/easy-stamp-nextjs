@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { ImageIcon, Info, ShieldCheck, Stamp } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { TabSelect } from "@/src/presentation/components/ui/TabSelect";
 
@@ -30,6 +31,7 @@ export function SettingsTabs({
   tabs: Tab[];
   footer?: ReactNode;
 }) {
+  const t = useTranslations("common");
   const [active, setActive] = useState(tabs[0]?.id);
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
 
@@ -38,7 +40,7 @@ export function SettingsTabs({
       {/* Mobile (<lg): custom dropdown instead of a cramped horizontal strip. */}
       <div className="mb-4 lg:hidden">
         <TabSelect
-          ariaLabel="หมวดการตั้งค่า"
+          ariaLabel={t("settingsCategoryAria")}
           value={current?.id ?? ""}
           onChange={setActive}
           options={tabs.map((tab) => {
@@ -56,7 +58,7 @@ export function SettingsTabs({
         {/* Desktop (lg+): left sidebar tab nav. */}
         <nav
           className="hidden lg:flex lg:flex-col lg:gap-1"
-          aria-label="หมวดการตั้งค่า"
+          aria-label={t("settingsCategoryAria")}
         >
           {tabs.map((tab) => {
             const Icon = tab.icon ? ICONS[tab.icon] : null;

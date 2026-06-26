@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "./cn";
 
@@ -57,6 +58,7 @@ const DURATION_MS = 3000;
  * context (mirrors Modal).
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const tr = useTranslations("common");
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
 
@@ -112,7 +114,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   <button
                     type="button"
                     onClick={() => remove(t.id)}
-                    aria-label="ปิด"
+                    aria-label={tr("close")}
                     className="text-muted hover:text-foreground"
                   >
                     <X className="size-4" />

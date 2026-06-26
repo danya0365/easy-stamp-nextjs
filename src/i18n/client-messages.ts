@@ -28,5 +28,7 @@ export async function getClientMessages() {
     leads: messages.leads,
     layout: messages.layout,
     map: messages.map,
+    channels: messages.channels,
+    analytics: messages.analytics,
   };
 }

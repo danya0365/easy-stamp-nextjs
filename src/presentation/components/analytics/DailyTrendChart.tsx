@@ -11,6 +11,7 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { useTranslations } from "next-intl";
 
 import type { AnalyticsDailyPoint } from "@/src/domain/entities";
 
@@ -22,6 +23,7 @@ function shortDay(day: string): string {
 
 /** Daily stamps (bars) vs rewards redeemed (line) over the selected range. */
 export function DailyTrendChart({ data }: { data: AnalyticsDailyPoint[] }) {
+  const t = useTranslations("analytics");
   // Aim for ~7 X-axis labels regardless of range length.
   const interval = Math.max(0, Math.ceil(data.length / 7) - 1);
 
@@ -59,14 +61,14 @@ export function DailyTrendChart({ data }: { data: AnalyticsDailyPoint[] }) {
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar
             dataKey="stamps"
-            name="แสตมป์"
+            name={t("stamps")}
             fill="var(--color-brand-500)"
             radius={[3, 3, 0, 0]}
             maxBarSize={28}
           />
           <Line
             dataKey="redemptions"
-            name="แลกรางวัล"
+            name={t("redemptions")}
             stroke="var(--color-accent-500)"
             strokeWidth={2}
             dot={false}

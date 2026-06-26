@@ -19,7 +19,22 @@
     "geoPermissionDenied": "กรุณาอนุญาตให้เข้าถึงตำแหน่งในเบราว์เซอร์",
     "geoFailed": "ระบุตำแหน่งไม่สำเร็จ ลองใหม่อีกครั้ง",
     "currentLocation": "ตำแหน่งปัจจุบัน",
-    "navigate": "นำทาง"
+    "navigate": "นำทาง",
+    "close": "ปิด",
+    "zoom": "ซูม",
+    "randomize": "สุ่ม",
+    "spinnerLabel": "กำลังโหลด",
+    "starRatingStars": "{n} ดาว",
+    "stampFilled": "ดวงที่สะสมแล้ว",
+    "stampEmpty": "ดวงที่ว่าง",
+    "noNotificationsTitle": "ยังไม่มีการแจ้งเตือน",
+    "noNotificationsDesc": "เมื่อมีความเคลื่อนไหว การแจ้งเตือนจะแสดงที่นี่",
+    "settingsCategoryAria": "หมวดการตั้งค่า",
+    "installAddToHome": "เพิ่มลงหน้าจอหลัก (เปิดบัตรได้เลยครั้งหน้า)",
+    "installIosTapPrefix": "เพิ่มลงหน้าจอหลัก: แตะ",
+    "installIosShare": "แชร์",
+    "installIosThenSelect": "แล้วเลือก",
+    "installIosAddToHome": "เพิ่มไปยังหน้าจอโฮม"
   },
   "error": {
     "title": "เกิดข้อผิดพลาด",
@@ -559,5 +574,25 @@
     "notPinned": "ยังไม่ได้ปักหมุด",
     "clearPin": "ล้างหมุด",
     "saveLocation": "บันทึกตำแหน่ง"
+  },
+  "channels": {
+    "connected": "เชื่อมแล้ว",
+    "disconnect": "ยกเลิก",
+    "connect": "เชื่อมต่อ",
+    "securityHint": "เชื่อมอย่างน้อย 1 ช่องทางเพื่อความปลอดภัย — ใช้รับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP โดยไม่ต้องใช้รหัสผ่าน",
+    "lineDescription": "รับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP",
+    "usableForLogin": "ใช้เข้าสู่ระบบได้",
+    "notConfigured": "* ระบบยังไม่ได้ตั้งค่า LINE OA — เชื่อมต่อได้เมื่อผู้ดูแลตั้งค่าเสร็จ",
+    "howToConnect": "วิธีเชื่อมต่อ",
+    "addFriendPrefix": "เพิ่มเพื่อน LINE OA:",
+    "addFriendLink": "กดเพิ่มเพื่อน",
+    "addFriendNoUrl": "เพิ่มเพื่อน LINE OA ของระบบ",
+    "sendCodeInChat": "พิมพ์โค้ดนี้ส่งในแชท:",
+    "afterSendHint": "เมื่อส่งโค้ดแล้วระบบจะตอบกลับว่าเชื่อมต่อสำเร็จ จากนั้นรีเฟรชหน้านี้"
+  },
+  "analytics": {
+    "breakdownRow": "{stamps} แสตมป์ · {redemptions} แลก",
+    "stamps": "แสตมป์",
+    "redemptions": "แลกรางวัล"
   }
 }

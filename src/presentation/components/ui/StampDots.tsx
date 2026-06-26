@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import { cn } from "./cn";
 
 interface StampDotsProps {
@@ -14,6 +16,7 @@ const SIZES = {
 
 /** A cute loyalty-card grid: filled stamps vs empty slots. */
 export function StampDots({ current, threshold, size = "md" }: StampDotsProps) {
+  const t = useTranslations("common");
   const filled = Math.max(0, Math.min(current, threshold));
   return (
     <div className="flex flex-wrap gap-2">
@@ -29,7 +32,7 @@ export function StampDots({ current, threshold, size = "md" }: StampDotsProps) {
                 ? "bg-brand-500 text-on-brand shadow-sm ring-1 ring-brand-600/20"
                 : "border border-brand-200 bg-brand-50 text-brand-200",
             )}
-            aria-label={isFilled ? "ดวงที่สะสมแล้ว" : "ดวงที่ว่าง"}
+            aria-label={isFilled ? t("stampFilled") : t("stampEmpty")}
           >
             ★
           </div>

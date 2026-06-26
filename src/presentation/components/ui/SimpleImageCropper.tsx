@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Minimal, dependency-free image cropper: drag to pan, slider to zoom, fixed
@@ -32,6 +33,7 @@ export const SimpleImageCropper = forwardRef<
   SimpleCropperHandle,
   { src: string; aspect: number | null }
 >(function SimpleImageCropper({ src, aspect }, ref) {
+  const t = useTranslations("common");
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
@@ -187,7 +189,7 @@ export const SimpleImageCropper = forwardRef<
         />
       </div>
       <label className="flex items-center gap-2 text-xs text-muted">
-        ซูม
+        {t("zoom")}
         <input
           type="range"
           min={1}
