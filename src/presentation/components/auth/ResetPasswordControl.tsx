@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import { adminResetOwnerPasswordAction } from "@/src/presentation/actions/admin-actions";
 import { resetStaffPasswordAction } from "@/src/presentation/actions/shop-actions";
@@ -20,6 +21,8 @@ export function ResetPasswordControl({
   kind: "owner" | "staff";
   userId: string;
 }) {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [pwd, setPwd] = useState("");
   const [done, setDone] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export function ResetPasswordControl({
       } else {
         setDone(pwd);
         setOpen(false);
-        toast.success("ตั้งรหัสผ่านใหม่แล้ว");
+        toast.success(t("resetPwSuccess"));
       }
     });
   }
@@ -62,7 +65,7 @@ export function ResetPasswordControl({
         onClick={toggle}
         className="rounded-full bg-muted-surface px-2.5 py-1 text-xs font-medium text-muted transition hover:opacity-80"
       >
-        รีเซ็ตรหัส
+        {t("resetPassword")}
       </button>
 
       {open && (
@@ -80,7 +83,7 @@ export function ResetPasswordControl({
               onClick={() => setPwd(genPassword())}
               disabled={pending}
             >
-              สุ่ม
+              {tc("randomize")}
             </Button>
             <Button
               type="button"
@@ -89,7 +92,7 @@ export function ResetPasswordControl({
               loading={pending}
               disabled={pwd.length < 6}
             >
-              ยืนยัน
+              {tc("confirm")}
             </Button>
           </div>
           {error && <p className="text-xs text-error">{error}</p>}
@@ -98,9 +101,9 @@ export function ResetPasswordControl({
 
       {done && (
         <p className="text-right text-xs text-success">
-          ตั้งรหัสใหม่แล้ว: <strong className="text-sm">{done}</strong>
+          {t("resetPwDoneLabel")} <strong className="text-sm">{done}</strong>
           <br />
-          แจ้งรหัสนี้ให้ผู้ใช้ แล้วให้เปลี่ยนเองภายหลัง
+          {t("resetPwDoneHint")}
         </p>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Check, Copy, Download, ShieldCheck, ShieldOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   beginTwoFactorSetupAction,
@@ -31,6 +32,7 @@ export function TwoFactorPanel({
   /** Where to go after finishing enrollment (e.g. the mandatory setup gate). */
   redirectTo?: string;
 }) {
+  const t = useTranslations("auth");
   const [on, setOn] = useState(enabled);
   const [setup, setSetup] = useState<TwoFactorSetupState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +56,8 @@ export function TwoFactorPanel({
   if (setup?.recoveryCodes) {
     const codes = setup.recoveryCodes;
     const asText =
-      `${BRAND.name} — รหัสกู้คืน 2FA (recovery codes)\n` +
-      `เก็บไว้ในที่ปลอดภัย · แต่ละรหัสใช้ได้ครั้งเดียว\n\n` +
+      `${t("recoveryFileTitle", { brand: BRAND.name })}\n` +
+      `${t("recoveryFileSubtitle")}\n\n` +
       codes.join("\n") +
       `\n`;
 
@@ -84,12 +86,11 @@ export function TwoFactorPanel({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm font-medium text-success">
-          {setup.success ?? "เปิด 2FA สำเร็จ"}
+          {setup.success ?? t("twofaEnabledSuccess")}
         </p>
         <p className="text-sm text-muted">
-          <strong className="text-foreground">บันทึกรหัสกู้คืนนี้ไว้</strong>{" "}
-          (เก็บใน password manager) — ใช้เข้าระบบเมื่อทำอุปกรณ์ 2FA หาย · แต่ละรหัสใช้ได้ครั้งเดียว ·
-          หน้านี้จะไม่แสดงอีก
+          <strong className="text-foreground">{t("saveRecoveryCodes")}</strong>{" "}
+          {t("recoveryCodesHint")}
         </p>
         <ul className="grid grid-cols-2 gap-2 rounded-lg bg-muted-surface p-3 font-mono text-sm text-foreground">
           {codes.map((c) => (
@@ -98,16 +99,16 @@ export function TwoFactorPanel({
         </ul>
         <div className="flex gap-2">
           <button type="button" onClick={download} className={secondaryBtnCls}>
-            <Download className="size-4" /> ดาวน์โหลด (.txt)
+            <Download className="size-4" /> {t("downloadTxt")}
           </button>
           <button type="button" onClick={copy} className={secondaryBtnCls}>
             {copied ? (
               <>
-                <Check className="size-4 text-success" /> คัดลอกแล้ว
+                <Check className="size-4 text-success" /> {t("copied")}
               </>
             ) : (
               <>
-                <Copy className="size-4" /> คัดลอก
+                <Copy className="size-4" /> {t("copy")}
               </>
             )}
           </button>
@@ -125,7 +126,7 @@ export function TwoFactorPanel({
             setOn(true);
           }}
         >
-          {saved ? "ดำเนินการต่อ" : "ดาวน์โหลดหรือคัดลอกรหัสก่อน"}
+          {saved ? t("continue") : t("saveCodesFirst")}
         </button>
       </div>
     );
@@ -136,10 +137,10 @@ export function TwoFactorPanel({
     return (
       <div className="flex flex-col gap-4">
         <p className="flex items-center gap-1.5 text-sm font-medium text-success">
-          <ShieldCheck className="size-4" /> เปิดใช้งานการยืนยัน 2 ชั้นอยู่
+          <ShieldCheck className="size-4" /> {t("twofaOn")}
           {typeof recoveryRemaining === "number" && (
             <span className="font-normal text-muted">
-              · เหลือรหัสสำรอง {recoveryRemaining} ชุด
+              {t("recoveryRemaining", { count: recoveryRemaining })}
             </span>
           )}
         </p>
@@ -155,18 +156,16 @@ export function TwoFactorPanel({
             })
           }
         >
-          <label className="text-sm text-muted">
-            สร้างรหัสสำรองชุดใหม่ (รหัสเดิมจะใช้ไม่ได้)
-          </label>
+          <label className="text-sm text-muted">{t("regenerateLabel")}</label>
           <input
             name="password"
             type="password"
             required
-            placeholder="ยืนยันด้วยรหัสผ่าน"
+            placeholder={t("confirmPasswordPlaceholder")}
             className={inputCls}
           />
           <button type="submit" disabled={pending} className={`${btnCls} text-sm`}>
-            สร้างรหัสสำรองใหม่
+            {t("regenerateButton")}
           </button>
         </form>
 
@@ -181,14 +180,14 @@ export function TwoFactorPanel({
             })
           }
         >
-          <label className="text-sm text-muted">ปิด 2FA (ยืนยันด้วยรหัสผ่าน)</label>
+          <label className="text-sm text-muted">{t("disableLabel")}</label>
           <input name="password" type="password" required className={inputCls} />
           <button
             type="submit"
             disabled={pending}
             className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-error px-4 py-2 text-sm font-medium text-error hover:bg-error/5 disabled:opacity-60"
           >
-            <ShieldOff className="size-4" /> ปิด 2FA
+            <ShieldOff className="size-4" /> {t("disableButton")}
           </button>
         </form>
         {err}
@@ -200,14 +199,11 @@ export function TwoFactorPanel({
   if (setup?.qrDataUrl) {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted">
-          สแกน QR ด้วยแอป Authenticator (Google Authenticator, 1Password ฯลฯ)
-          หรือกรอกรหัสลับด้านล่าง แล้วใส่รหัส 6 หลักเพื่อยืนยัน
-        </p>
+        <p className="text-sm text-muted">{t("scanQrHint")}</p>
         {/* eslint-disable-next-line @next/next/no-img-element -- QR is an inline data URL */}
         <img
           src={setup.qrDataUrl}
-          alt="QR สำหรับตั้งค่า 2FA"
+          alt={t("qrAlt")}
           className="mx-auto size-44 rounded-lg border border-border"
         />
         <code className="break-all rounded-lg bg-muted-surface px-3 py-2 text-center text-xs text-foreground">
@@ -229,12 +225,12 @@ export function TwoFactorPanel({
             inputMode="numeric"
             maxLength={6}
             required
-            placeholder="รหัส 6 หลัก"
+            placeholder={t("codePlaceholder")}
             className={`${inputCls} text-center tracking-[0.3em]`}
           />
           {err}
           <button type="submit" disabled={pending} className={btnCls}>
-            {pending ? "กำลังยืนยัน…" : "ยืนยันและเปิด 2FA"}
+            {pending ? t("confirming") : t("confirmEnable2fa")}
           </button>
         </form>
       </div>
@@ -244,9 +240,7 @@ export function TwoFactorPanel({
   // --- Off: offer to start ---
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted">
-        เพิ่มการยืนยันตัวตน 2 ชั้น (TOTP) ให้บัญชีผู้ดูแล — ลดความเสี่ยงหากรหัสผ่านรั่ว
-      </p>
+      <p className="text-sm text-muted">{t("enable2faIntro")}</p>
       {err}
       <button
         type="button"
@@ -261,7 +255,7 @@ export function TwoFactorPanel({
           })
         }
       >
-        {pending ? "กำลังเตรียม…" : "เริ่มตั้งค่า 2FA"}
+        {pending ? t("preparing") : t("start2faSetup")}
       </button>
     </div>
   );
