@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   updateSettingsAction,
@@ -18,6 +19,7 @@ export function SettingsForm({
   stampThreshold: number;
   rewardText: string;
 }) {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateSettingsAction,
     {},
@@ -25,10 +27,7 @@ export function SettingsForm({
 
   return (
     <form action={action} className="flex flex-col gap-4">
-      <FormField
-        label="จำนวนแสตมป์ที่ครบเกณฑ์ (แลก 1 รางวัล)"
-        htmlFor="stampThreshold"
-      >
+      <FormField label={t("setThresholdLabel")} htmlFor="stampThreshold">
         <Input
           id="stampThreshold"
           name="stampThreshold"
@@ -39,9 +38,9 @@ export function SettingsForm({
         />
       </FormField>
       <FormField
-        label="ของรางวัล (ข้อความ)"
+        label={t("setRewardLabel")}
         htmlFor="rewardText"
-        hint="เช่น เลือกเครื่องดื่มในร้านฟรี 1 แก้ว"
+        hint={t("setRewardHint")}
       >
         <Textarea
           id="rewardText"
@@ -56,7 +55,7 @@ export function SettingsForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังบันทึก…" : "บันทึก"}
+        {pending ? t("setSaving") : t("setSave")}
       </Button>
     </form>
   );

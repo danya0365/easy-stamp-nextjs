@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import type { ReviewSummary, ShopImage } from "@/src/domain/entities";
 import { StarRating } from "@/src/presentation/components/ui/StarRating";
@@ -13,7 +14,7 @@ import { StarRating } from "@/src/presentation/components/ui/StarRating";
  * "tap the image to change it") layered over each image — passed only for the
  * shop owner viewing their own page. Omitted = the plain public view.
  */
-export function ShopHero({
+export async function ShopHero({
   coverImage,
   profileImage,
   shopName,
@@ -30,6 +31,7 @@ export function ShopHero({
   coverOverlay?: ReactNode;
   profileOverlay?: ReactNode;
 }) {
+  const t = await getTranslations("shop");
   return (
     <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border">
       {/* Cover */}
@@ -86,7 +88,7 @@ export function ShopHero({
               </span>
             </div>
           ) : (
-            <span className="text-xs text-muted">ยังไม่มีรีวิว</span>
+            <span className="text-xs text-muted">{t("noReviews")}</span>
           )}
         </div>
       </div>

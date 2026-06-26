@@ -86,11 +86,12 @@ checkboxes as items land.
   added to the allowlist. The billing **server** components are migrated too (`PromptPayQR` +
   `SuspensionBanner`/`PreExpiryBanner`/`PausedBanner` — converted to async server components using
   `getTranslations` + `t.rich` for the `<strong>` banner copy), so the whole **billing area is now
-  done**. **Shop namespace started:** `FeatureGrid` (the dashboard feature catalog) migrated into a
-  new `shop` namespace (async server component via `getTranslations`). **Remaining (incremental):**
-  the rest of the shop components (FeatureCarousel, StampTypesManager, ShopImages*, PauseShopControl,
-  etc.) and the admin components (~400 strings) — migrate page-by-page, adding each client namespace
-  to the allowlist. (Leave inline: use-case/action `{ error }`
+  done**. **Shop area done:** the entire `src/presentation/components/shop/` tree is migrated into a
+  `shop` namespace — dashboard (FeatureGrid/FeatureCarousel/OnboardingSuggestions), stamp/pause
+  settings, images/profile, customer list, QR poster, staff/branch forms, contact-admin, and the
+  public display components (ShopHero/ShopGallery/ShopDirectoryCard/ShopDetails, converted to async
+  server components). `shop` is in the client allowlist. **Remaining (incremental):** the admin
+  components (~250 strings) — migrate page-by-page into an `admin` namespace. (Leave inline: use-case/action `{ error }`
   strings, audit text, and `app/global-error.tsx` — it replaces the root layout/provider.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an

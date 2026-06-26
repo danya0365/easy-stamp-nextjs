@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { ScanLine, Stamp, Download, Printer } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/src/presentation/components/ui/Button";
 
@@ -15,6 +16,7 @@ export function ShopQrPoster({
   url: string;
   qrImageUrl: string;
 }) {
+  const t = useTranslations("shop");
   function download() {
     const a = document.createElement("a");
     a.href = qrImageUrl;
@@ -29,22 +31,22 @@ export function ShopQrPoster({
         id="shop-qr-poster"
         className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl bg-white p-8 text-center ring-1 ring-brand-100"
       >
-        <p className="text-sm font-medium text-brand-600">ร้านนี้สะสมแสตมป์</p>
+        <p className="text-sm font-medium text-brand-600">{t("qrTagline")}</p>
         <h2 className="text-2xl font-bold text-foreground">{shopName}</h2>
         <p className="inline-flex items-center gap-1.5 text-lg font-semibold text-brand-700">
           <Stamp className="size-5" />
-          ซื้อรับแสตมป์ที่ร้าน สะสมครบแลกฟรี
+          {t("qrSubtext")}
         </p>
         <img
           src={qrImageUrl}
-          alt={`QR ร้าน ${shopName}`}
+          alt={t("qrAlt", { name: shopName })}
           width={256}
           height={256}
           className="h-64 w-64 object-contain"
         />
         <p className="inline-flex items-center gap-1.5 text-sm text-muted">
           <ScanLine className="size-4" />
-          สแกนดูร้าน · ของรางวัล · เช็คแต้มสะสม
+          {t("qrScanHint")}
         </p>
         <p className="text-xs break-all text-muted">{url}</p>
       </div>
@@ -52,11 +54,11 @@ export function ShopQrPoster({
       <div className="flex justify-center gap-2 print:hidden">
         <Button variant="outline" onClick={download}>
           <Download className="size-4" />
-          ดาวน์โหลด PNG
+          {t("qrDownloadPng")}
         </Button>
         <Button onClick={() => window.print()}>
           <Printer className="size-4" />
-          พิมพ์ป้าย
+          {t("qrPrint")}
         </Button>
       </div>
     </div>

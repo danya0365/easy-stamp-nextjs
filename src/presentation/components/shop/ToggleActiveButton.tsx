@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   toggleBranchAction,
@@ -18,6 +19,7 @@ export function ToggleActiveButton({
   id: string;
   isActive: boolean;
 }) {
+  const t = useTranslations("shop");
   const [pending, start] = useTransition();
   const confirm = useConfirm();
 
@@ -31,14 +33,11 @@ export function ToggleActiveButton({
   async function onClick() {
     // Re-activating is safe; confirm only when turning something OFF.
     if (!isActive) return apply();
-    const label = kind === "branch" ? "สาขานี้" : "พนักงานคนนี้";
+    const label = kind === "branch" ? t("tglBranchTarget") : t("tglStaffTarget");
     const ok = await confirm({
-      title: "ปิดใช้งาน?",
-      message:
-        kind === "branch"
-          ? "ปิดใช้งานสาขานี้ — จะไม่ถูกใช้ในระบบจนกว่าจะเปิดอีกครั้ง"
-          : "ปิดใช้งานพนักงานคนนี้ — จะเข้าระบบไม่ได้จนกว่าจะเปิดอีกครั้ง",
-      confirmLabel: `ปิดใช้งาน${label}`,
+      title: t("tglConfirmTitle"),
+      message: kind === "branch" ? t("tglBranchMsg") : t("tglStaffMsg"),
+      confirmLabel: t("tglConfirmLabel", { target: label }),
       tone: "danger",
     });
     if (ok) apply();
@@ -56,7 +55,7 @@ export function ToggleActiveButton({
           : "bg-muted-surface text-muted hover:opacity-80",
       )}
     >
-      {isActive ? "ใช้งาน" : "ปิดอยู่"}
+      {isActive ? t("tglActive") : t("tglInactive")}
     </button>
   );
 }
