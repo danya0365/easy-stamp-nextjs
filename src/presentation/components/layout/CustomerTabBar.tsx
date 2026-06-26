@@ -3,42 +3,44 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Map, Store, Wallet, BookOpen, Info, type LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
 interface Tab {
   href: string;
-  label: string;
+  /** A `layout`-namespace message key (resolved with `t()`). */
+  label: "navMap" | "navMyCards" | "navShops" | "navTutorial" | "navAbout";
   icon: LucideIcon;
   /** Returns true when this tab should appear active for the given pathname. */
   active: (pathname: string) => boolean;
 }
 
 // Order = frequency of use: map is the discovery home; returning customers open
-// "บัตรของฉัน" most → keep it second; help/about are rarely used → last.
+// "my cards" most → keep it second; help/about are rarely used → last.
 const TABS: Tab[] = [
-  { href: "/", label: "แผนที่", icon: Map, active: (p) => p === "/" },
+  { href: "/", label: "navMap", icon: Map, active: (p) => p === "/" },
   {
     href: "/me",
-    label: "บัตรของฉัน",
+    label: "navMyCards",
     icon: Wallet,
     active: (p) => p === "/me" || p.startsWith("/me/"),
   },
   {
     href: "/shops",
-    label: "ร้านค้า",
+    label: "navShops",
     icon: Store,
     active: (p) => p.startsWith("/shops"),
   },
   {
     href: "/tutorial",
-    label: "วิธีใช้",
+    label: "navTutorial",
     icon: BookOpen,
     active: (p) => p.startsWith("/tutorial"),
   },
   {
     href: "/info",
-    label: "เกี่ยวกับ",
+    label: "navAbout",
     icon: Info,
     active: (p) => p.startsWith("/info"),
   },
@@ -46,6 +48,7 @@ const TABS: Tab[] = [
 
 /** Bottom navigation for customer-facing public pages. */
 export function CustomerTabBar() {
+  const t = useTranslations("layout");
   const pathname = usePathname();
 
   return (
@@ -67,7 +70,7 @@ export function CustomerTabBar() {
                 )}
               >
                 <Icon className="size-5" />
-                {tab.label}
+                {t(tab.label)}
               </Link>
             </li>
           );

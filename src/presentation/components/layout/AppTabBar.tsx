@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   BarChart3,
   Bell,
@@ -28,57 +29,81 @@ import {
 
 import { cn } from "@/src/presentation/components/ui/cn";
 
+/** A `layout`-namespace message key for a nav label (resolved with `t()`). */
+type NavLabelKey =
+  | "navStampStation"
+  | "navDashboard"
+  | "navCustomers"
+  | "navNotifications"
+  | "navRedemptions"
+  | "navAnalytics"
+  | "navReviews"
+  | "navBilling"
+  | "navQrPoster"
+  | "navPromote"
+  | "navBranches"
+  | "navStaff"
+  | "navSettings"
+  | "navSecurity"
+  | "navContactAdmin"
+  | "navOverview"
+  | "navShops"
+  | "navPayments"
+  | "navLeads"
+  | "navContacts";
+
 interface NavItem {
   href: string;
-  label: string;
+  label: NavLabelKey;
   icon: LucideIcon;
 }
 
 // Nav config lives in this client component because lucide icons are functions
 // and cannot be passed as props across the Server→Client boundary (same reason
-// CustomerTabBar hardcodes its tabs). Order = frequency of use: the first 4 links
-// are the always-visible primary tabs; the rest fold into the "เพิ่มเติม" sheet.
+// CustomerTabBar hardcodes its tabs). Labels are `layout` message keys, resolved
+// at render. Order = frequency of use: the first 4 links are the always-visible
+// primary tabs; the rest fold into the "more" sheet.
 const NAVS = {
   shop: [
     // Primary (daily): the stamp station is the core counter action.
-    { href: "/shop/stamps", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },
-    { href: "/shop", label: "แดชบอร์ด", icon: LayoutDashboard },
-    { href: "/shop/customers", label: "ลูกค้า", icon: Users },
-    { href: "/shop/notifications", label: "แจ้งเตือน", icon: Bell },
+    { href: "/shop/stamps", label: "navStampStation", icon: Stamp },
+    { href: "/shop", label: "navDashboard", icon: LayoutDashboard },
+    { href: "/shop/customers", label: "navCustomers", icon: Users },
+    { href: "/shop/notifications", label: "navNotifications", icon: Bell },
     // Overflow (periodic → setup → rare)
-    { href: "/shop/redemptions", label: "ประวัติแลกรางวัล", icon: History },
-    { href: "/shop/analytics", label: "สถิติ", icon: BarChart3 },
-    { href: "/shop/reviews", label: "รีวิว", icon: Star },
-    { href: "/shop/billing", label: "ชำระเงิน", icon: CreditCard },
-    { href: "/shop/qr", label: "ป้าย QR", icon: QrCode },
-    { href: "/shop/promote", label: "โปสเตอร์โปรโมท", icon: Megaphone },
-    { href: "/shop/branches", label: "สาขา", icon: Building2 },
-    { href: "/shop/staff", label: "พนักงาน", icon: UserCog },
-    { href: "/shop/settings", label: "ตั้งค่า", icon: Settings },
-    { href: "/shop/security", label: "ความปลอดภัย", icon: ShieldAlert },
-    { href: "/shop/contact", label: "ติดต่อผู้ดูแล", icon: LifeBuoy },
+    { href: "/shop/redemptions", label: "navRedemptions", icon: History },
+    { href: "/shop/analytics", label: "navAnalytics", icon: BarChart3 },
+    { href: "/shop/reviews", label: "navReviews", icon: Star },
+    { href: "/shop/billing", label: "navBilling", icon: CreditCard },
+    { href: "/shop/qr", label: "navQrPoster", icon: QrCode },
+    { href: "/shop/promote", label: "navPromote", icon: Megaphone },
+    { href: "/shop/branches", label: "navBranches", icon: Building2 },
+    { href: "/shop/staff", label: "navStaff", icon: UserCog },
+    { href: "/shop/settings", label: "navSettings", icon: Settings },
+    { href: "/shop/security", label: "navSecurity", icon: ShieldAlert },
+    { href: "/shop/contact", label: "navContactAdmin", icon: LifeBuoy },
   ],
   admin: [
     // Primary: shop management + payment-slip approval are the daily admin tasks.
-    { href: "/admin", label: "ภาพรวม", icon: LayoutDashboard },
-    { href: "/admin/shops", label: "ร้านค้า", icon: Store },
-    { href: "/admin/payments", label: "การชำระเงิน", icon: CreditCard },
-    { href: "/admin/leads", label: "ลีด", icon: MapPinned },
+    { href: "/admin", label: "navOverview", icon: LayoutDashboard },
+    { href: "/admin/shops", label: "navShops", icon: Store },
+    { href: "/admin/payments", label: "navPayments", icon: CreditCard },
+    { href: "/admin/leads", label: "navLeads", icon: MapPinned },
     // Overflow
-    { href: "/admin/notifications", label: "แจ้งเตือน", icon: Bell },
-    { href: "/admin/reviews", label: "รีวิว", icon: Star },
-    { href: "/admin/contacts", label: "ติดต่อ", icon: MessageSquare },
-    { href: "/admin/analytics", label: "สถิติ", icon: BarChart3 },
-    { href: "/admin/security", label: "ความปลอดภัย", icon: ShieldAlert },
+    { href: "/admin/notifications", label: "navNotifications", icon: Bell },
+    { href: "/admin/reviews", label: "navReviews", icon: Star },
+    { href: "/admin/contacts", label: "navContacts", icon: MessageSquare },
+    { href: "/admin/analytics", label: "navAnalytics", icon: BarChart3 },
+    { href: "/admin/security", label: "navSecurity", icon: ShieldAlert },
   ],
   staff: [
-    { href: "/staff", label: "เพิ่ม/แลกแสตมป์", icon: Stamp },
-    { href: "/staff/notifications", label: "แจ้งเตือน", icon: Bell },
-    { href: "/staff/settings", label: "ตั้งค่า", icon: Settings },
+    { href: "/staff", label: "navStampStation", icon: Stamp },
+    { href: "/staff/notifications", label: "navNotifications", icon: Bell },
+    { href: "/staff/settings", label: "navSettings", icon: Settings },
   ],
 } satisfies Record<string, NavItem[]>;
 
-/** Up to this many links render as plain tabs; beyond it, the overflow folds into "เพิ่มเติม". */
+/** Up to this many links render as plain tabs; beyond it, the overflow folds into the "more" sheet. */
 const MORE_THRESHOLD = 5;
 
 const TAB_CLASS =
@@ -102,9 +127,10 @@ function matchActiveHref(pathname: string, links: NavItem[]): string | null {
 /**
  * Bottom navigation for authenticated shells (shop / admin), shown on every
  * screen size — mirrors the customer-facing CustomerTabBar. Shows the first few
- * links as tabs; any extras collapse into a slide-up "เพิ่มเติม" sheet.
+ * links as tabs; any extras collapse into a slide-up "more" sheet.
  */
 export function AppTabBar({ nav }: { nav: keyof typeof NAVS }) {
+  const t = useTranslations("layout");
   const links: NavItem[] = NAVS[nav];
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -154,7 +180,7 @@ export function AppTabBar({ nav }: { nav: keyof typeof NAVS }) {
                   )}
                 >
                   <Icon className="size-5 shrink-0" />
-                  <span className="line-clamp-2">{link.label}</span>
+                  <span className="line-clamp-2">{t(link.label)}</span>
                 </Link>
               </li>
             );
@@ -174,7 +200,7 @@ export function AppTabBar({ nav }: { nav: keyof typeof NAVS }) {
                 )}
               >
                 <MoreHorizontal className="size-5 shrink-0" />
-                เพิ่มเติม
+                {t("navMore")}
               </button>
             </li>
           )}
@@ -195,6 +221,7 @@ function MoreSheet({
   items: NavItem[];
   activeHref: string | null;
 }) {
+  const t = useTranslations("layout");
   return (
     <div
       className={cn(
@@ -215,7 +242,7 @@ function MoreSheet({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="เมนูเพิ่มเติม"
+        aria-label={t("moreMenuAria")}
         className={cn(
           "absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-border bg-card shadow-lg transition-transform duration-200 ease-out",
           open ? "translate-y-0" : "translate-y-full",
@@ -223,7 +250,7 @@ function MoreSheet({
       >
         <div className="mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-surface" />
-          <p className="mb-2 px-1 text-xs font-medium text-muted">เพิ่มเติม</p>
+          <p className="mb-2 px-1 text-xs font-medium text-muted">{t("navMore")}</p>
           <ul className="flex flex-col">
             {items.map((item) => {
               const Icon = item.icon;
@@ -242,7 +269,7 @@ function MoreSheet({
                     )}
                   >
                     <Icon className="size-5 shrink-0" />
-                    {item.label}
+                    {t(item.label)}
                   </Link>
                 </li>
               );
