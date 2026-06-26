@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, ImagePlus, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   uploadShopImageAction,
@@ -30,14 +31,15 @@ const ASPECT_BY_KIND: Record<EditableKind, number> = {
   gallery: 1,
 };
 
-const KIND_LABEL: Record<EditableKind, string> = {
-  cover: "รูปปก",
-  profile: "รูปโปรไฟล์",
-  gallery: "รูปแกลเลอรี่",
+const KIND_KEY: Record<EditableKind, "imgKindCover" | "imgKindProfile" | "imgKindGallery"> = {
+  cover: "imgKindCover",
+  profile: "imgKindProfile",
+  gallery: "imgKindGallery",
 };
 
 /** Confirm + delete one image, then refresh the page. Shared by the dialog and gallery tiles. */
 function useDeleteImage() {
+  const t = useTranslations("shop");
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -46,9 +48,9 @@ function useDeleteImage() {
   const remove = (imageId: string, onDone?: () => void) =>
     void (async () => {
       const ok = await confirm({
-        title: "ลบรูปนี้?",
-        message: "รูปจะถูกลบออกจากหน้าร้านถาวร",
-        confirmLabel: "ลบรูป",
+        title: t("imgDeleteConfirmTitle"),
+        message: t("imgDeleteConfirmMessage"),
+        confirmLabel: t("imgDeleteConfirmLabel"),
         tone: "danger",
       });
       if (!ok) return;
@@ -57,7 +59,7 @@ function useDeleteImage() {
         if (res.error) {
           toast.error(res.error);
         } else {
-          toast.success("ลบรูปแล้ว");
+          toast.success(t("imgDeleted"));
           router.refresh();
           onDone?.();
         }
@@ -81,6 +83,7 @@ function UploadDialog({
   imageId?: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("shop");
   const router = useRouter();
   const [state, action, pending] = useActionState<FormState, FormData>(
     uploadShopImageAction,
@@ -104,14 +107,18 @@ function UploadDialog({
     <Modal
       open
       onClose={onClose}
-      title={imageId ? `เปลี่ยน${KIND_LABEL[kind]}` : `เพิ่ม${KIND_LABEL[kind]}`}
+      title={
+        imageId
+          ? t("imgChangeKind", { kind: t(KIND_KEY[kind]) })
+          : t("imgAddKind", { kind: t(KIND_KEY[kind]) })
+      }
     >
       <form action={action} className="flex flex-col gap-3">
         <input type="hidden" name="kind" value={kind} />
         <ImageCropField
           name="image"
           aspect={ASPECT_BY_KIND[kind]}
-          label="เลือกรูป"
+          label={t("imgChoosePhoto")}
           onReadyChange={setReady}
         />
         {state.error && <p className="text-sm text-error">{state.error}</p>}
@@ -125,17 +132,17 @@ function UploadDialog({
               onClick={() => remove(imageId, onClose)}
             >
               <Trash2 className="size-4" />
-              ลบรูป
+              {t("imgDeleteConfirmLabel")}
             </Button>
           ) : (
             <span />
           )}
           <div className="flex gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={onClose}>
-              ยกเลิก
+              {t("imgCancel")}
             </Button>
             <Button type="submit" size="sm" loading={pending} disabled={!ready}>
-              {pending ? "กำลังอัปโหลด…" : "บันทึก"}
+              {pending ? t("imgUploading") : t("imgSave")}
             </Button>
           </div>
         </div>
@@ -158,20 +165,25 @@ export function ShopImageEditButton({
   imageId?: string;
   className?: string;
 }) {
+  const t = useTranslations("shop");
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={imageId ? `เปลี่ยน${KIND_LABEL[kind]}` : `เพิ่ม${KIND_LABEL[kind]}`}
+        aria-label={
+          imageId
+            ? t("imgChangeKind", { kind: t(KIND_KEY[kind]) })
+            : t("imgAddKind", { kind: t(KIND_KEY[kind]) })
+        }
         className={cn(
           "inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white shadow-sm backdrop-blur transition hover:bg-black/70",
           className,
         )}
       >
         <Camera className="size-3.5" />
-        {imageId ? "เปลี่ยนรูป" : "เพิ่มรูป"}
+        {imageId ? t("imgChangePhoto") : t("imgAddPhoto")}
       </button>
       {open && (
         <UploadDialog kind={kind} imageId={imageId} onClose={() => setOpen(false)} />
@@ -181,20 +193,21 @@ export function ShopImageEditButton({
 }
 
 function GalleryTile({ image }: { image: ShopImage }) {
+  const t = useTranslations("shop");
   const { remove, pending } = useDeleteImage();
   return (
     <div className="relative">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={`/api/shop-images/${image.id}`}
-        alt="ภาพร้าน"
+        alt={t("imgGalleryAlt")}
         className="aspect-square w-full rounded-xl object-cover ring-1 ring-border"
       />
       <button
         type="button"
         disabled={pending}
         onClick={() => remove(image.id)}
-        aria-label="ลบรูป"
+        aria-label={t("imgDeleteAria")}
         className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white transition hover:bg-black/70 disabled:opacity-50"
       >
         <Trash2 className="size-3.5" />
@@ -204,6 +217,7 @@ function GalleryTile({ image }: { image: ShopImage }) {
 }
 
 function AddGalleryTile() {
+  const t = useTranslations("shop");
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -213,7 +227,7 @@ function AddGalleryTile() {
         className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border text-muted transition hover:border-brand-300 hover:text-brand-600"
       >
         <ImagePlus className="size-6" />
-        <span className="text-xs font-medium">เพิ่มรูป</span>
+        <span className="text-xs font-medium">{t("imgAddPhoto")}</span>
       </button>
       {open && <UploadDialog kind="gallery" onClose={() => setOpen(false)} />}
     </>
@@ -225,9 +239,10 @@ function AddGalleryTile() {
  * on each photo and an "add photo" tile (max 12 enforced by the use case).
  */
 export function EditableShopGallery({ images }: { images: ShopImage[] }) {
+  const t = useTranslations("shop");
   return (
     <Card>
-      <CardHeader title="ภาพร้าน" />
+      <CardHeader title={t("imgGalleryCardTitle")} />
       <div className="grid grid-cols-3 gap-2.5">
         {images.map((img) => (
           <GalleryTile key={img.id} image={img} />

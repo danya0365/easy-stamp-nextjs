@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   uploadShopImageAction,
@@ -31,6 +32,7 @@ function UploadForm({
   kind: "profile" | "gallery" | "cover";
   label: string;
 }) {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     uploadShopImageAction,
     {},
@@ -43,7 +45,7 @@ function UploadForm({
       <ImageCropField
         name="image"
         aspect={ASPECT_BY_KIND[kind]}
-        label="เลือกรูป"
+        label={t("imgChoosePhoto")}
         onReadyChange={setReady}
       />
       {state.error && <p className="text-sm text-error">{state.error}</p>}
@@ -55,13 +57,14 @@ function UploadForm({
         loading={pending}
         disabled={!ready}
       >
-        {pending ? "กำลังอัปโหลด…" : label}
+        {pending ? t("imgUploading") : label}
       </Button>
     </form>
   );
 }
 
 function DeleteButton({ imageId }: { imageId: string }) {
+  const t = useTranslations("shop");
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -69,9 +72,9 @@ function DeleteButton({ imageId }: { imageId: string }) {
   const [error, setError] = useState<string | null>(null);
   async function onClick() {
     const ok = await confirm({
-      title: "ลบรูปนี้?",
-      message: "รูปจะถูกลบออกจากหน้าร้านถาวร",
-      confirmLabel: "ลบรูป",
+      title: t("imgDeleteConfirmTitle"),
+      message: t("imgDeleteConfirmMessage"),
+      confirmLabel: t("imgDeleteConfirmLabel"),
       tone: "danger",
     });
     if (!ok) return;
@@ -81,7 +84,7 @@ function DeleteButton({ imageId }: { imageId: string }) {
         setError(res.error);
         toast.error(res.error);
       } else {
-        toast.success("ลบรูปแล้ว");
+        toast.success(t("imgDeleted"));
         router.refresh();
       }
     });
@@ -92,8 +95,8 @@ function DeleteButton({ imageId }: { imageId: string }) {
       disabled={pending}
       onClick={onClick}
       className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70 disabled:opacity-50"
-      aria-label="ลบรูป"
-      title={error ?? "ลบรูป"}
+      aria-label={t("imgDeleteAria")}
+      title={error ?? t("imgDeleteAria")}
     >
       <Trash2 className="size-3.5" />
     </button>
@@ -101,6 +104,7 @@ function DeleteButton({ imageId }: { imageId: string }) {
 }
 
 export function ShopImagesManager({ images }: { images: ShopImage[] }) {
+  const t = useTranslations("shop");
   const cover = images.find((i) => i.kind === "cover") ?? null;
   const profile = images.find((i) => i.kind === "profile") ?? null;
   const gallery = images.filter((i) => i.kind === "gallery");
@@ -109,48 +113,48 @@ export function ShopImagesManager({ images }: { images: ShopImage[] }) {
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <p className="text-sm font-medium text-foreground">
-          รูปปก (Cover) — แบนเนอร์กว้างบนหน้าร้าน
+          {t("imgCoverSectionTitle")}
         </p>
         {cover ? (
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/api/shop-images/${cover.id}`}
-              alt="รูปปกร้าน"
+              alt={t("imgCoverAlt")}
               className="h-32 w-full rounded-xl border border-border object-cover"
             />
             <DeleteButton imageId={cover.id} />
           </div>
         ) : (
-          <p className="text-xs text-muted">ยังไม่มีรูปปก</p>
+          <p className="text-xs text-muted">{t("imgNoCover")}</p>
         )}
         <UploadForm
           kind="cover"
-          label={cover ? "เปลี่ยนรูปปก" : "อัปโหลดรูปปก"}
+          label={cover ? t("imgChangeCover") : t("imgUploadCover")}
         />
       </section>
 
       <section className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-foreground">รูปโปรไฟล์ร้าน</p>
+        <p className="text-sm font-medium text-foreground">{t("imgProfileSectionTitle")}</p>
         {profile ? (
           <div className="relative w-28">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/api/shop-images/${profile.id}`}
-              alt="โปรไฟล์ร้าน"
+              alt={t("imgProfileAlt")}
               className="h-28 w-28 rounded-2xl border border-border object-cover"
             />
             <DeleteButton imageId={profile.id} />
           </div>
         ) : (
-          <p className="text-xs text-muted">ยังไม่มีรูปโปรไฟล์</p>
+          <p className="text-xs text-muted">{t("imgNoProfile")}</p>
         )}
-        <UploadForm kind="profile" label={profile ? "เปลี่ยนรูปโปรไฟล์" : "อัปโหลดรูปโปรไฟล์"} />
+        <UploadForm kind="profile" label={profile ? t("imgChangeProfile") : t("imgUploadProfile")} />
       </section>
 
       <section className="flex flex-col gap-3">
         <p className="text-sm font-medium text-foreground">
-          แกลเลอรี่ ({gallery.length})
+          {t("imgGallerySectionTitle", { count: gallery.length })}
         </p>
         {gallery.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
@@ -159,7 +163,7 @@ export function ShopImagesManager({ images }: { images: ShopImage[] }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/api/shop-images/${img.id}`}
-                  alt="ภาพร้าน"
+                  alt={t("imgGalleryAlt")}
                   className="aspect-square w-full rounded-lg border border-border object-cover"
                 />
                 <DeleteButton imageId={img.id} />
@@ -167,7 +171,7 @@ export function ShopImagesManager({ images }: { images: ShopImage[] }) {
             ))}
           </div>
         )}
-        <UploadForm kind="gallery" label="เพิ่มรูปแกลเลอรี่" />
+        <UploadForm kind="gallery" label={t("imgAddGallery")} />
       </section>
     </div>
   );

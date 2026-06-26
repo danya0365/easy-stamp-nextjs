@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   updateShopProfileAction,
@@ -14,6 +15,7 @@ import { FormField } from "@/src/presentation/components/ui/FormField";
 import { useActionToast } from "@/src/presentation/hooks/useActionToast";
 
 export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateShopProfileAction,
     {},
@@ -22,30 +24,30 @@ export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
 
   return (
     <form action={action} className="flex flex-col gap-4">
-      <FormField label="เกี่ยวกับร้าน" htmlFor="description">
+      <FormField label={t("profAbout")} htmlFor="description">
         <Textarea
           id="description"
           name="description"
           rows={4}
           maxLength={2000}
-          placeholder="แนะนำร้าน จุดเด่น เมนูแนะนำ ฯลฯ"
+          placeholder={t("profAboutPlaceholder")}
           defaultValue={profile?.description ?? ""}
         />
       </FormField>
 
-      <FormField label="เวลาทำการ" htmlFor="openingHours">
+      <FormField label={t("profHours")} htmlFor="openingHours">
         <Textarea
           id="openingHours"
           name="openingHours"
           rows={2}
           maxLength={500}
-          placeholder="เช่น จ–ศ 8:00–18:00 · ส–อา 9:00–17:00"
+          placeholder={t("profHoursPlaceholder")}
           defaultValue={profile?.openingHours ?? ""}
         />
       </FormField>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="เบอร์โทร" htmlFor="phone">
+        <FormField label={t("profPhone")} htmlFor="phone">
           <Input
             id="phone"
             name="phone"
@@ -53,7 +55,7 @@ export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
             defaultValue={profile?.phone ?? ""}
           />
         </FormField>
-        <FormField label="ลิงก์ LINE" htmlFor="lineUrl">
+        <FormField label={t("profLineUrl")} htmlFor="lineUrl">
           <Input
             id="lineUrl"
             name="lineUrl"
@@ -77,7 +79,7 @@ export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
             defaultValue={profile?.instagramUrl ?? ""}
           />
         </FormField>
-        <FormField label="เว็บไซต์" htmlFor="websiteUrl">
+        <FormField label={t("profWebsite")} htmlFor="websiteUrl">
           <Input
             id="websiteUrl"
             name="websiteUrl"
@@ -91,7 +93,7 @@ export function ShopProfileForm({ profile }: { profile: ShopProfile | null }) {
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" loading={pending}>
-        {pending ? "กำลังบันทึก…" : "บันทึก"}
+        {pending ? t("profSaving") : t("profSave")}
       </Button>
     </form>
   );
