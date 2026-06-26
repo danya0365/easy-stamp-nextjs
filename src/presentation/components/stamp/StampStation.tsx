@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   Camera,
   Plus,
@@ -65,6 +66,7 @@ export function StampStation({
   const [bindError, setBindError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const toast = useToast();
+  const t = useTranslations("stamp");
 
   const digits = query.replace(/\D/g, "");
   const q = query.trim().toLowerCase();
@@ -197,7 +199,7 @@ export function StampStation({
   }
 
   const view = result?.view;
-  const redeemable = view?.types.filter((t) => t.eligibleToRedeem) ?? [];
+  const redeemable = view?.types.filter((pt) => pt.eligibleToRedeem) ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -207,16 +209,16 @@ export function StampStation({
           {stampTypes.length > 1 && (
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">
-                ประเภทแสตมป์
+                {t("stampType")}
               </label>
               <div className="flex flex-wrap gap-2">
-                {stampTypes.map((t) => {
-                  const active = t.id === typeId;
+                {stampTypes.map((st) => {
+                  const active = st.id === typeId;
                   return (
                     <button
-                      key={t.id}
+                      key={st.id}
                       type="button"
-                      onClick={() => setTypeId(t.id)}
+                      onClick={() => setTypeId(st.id)}
                       aria-pressed={active}
                       className={cn(
                         "rounded-full border px-3 py-1.5 text-sm transition",
@@ -225,7 +227,7 @@ export function StampStation({
                           : "border-border text-muted hover:text-foreground",
                       )}
                     >
-                      {t.name}
+                      {st.name}
                     </button>
                   );
                 })}
@@ -235,14 +237,14 @@ export function StampStation({
 
           {/* Combobox: type phone or name → suggestions with quick +1 */}
           <label className="text-sm font-medium text-foreground">
-            ค้นหาลูกค้า (เบอร์ หรือ ชื่อ)
+            {t("searchCustomer")}
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
                 type="text"
                 inputMode="tel"
-                placeholder="พิมพ์เบอร์ หรือ ชื่อลูกค้า"
+                placeholder={t("searchPlaceholder")}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -285,7 +287,7 @@ export function StampStation({
                         onClick={() => quickAdd(c)}
                         disabled={pending || !typeId}
                         className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-500 px-3 py-1.5 text-sm font-medium text-on-brand transition hover:bg-brand-600 disabled:opacity-60"
-                        title="เพิ่ม 1 แสตมป์ทันที"
+                        title={t("quickAddTitle")}
                       >
                         <Plus className="size-4" />1
                       </button>
@@ -300,7 +302,7 @@ export function StampStation({
                         className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-brand-700 hover:bg-muted-surface"
                       >
                         <UserPlus className="size-4" />
-                        เพิ่มลูกค้าใหม่: {digits}
+                        {t("addNewCustomer", { digits })}
                       </button>
                     </li>
                   )}
@@ -311,16 +313,14 @@ export function StampStation({
               variant="accent"
               onClick={() => setScanOpen(true)}
               disabled={pending}
-              title="สแกน QR ส่วนตัวลูกค้า"
+              title={t("scanTitle")}
             >
               <Camera className="size-4" />
-              สแกน
+              {t("scan")}
             </Button>
           </div>
           {open && q.length > 0 && matches.length === 0 && !canCreate && (
-            <p className="text-xs text-muted">
-              ไม่พบลูกค้า — พิมพ์เบอร์ให้ครบเพื่อเพิ่มลูกค้าใหม่
-            </p>
+            <p className="text-xs text-muted">{t("noCustomerFound")}</p>
           )}
         </div>
       </Card>
@@ -334,7 +334,7 @@ export function StampStation({
               {name && <p className="text-xs text-muted">{phone}</p>}
               {isNew && (
                 <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-600">
-                  <Sparkles className="size-3.5" /> ลูกค้าใหม่ — กด «เพิ่มแสตมป์» เพื่อสร้างบัตร
+                  <Sparkles className="size-3.5" /> {t("newCustomerHint")}
                 </p>
               )}
             </div>
@@ -344,13 +344,13 @@ export function StampStation({
               className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
             >
               <X className="size-3.5" />
-              เปลี่ยน
+              {t("change")}
             </button>
           </div>
 
           {isNew && (
             <Input
-              placeholder="ชื่อลูกค้า (ไม่บังคับ)"
+              placeholder={t("customerNamePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -366,7 +366,7 @@ export function StampStation({
                 onClick={() => setQuantity((n) => Math.max(1, n - 1))}
                 disabled={pending || quantity <= 1}
                 className="flex size-9 items-center justify-center text-muted hover:text-foreground disabled:opacity-40"
-                aria-label="ลดจำนวน"
+                aria-label={t("decreaseQty")}
               >
                 <Minus className="size-4" />
               </button>
@@ -378,7 +378,7 @@ export function StampStation({
                 onClick={() => setQuantity((n) => Math.min(50, n + 1))}
                 disabled={pending || quantity >= 50}
                 className="flex size-9 items-center justify-center text-muted hover:text-foreground disabled:opacity-40"
-                aria-label="เพิ่มจำนวน"
+                aria-label={t("increaseQty")}
               >
                 <Plus className="size-4" />
               </button>
@@ -389,7 +389,7 @@ export function StampStation({
               loading={pending}
               disabled={!typeId}
             >
-              <Plus className="size-4" /> เพิ่ม {quantity} แสตมป์
+              <Plus className="size-4" /> {t("addStamps", { quantity })}
             </Button>
           </div>
 
@@ -402,14 +402,14 @@ export function StampStation({
               disabled={pending}
             >
               <Gift className="size-4" />
-              แลกรางวัล: {p.type.name} (ใช้ {p.type.threshold} ดวง)
+              {t("redeemReward", { name: p.type.name, threshold: p.type.threshold })}
             </Button>
           ))}
 
           {view && (
             <Button variant="outline" fullWidth onClick={openBind} disabled={pending}>
               <Smartphone className="size-4" />
-              ออก QR ผูกบัตร (ให้ลูกค้าสแกนดูแต้มเอง)
+              {t("issueBindQr")}
             </Button>
           )}
         </Card>
@@ -418,8 +418,8 @@ export function StampStation({
       {!phone && (
         <EmptyState
           icon={<Sparkles />}
-          title="เริ่มแจกแสตมป์"
-          description="พิมพ์เบอร์/ชื่อแล้วแตะ «+1» ที่รายชื่อ หรือสแกน QR ของลูกค้า"
+          title={t("stationEmptyTitle")}
+          description={t("stationEmptyDesc")}
         />
       )}
 
@@ -435,7 +435,7 @@ export function StampStation({
           setBindImg(null);
           setBindError(null);
         }}
-        title="QR ผูกบัตรลูกค้า"
+        title={t("bindModalTitle")}
       >
         {bindError ? (
           <p className="text-sm text-error">{bindError}</p>
@@ -445,15 +445,13 @@ export function StampStation({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={bindImg}
-                alt="QR ผูกบัตร"
+                alt={t("bindQrAlt")}
                 width={224}
                 height={224}
                 className="h-56 w-56 object-contain"
               />
             )}
-            <p className="text-center text-sm text-muted">
-              ให้ลูกค้าสแกนด้วยกล้องมือถือภายใน 5 นาที เพื่อผูกบัตรกับเครื่องตัวเอง
-            </p>
+            <p className="text-center text-sm text-muted">{t("bindModalHint")}</p>
           </div>
         )}
       </Modal>

@@ -1,4 +1,5 @@
 import { Store, Gift, PartyPopper } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type {
   CustomerCardView,
   StampTypeProgress,
@@ -15,6 +16,7 @@ function TypeProgress({
   p: StampTypeProgress;
   dotSize: "sm" | "md" | "lg";
 }) {
+  const t = useTranslations("stamp");
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-card p-3 ring-1 ring-border">
       <div className="flex items-center gap-2">
@@ -29,11 +31,14 @@ function TypeProgress({
         {p.eligibleToRedeem ? (
           <Badge tone="success">
             <PartyPopper className="size-3.5" />
-            ครบ แลกได้
+            {t("readyToRedeem")}
           </Badge>
         ) : (
           <Badge tone="brand">
-            {p.currentStamps} / {p.type.threshold} ดวง
+            {t("progressBadge", {
+              current: p.currentStamps,
+              threshold: p.type.threshold,
+            })}
           </Badge>
         )}
       </div>
@@ -49,14 +54,19 @@ function TypeProgress({
         <span>
           {p.eligibleToRedeem ? (
             <>
-              แลกรับ{" "}
+              {t("redeemGet")}{" "}
               <strong className="text-brand-700">
-                {p.type.rewardText || "ของรางวัล"}
+                {p.type.rewardText || t("defaultReward")}
               </strong>
             </>
           ) : (
             <>
-              อีก <strong className="text-brand-700">{p.remaining}</strong> ดวง
+              {t.rich("remainingStamps", {
+                remaining: p.remaining,
+                b: (chunks) => (
+                  <strong className="text-brand-700">{chunks}</strong>
+                ),
+              })}
               {p.type.rewardText ? (
                 <span className="text-muted"> · {p.type.rewardText}</span>
               ) : null}
@@ -79,6 +89,7 @@ export function CardBalance({
   shopName?: string;
   dotSize?: "sm" | "md" | "lg";
 }) {
+  const t = useTranslations("stamp");
   const { customer, types } = view;
   const customerLabel = customer.displayName || formatPhone(customer.phone);
   const title = shopName ?? customerLabel;
@@ -101,7 +112,7 @@ export function CardBalance({
       </div>
 
       {types.length === 0 ? (
-        <p className="text-sm text-muted">ร้านนี้ยังไม่ได้ตั้งค่าประเภทแสตมป์</p>
+        <p className="text-sm text-muted">{t("noStampTypes")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {types.map((p) => (

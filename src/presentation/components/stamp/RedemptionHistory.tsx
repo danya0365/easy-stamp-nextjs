@@ -1,4 +1,5 @@
 import { Gift } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "../ui/Badge";
 import { EmptyState } from "../ui/EmptyState";
@@ -15,12 +16,13 @@ export function RedemptionRow({
   item: RedemptionItem;
   showCustomer?: boolean;
 }) {
+  const t = useTranslations("stamp");
   return (
     <li className="flex items-start justify-between gap-3 py-3">
       <div className="min-w-0">
         <p className="flex items-center gap-1.5 truncate font-medium text-foreground">
           <Gift className="size-4 shrink-0 text-brand-500" />
-          {r.rewardTextSnapshot || "ของรางวัล"}
+          {r.rewardTextSnapshot || t("defaultReward")}
         </p>
         <p className="mt-0.5 text-xs text-muted">
           {showCustomer && r.customerLabel ? `${r.customerLabel} · ` : ""}
@@ -28,7 +30,7 @@ export function RedemptionRow({
           {r.branchLabel ? ` · ${r.branchLabel}` : ""}
         </p>
       </div>
-      <Badge tone="neutral">−{r.stampsSpent} ดวง</Badge>
+      <Badge tone="neutral">{t("stampsSpent", { count: r.stampsSpent })}</Badge>
     </li>
   );
 }
@@ -44,12 +46,13 @@ export function RedemptionHistory({
   items: RedemptionItem[];
   showCustomer?: boolean;
 }) {
+  const t = useTranslations("stamp");
   if (items.length === 0) {
     return (
       <EmptyState
         icon={<Gift />}
-        title="ยังไม่มีประวัติการแลกรางวัล"
-        description="เมื่อมีการแลกของรางวัล รายการจะแสดงที่นี่"
+        title={t("noRedemptionsTitle")}
+        description={t("noRedemptionsDesc")}
       />
     );
   }

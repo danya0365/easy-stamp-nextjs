@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 
@@ -8,14 +10,15 @@ import { Button } from "@/src/presentation/components/ui/Button";
 export function PhoneLookupForm({
   action,
   defaultPhone = "",
-  placeholder = "เบอร์โทรลูกค้า เช่น 0812345678",
-  submitLabel = "ค้นหา",
+  placeholder,
+  submitLabel,
 }: {
   action: string;
   defaultPhone?: string;
   placeholder?: string;
   submitLabel?: string;
 }) {
+  const t = useTranslations("stamp");
   return (
     <form action={action} method="get" className="flex gap-2">
       <Input
@@ -24,10 +27,10 @@ export function PhoneLookupForm({
         inputMode="numeric"
         autoComplete="tel"
         defaultValue={defaultPhone}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t("lookupPlaceholder")}
         required
       />
-      <Button type="submit">{submitLabel}</Button>
+      <Button type="submit">{submitLabel ?? t("lookupSubmit")}</Button>
     </form>
   );
 }
