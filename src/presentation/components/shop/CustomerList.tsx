@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
@@ -17,6 +18,7 @@ import type { CustomerRow } from "@/src/application/use-cases/stamp/AnnotateCust
 
 /** Per-customer PDPA tools: download their data, or erase (anonymize) it. */
 function RowActions({ customerId }: { customerId: string }) {
+  const t = useTranslations("shop");
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -25,17 +27,16 @@ function RowActions({ customerId }: { customerId: string }) {
   function erase() {
     start(async () => {
       const ok = await confirm({
-        title: "ลบข้อมูลลูกค้า (PDPA)?",
-        message:
-          "จะลบข้อมูลส่วนตัว (เบอร์/ชื่อ/QR) ของลูกค้ารายนี้อย่างถาวร — แต้มสะสมจะยังอยู่แบบไม่ระบุตัวตน · ย้อนกลับไม่ได้",
-        confirmLabel: "ลบข้อมูล",
+        title: t("custEraseConfirmTitle"),
+        message: t("custEraseConfirmMessage"),
+        confirmLabel: t("custEraseConfirmLabel"),
         tone: "danger",
       });
       if (!ok) return;
       const res = await anonymizeCustomerAction(customerId);
       if (res.error) toast.error(res.error);
       else {
-        toast.success("ลบข้อมูลลูกค้าแล้ว");
+        toast.success(t("custEraseSuccess"));
         router.refresh();
       }
     });
@@ -46,8 +47,8 @@ function RowActions({ customerId }: { customerId: string }) {
       <a
         href={`/api/shop/customers/${customerId}/data-export`}
         download
-        aria-label="ดาวน์โหลดข้อมูลลูกค้า (PDPA)"
-        title="ดาวน์โหลดข้อมูลลูกค้า (PDPA)"
+        aria-label={t("custDownloadAria")}
+        title={t("custDownloadAria")}
         className="inline-flex size-8 items-center justify-center rounded-lg text-muted transition hover:bg-muted-surface hover:text-foreground"
       >
         <Download className="size-4" />
@@ -56,8 +57,8 @@ function RowActions({ customerId }: { customerId: string }) {
         type="button"
         onClick={erase}
         disabled={pending}
-        aria-label="ลบข้อมูลลูกค้า (PDPA)"
-        title="ลบข้อมูลลูกค้า (PDPA)"
+        aria-label={t("custEraseAria")}
+        title={t("custEraseAria")}
         className="inline-flex size-8 items-center justify-center rounded-lg text-muted transition hover:bg-muted-surface hover:text-error disabled:opacity-50"
       >
         <Trash2 className="size-4" />
@@ -76,6 +77,7 @@ export function CustomerList({
   initialCursor: string | null;
   search: string;
 }) {
+  const t = useTranslations("shop");
   return (
     <LoadMore
       initialItems={initialItems}
@@ -90,7 +92,8 @@ export function CustomerList({
           <span className="flex shrink-0 items-center gap-2">
             {eligible > 0 && (
               <Badge tone="success">
-                ครบ แลกได้{eligible > 1 ? ` ${eligible} ประเภท` : ""}
+                {t("custEligible")}
+                {eligible > 1 ? t("custEligibleTypes", { count: eligible }) : ""}
               </Badge>
             )}
             <RowActions customerId={customer.id} />

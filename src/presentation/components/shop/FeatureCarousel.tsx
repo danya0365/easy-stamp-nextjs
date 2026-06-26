@@ -12,6 +12,7 @@ import {
   QrCode,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Slide = {
   icon: LucideIcon;
@@ -21,45 +22,47 @@ type Slide = {
   badge?: string;
 };
 
-/** Curated highlights to promote — not every feature (that's FeatureGrid). */
-const SLIDES: Slide[] = [
-  {
-    icon: PauseCircle,
-    title: "ปิดร้านชั่วคราวได้แล้ว",
-    description: "ปิดช่วงหยุดยาว/ปรับปรุงร้าน วันใช้งานที่เหลือไม่ถูกหัก",
-    href: "/shop/settings",
-    badge: "ใหม่",
-  },
-  {
-    icon: MessageCircle,
-    title: "เชื่อม LINE กับร้าน",
-    description: "รับแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP ไม่ต้องใช้รหัสผ่าน",
-    href: "/shop/settings",
-  },
-  {
-    icon: BarChart3,
-    title: "ดูสถิติร้านของคุณ",
-    description: "ยอดแสตมป์ ลูกค้าใหม่ และอัตราการแลกรางวัล",
-    href: "/shop/analytics",
-  },
-  {
-    icon: QrCode,
-    title: "ป้าย QR หน้าร้าน",
-    description: "พิมพ์ติดหน้าร้านให้ลูกค้าสแกนสมัครและสะสมแสตมป์เองได้",
-    href: "/shop/qr",
-  },
-];
-
 const INTERVAL_MS = 5000;
-const count = SLIDES.length;
+const SLIDE_COUNT = 4;
 
 /**
  * Auto-sliding highlights banner. Pauses on hover/focus, exposes manual
  * arrows + dots, and respects prefers-reduced-motion (no auto-advance).
  */
 export function FeatureCarousel() {
+  const t = useTranslations("shop");
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  // Curated highlights to promote — not every feature (that's FeatureGrid).
+  const SLIDES: Slide[] = [
+    {
+      icon: PauseCircle,
+      title: t("carShopPauseTitle"),
+      description: t("carShopPauseDesc"),
+      href: "/shop/settings",
+      badge: t("carBadgeNew"),
+    },
+    {
+      icon: MessageCircle,
+      title: t("carLineTitle"),
+      description: t("carLineDesc"),
+      href: "/shop/settings",
+    },
+    {
+      icon: BarChart3,
+      title: t("carAnalyticsTitle"),
+      description: t("carAnalyticsDesc"),
+      href: "/shop/analytics",
+    },
+    {
+      icon: QrCode,
+      title: t("carQrTitle"),
+      description: t("carQrDesc"),
+      href: "/shop/qr",
+    },
+  ];
+  const count = SLIDE_COUNT;
 
   useEffect(() => {
     if (paused) return;
@@ -78,7 +81,7 @@ export function FeatureCarousel() {
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
       aria-roledescription="carousel"
-      aria-label="ไฮไลต์ฟีเจอร์"
+      aria-label={t("carAriaLabel")}
     >
       <div
         className="flex transition-transform duration-500 ease-out"
@@ -108,7 +111,7 @@ export function FeatureCarousel() {
                   {s.description}
                 </span>
                 <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-on-brand/15 px-3 py-1 text-xs font-medium">
-                  ดูเลย
+                  {t("carViewNow")}
                   <ArrowRight className="size-3.5" />
                 </span>
               </span>
@@ -119,7 +122,7 @@ export function FeatureCarousel() {
 
       <button
         type="button"
-        aria-label="สไลด์ก่อนหน้า"
+        aria-label={t("carPrev")}
         onClick={() => go(index - 1)}
         className="absolute left-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-on-brand/15 text-on-brand transition hover:bg-on-brand/25"
       >
@@ -127,7 +130,7 @@ export function FeatureCarousel() {
       </button>
       <button
         type="button"
-        aria-label="สไลด์ถัดไป"
+        aria-label={t("carNext")}
         onClick={() => go(index + 1)}
         className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full bg-on-brand/15 text-on-brand transition hover:bg-on-brand/25"
       >
@@ -139,7 +142,7 @@ export function FeatureCarousel() {
           <button
             key={s.title}
             type="button"
-            aria-label={`ไปสไลด์ที่ ${i + 1}`}
+            aria-label={t("carGoTo", { n: i + 1 })}
             aria-current={i === index}
             onClick={() => go(i)}
             className={`size-1.5 rounded-full transition ${

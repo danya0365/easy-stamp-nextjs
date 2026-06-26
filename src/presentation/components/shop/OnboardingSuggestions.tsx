@@ -11,6 +11,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { Badge } from "@/src/presentation/components/ui/Badge";
@@ -45,14 +46,15 @@ export function OnboardingSuggestions({
   hasCustomers: boolean;
   hasStaff: boolean;
 }) {
+  const t = useTranslations("shop");
   const all: Item[] = [];
   if (!rewardConfigured) {
     all.push({
       key: "reward",
       icon: Gift,
       iconClassName: "bg-brand-100 text-brand-700",
-      title: "ตั้งค่าประเภทแสตมป์และของรางวัล",
-      description: "กำหนดจำนวนดวงที่ครบและของรางวัลที่ลูกค้าจะได้รับ",
+      title: t("obRewardTitle"),
+      description: t("obRewardDesc"),
       href: "/shop/settings",
     });
   }
@@ -62,8 +64,8 @@ export function OnboardingSuggestions({
       icon: MessageCircle,
       // eslint-disable-next-line no-restricted-syntax -- #06C755 is LINE's official brand color
       iconClassName: "bg-[#06C755]/10 text-[#06C755]",
-      title: "เชื่อม LINE",
-      description: "รับแจ้งเตือนผลอนุมัติชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP",
+      title: t("obLineTitle"),
+      description: t("obLineDesc"),
       href: "/shop/settings",
     });
   }
@@ -72,8 +74,8 @@ export function OnboardingSuggestions({
       key: "qr",
       icon: QrCode,
       iconClassName: "bg-brand-100 text-brand-700",
-      title: "พิมพ์ป้าย QR ติดหน้าร้าน",
-      description: "ให้ลูกค้าสแกนสมัครและสะสมแสตมป์ได้เองโดยไม่ต้องพกบัตร",
+      title: t("obQrTitle"),
+      description: t("obQrDesc"),
       href: "/shop/qr",
     });
   }
@@ -82,8 +84,8 @@ export function OnboardingSuggestions({
       key: "staff",
       icon: UserCog,
       iconClassName: "bg-brand-100 text-brand-700",
-      title: "เพิ่มพนักงาน",
-      description: "ให้พนักงานช่วยกดแสตมป์/แลกรางวัลที่เคาน์เตอร์ได้",
+      title: t("obStaffTitle"),
+      description: t("obStaffDesc"),
       href: "/shop/staff",
     });
   }
@@ -105,9 +107,9 @@ export function OnboardingSuggestions({
   return (
     <Card>
       <CardHeader
-        title="เริ่มต้นใช้งาน"
-        subtitle={`ทำให้ครบเพื่อใช้ ${BRAND.name} ได้เต็มที่`}
-        action={<Badge tone="brand">เหลือ {visible.length} ข้อ</Badge>}
+        title={t("obTitle")}
+        subtitle={t("obSubtitle", { brand: BRAND.name })}
+        action={<Badge tone="brand">{t("obRemaining", { count: visible.length })}</Badge>}
       />
       <ul className="flex flex-col divide-y divide-border">
         {visible.map((item) => {
@@ -136,7 +138,7 @@ export function OnboardingSuggestions({
               <button
                 type="button"
                 onClick={() => dismiss(shopId, item.key)}
-                aria-label="ปิดคำแนะนำนี้"
+                aria-label={t("obDismiss")}
                 className="grid size-8 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-muted-surface hover:text-foreground"
               >
                 <X className="size-4" />
