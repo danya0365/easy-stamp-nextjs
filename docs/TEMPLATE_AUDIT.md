@@ -90,8 +90,11 @@ checkboxes as items land.
   `shop` namespace — dashboard (FeatureGrid/FeatureCarousel/OnboardingSuggestions), stamp/pause
   settings, images/profile, customer list, QR poster, staff/branch forms, contact-admin, and the
   public display components (ShopHero/ShopGallery/ShopDirectoryCard/ShopDetails, converted to async
-  server components). `shop` is in the client allowlist. **Remaining (incremental):** the admin
-  components (~250 strings) — migrate page-by-page into an `admin` namespace. (Leave inline: use-case/action `{ error }`
+  server components). `shop` is in the client allowlist. **Admin area done too:** the entire
+  `src/presentation/components/admin/` tree is migrated into an `admin` namespace (audit timeline,
+  shop/payment/2FA controls, create-shop + credentials-handoff forms, contact inbox, impersonation
+  banner). **Remaining (incremental):** inline strings still living in `app/**` page files (headings,
+  empty states) and a few smaller component areas (notifications/reviews/leads) — migrate as touched. (Leave inline: use-case/action `{ error }`
   strings, audit text, and `app/global-error.tsx` — it replaces the root layout/provider.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an

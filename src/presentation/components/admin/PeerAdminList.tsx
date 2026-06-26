@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ShieldCheck, ShieldOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { useConfirm } from "@/src/presentation/components/ui/ConfirmDialog";
@@ -22,6 +23,7 @@ export function PeerAdminList({
   admins: AdminRow[];
   currentAdminId: string;
 }) {
+  const t = useTranslations("admin");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [resetIds, setResetIds] = useState<Set<string>>(new Set());
@@ -30,9 +32,9 @@ export function PeerAdminList({
 
   async function reset(a: AdminRow) {
     const ok = await confirm({
-      title: "รีเซ็ต 2FA?",
-      message: `รีเซ็ต 2FA ของ ${a.email} — เขาจะต้องตั้งค่าใหม่ตอนเข้าระบบครั้งหน้า`,
-      confirmLabel: "รีเซ็ต 2FA",
+      title: t("palResetConfirmTitle"),
+      message: t("palResetConfirmMessage", { email: a.email }),
+      confirmLabel: t("palResetConfirmLabel"),
       tone: "danger",
     });
     if (!ok) return;
@@ -44,7 +46,7 @@ export function PeerAdminList({
         toast.error(res.error);
       } else {
         setResetIds((prev) => new Set(prev).add(a.id));
-        toast.success("รีเซ็ต 2FA แล้ว");
+        toast.success(t("palResetSuccess"));
       }
     });
   }
@@ -64,15 +66,15 @@ export function PeerAdminList({
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium text-foreground">
                   {a.email}
-                  {isSelf && <span className="ml-1 text-xs text-muted">(คุณ)</span>}
+                  {isSelf && <span className="ml-1 text-xs text-muted">{t("palYou")}</span>}
                 </span>
                 {enabled ? (
                   <span className="flex items-center gap-1 text-xs text-success">
-                    <ShieldCheck className="size-3.5" /> เปิด 2FA
+                    <ShieldCheck className="size-3.5" /> {t("pal2faOn")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-xs text-muted">
-                    <ShieldOff className="size-3.5" /> ยังไม่เปิด 2FA
+                    <ShieldOff className="size-3.5" /> {t("pal2faOff")}
                   </span>
                 )}
               </span>
@@ -83,17 +85,20 @@ export function PeerAdminList({
                   onClick={() => reset(a)}
                   className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:text-error disabled:opacity-60"
                 >
-                  รีเซ็ต 2FA
+                  {t("palReset2fa")}
                 </button>
               )}
-              {wasReset && <Badge tone="warning">รีเซ็ตแล้ว</Badge>}
+              {wasReset && <Badge tone="warning">{t("palWasReset")}</Badge>}
             </li>
           );
         })}
       </ul>
       {error && <p className="text-sm text-error">{error}</p>}
       <p className="text-xs text-muted">
-        รีเซ็ต 2FA ของตัวเองทำที่นี่ไม่ได้ — ใช้ <code>npm run reset-2fa &lt;email&gt;</code> (break-glass)
+        {t.rich("palSelfHint", {
+          email: "<email>",
+          code: (chunks) => <code>{chunks}</code>,
+        })}
       </p>
     </div>
   );
