@@ -9,6 +9,7 @@ import {
   useTransition,
   type ChangeEvent,
 } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   submitSlipAction,
@@ -31,9 +32,12 @@ import { satangToBaht } from "@/src/presentation/lib/money";
 
 type Selection = { kind: "preset"; id: string } | { kind: "custom" };
 
-const BADGE_LABEL: Record<NonNullable<(typeof TOPUP_PRESETS)[number]["badge"]>, string> = {
-  popular: "ยอดนิยม",
-  best_value: "คุ้มที่สุด",
+const BADGE_KEY: Record<
+  NonNullable<(typeof TOPUP_PRESETS)[number]["badge"]>,
+  "badgePopular" | "badgeBestValue"
+> = {
+  popular: "badgePopular",
+  best_value: "badgeBestValue",
 };
 
 export function TopupForm({
@@ -41,6 +45,7 @@ export function TopupForm({
 }: {
   pricePerDaySatang: number;
 }) {
+  const t = useTranslations("billing");
   const [selection, setSelection] = useState<Selection>({
     kind: "preset",
     id: "d180",
@@ -74,7 +79,7 @@ export function TopupForm({
       return;
     }
     setCompressing(true);
-    setSlipNote("กำลังย่อรูป…");
+    setSlipNote(t("compressing"));
     try {
       const { default: imageCompression } = await import(
         "browser-image-compression"
@@ -92,7 +97,7 @@ export function TopupForm({
       const dt = new DataTransfer();
       dt.items.add(named);
       if (slipRef.current) slipRef.current.files = dt.files;
-      setSlipNote(`พร้อมส่ง: ${Math.round(named.size / 1024)} KB`);
+      setSlipNote(t("slipReady", { kb: Math.round(named.size / 1024) }));
     } catch {
       // Couldn't process (e.g. unsupported format) — send the original as-is.
       setSlipNote(null);
@@ -151,9 +156,7 @@ export function TopupForm({
       {promoOn && (
         <div className="rounded-2xl bg-accent-500 px-4 py-3 text-white">
           <p className="text-sm font-bold">🎉 {TOPUP_PROMO.label}</p>
-          <p className="text-xs opacity-90">
-            ราคาพิเศษช่วงแนะนำ — เติมแพ็กยาววันนี้คุ้มสุด
-          </p>
+          <p className="text-xs opacity-90">{t("promoSubtitle")}</p>
         </div>
       )}
 
@@ -176,19 +179,19 @@ export function TopupForm({
             >
               {q.promoPercentOff > 0 ? (
                 <span className="absolute -top-2 right-2 rounded-full bg-accent-500 px-2 py-0.5 text-[10px] font-medium text-white">
-                  ลด {q.promoPercentOff}%
+                  {t("discountPercent", { pct: q.promoPercentOff })}
                 </span>
               ) : (
                 p.badge && (
                   <span className="absolute -top-2 right-2 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-medium text-on-brand">
-                    {BADGE_LABEL[p.badge]}
+                    {t(BADGE_KEY[p.badge])}
                   </span>
                 )
               )}
               <span className="text-base font-bold text-foreground">{p.label}</span>
               {p.bonusDays > 0 ? (
                 <span className="text-xs font-medium text-success">
-                  + แถม {p.bonusDays} วัน
+                  {t("presetBonus", { days: p.bonusDays })}
                 </span>
               ) : (
                 <span className="text-xs text-muted">&nbsp;</span>
@@ -204,7 +207,7 @@ export function TopupForm({
                 </span>
               </span>
               {q.promoPercentOff === 0 && pct > 0 && (
-                <span className="text-xs text-brand-600">ประหยัด {pct}%</span>
+                <span className="text-xs text-brand-600">{t("savePercent", { pct })}</span>
               )}
             </button>
           );
@@ -222,7 +225,7 @@ export function TopupForm({
         }`}
       >
         <span className="text-sm font-medium text-foreground">
-          เติมวันอิสระ (ใส่จำนวนวันเอง)
+          {t("customDaysTitle")}
         </span>
         <div className="flex items-center gap-2">
           <input
@@ -237,11 +240,9 @@ export function TopupForm({
             onClick={(e) => e.stopPropagation()}
             className="w-28 rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
           />
-          <span className="text-sm text-muted">วัน</span>
+          <span className="text-sm text-muted">{t("daysUnit")}</span>
         </div>
-        <span className="text-xs text-muted">
-          เติม 90 วัน+ แถม 7 วัน · 150 วัน+ แถม 30 วัน · 365 วัน+ แถม 45 วัน
-        </span>
+        <span className="text-xs text-muted">{t("customDaysHint")}</span>
       </button>
 
       {/* Live preview */}
@@ -250,18 +251,21 @@ export function TopupForm({
       ) : preview ? (
         <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-muted">รวมที่จะได้รับ</span>
+            <span className="text-sm text-muted">{t("totalReceived")}</span>
             <span className="text-lg font-bold text-foreground">
-              {preview.totalDays} วัน
+              {t("daysValue", { days: preview.totalDays })}
             </span>
           </div>
           {preview.bonusDays > 0 && (
             <p className="text-xs text-success">
-              ({preview.baseDays} วัน + แถม {preview.bonusDays} วัน)
+              {t("baseBonusBreakdown", {
+                base: preview.baseDays,
+                bonus: preview.bonusDays,
+              })}
             </p>
           )}
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-sm text-muted">ยอดชำระ</span>
+            <span className="text-sm text-muted">{t("amountDue")}</span>
             <span className="flex items-baseline gap-2">
               {preview.promoPercentOff > 0 && (
                 <span className="text-sm text-muted line-through">
@@ -275,12 +279,12 @@ export function TopupForm({
           </div>
           {preview.promoPercentOff > 0 ? (
             <p className="mt-1 text-right text-xs font-medium text-accent-600">
-              ราคาโปรเปิดตัว (ลด {preview.promoPercentOff}%)
+              {t("promoLaunchPrice", { pct: preview.promoPercentOff })}
             </p>
           ) : (
             savings > 0 && (
               <p className="mt-1 text-right text-xs font-medium text-brand-600">
-                คุ้มกว่าเติมรายเดือน ~{savings}%
+                {t("cheaperThanMonthly", { pct: savings })}
               </p>
             )
           )}
@@ -299,11 +303,11 @@ export function TopupForm({
 
           <div className="flex w-full flex-col items-center gap-2 rounded-2xl bg-muted-surface p-4">
             <span className="text-sm font-medium text-brand-700">
-              สแกนจ่ายผ่าน PromptPay
+              {t("scanPromptPay")}
             </span>
             {qrPending || !qr ? (
               <div className="flex h-52 w-52 items-center justify-center rounded-xl bg-card text-sm text-muted">
-                {qrError ?? "กำลังสร้าง QR…"}
+                {qrError ?? t("generatingQr")}
               </div>
             ) : (
               <>
@@ -319,22 +323,20 @@ export function TopupForm({
                 </p>
                 {qr.promoPercentOff > 0 && (
                   <p className="text-xs text-muted">
-                    ราคาปกติ{" "}
+                    {t("normalPrice")}{" "}
                     <span className="line-through">
                       ฿{satangToBaht(qr.fullAmountSatang)}
                     </span>{" "}
-                    · ลด {qr.promoPercentOff}%
+                    · {t("discountPercent", { pct: qr.promoPercentOff })}
                   </p>
                 )}
-                <p className="text-xs text-muted">พร้อมเพย์: {qr.target}</p>
+                <p className="text-xs text-muted">{t("promptpayTarget", { target: qr.target })}</p>
               </>
             )}
           </div>
 
           <div className="w-full">
-            <p className="mb-2 text-sm text-muted">
-              โอนแล้วแนบสลิปเพื่อให้ผู้ดูแลตรวจสอบและเติมวันให้
-            </p>
+            <p className="mb-2 text-sm text-muted">{t("transferThenAttach")}</p>
             <input
               ref={slipRef}
               type="file"
@@ -357,10 +359,10 @@ export function TopupForm({
               className="mt-3 w-full"
             >
               {pending
-                ? "กำลังส่ง…"
+                ? t("submitting")
                 : compressing
-                  ? "กำลังย่อรูป…"
-                  : "ส่งสลิปการชำระเงิน"}
+                  ? t("compressing")
+                  : t("submitSlip")}
             </Button>
           </div>
         </form>

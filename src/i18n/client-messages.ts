@@ -20,5 +20,6 @@ export async function getClientMessages() {
     common: messages.common,
     error: messages.error,
     auth: messages.auth,
+    billing: messages.billing,
   };
 }

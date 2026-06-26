@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { Payment, PaymentStatus } from "@/src/domain/entities";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
@@ -9,14 +11,18 @@ import { loadMorePaymentsAction } from "@/src/presentation/actions/billing-actio
 
 const PAYMENT_BADGE: Record<
   PaymentStatus,
-  { tone: "warning" | "success" | "danger"; label: string }
+  {
+    tone: "warning" | "success" | "danger";
+    key: "statusPending" | "statusApproved" | "statusRejected";
+  }
 > = {
-  pending: { tone: "warning", label: "รอตรวจสอบ" },
-  approved: { tone: "success", label: "อนุมัติแล้ว" },
-  rejected: { tone: "danger", label: "ปฏิเสธ" },
+  pending: { tone: "warning", key: "statusPending" },
+  approved: { tone: "success", key: "statusApproved" },
+  rejected: { tone: "danger", key: "statusRejected" },
 };
 
 function PaymentRow({ p }: { p: Payment }) {
+  const t = useTranslations("billing");
   const badge = PAYMENT_BADGE[p.status];
   const totalDays = p.daysToAdd + p.bonusDays;
   return (
@@ -25,15 +31,16 @@ function PaymentRow({ p }: { p: Payment }) {
         <p className="text-foreground">
           ฿{satangToBaht(p.amountSatang)} ·{" "}
           <span className="text-muted">
-            {totalDays} วัน{p.bonusDays > 0 ? ` (แถม ${p.bonusDays})` : ""}
+            {t("daysValue", { days: totalDays })}
+            {p.bonusDays > 0 ? ` ${t("bonusShort", { bonus: p.bonusDays })}` : ""}
           </span>
         </p>
         <p className="text-xs text-muted">{formatDate(p.createdAt)}</p>
         {p.status === "rejected" && p.rejectReason && (
-          <p className="text-xs text-error">เหตุผล: {p.rejectReason}</p>
+          <p className="text-xs text-error">{t("rejectReason", { reason: p.rejectReason })}</p>
         )}
       </div>
-      <Badge tone={badge.tone}>{badge.label}</Badge>
+      <Badge tone={badge.tone}>{t(badge.key)}</Badge>
     </li>
   );
 }
