@@ -371,5 +371,26 @@
     "schGenerating": "กำลังสร้าง…",
     "schDownloadPng": "ดาวน์โหลด PNG",
     "schPrint": "พิมพ์"
+  },
+  "reviews": {
+    "unhide": "เลิกซ่อน",
+    "hide": "ซ่อน",
+    "hiddenBadge": "ซ่อนอยู่",
+    "replyPlaceholder": "ตอบกลับรีวิวนี้…",
+    "saving": "กำลังบันทึก…",
+    "editReply": "แก้ไขคำตอบ",
+    "reply": "ตอบกลับ",
+    "hiddenByAdmin": "ถูกซ่อนโดยผู้ดูแล",
+    "editYours": "แก้ไขรีวิวของคุณ",
+    "rateShop": "ให้คะแนนร้านนี้",
+    "commentPlaceholder": "เล่าประสบการณ์ของคุณ (ไม่บังคับ)",
+    "submitting": "กำลังส่ง…",
+    "saveReview": "บันทึกรีวิว",
+    "submitReview": "ส่งรีวิว",
+    "ownerReplied": "ร้านตอบกลับ",
+    "sectionTitle": "รีวิว",
+    "summary": "{avg} จาก {count} รีวิว",
+    "noReviews": "ยังไม่มีรีวิว",
+    "bindToReview": "ผูกบัตรสมาชิกกับร้านนี้ (สแกน QR ที่ร้าน) เพื่อรีวิว"
   }
 }

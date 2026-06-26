@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   submitReviewAction,
@@ -20,6 +21,7 @@ export function ReviewForm({
   slug: string;
   existing: ShopReview | null;
 }) {
+  const t = useTranslations("reviews");
   const [state, action, pending] = useActionState<ReviewFormState, FormData>(
     submitReviewAction,
     {},
@@ -30,20 +32,20 @@ export function ReviewForm({
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="slug" value={slug} />
       <p className="text-sm font-medium text-foreground">
-        {existing ? "แก้ไขรีวิวของคุณ" : "ให้คะแนนร้านนี้"}
+        {existing ? t("editYours") : t("rateShop")}
       </p>
       <StarRatingInput defaultValue={existing?.rating ?? 0} />
       <Textarea
         name="comment"
         rows={3}
         maxLength={1000}
-        placeholder="เล่าประสบการณ์ของคุณ (ไม่บังคับ)"
+        placeholder={t("commentPlaceholder")}
         defaultValue={existing?.comment ?? ""}
       />
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
       <Button type="submit" size="sm" loading={pending}>
-        {pending ? "กำลังส่ง…" : existing ? "บันทึกรีวิว" : "ส่งรีวิว"}
+        {pending ? t("submitting") : existing ? t("saveReview") : t("submitReview")}
       </Button>
     </form>
   );

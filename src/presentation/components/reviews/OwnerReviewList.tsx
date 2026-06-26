@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   replyToReviewAction,
@@ -15,6 +16,7 @@ import { Button } from "@/src/presentation/components/ui/Button";
 import { ReviewItem } from "./ReviewItem";
 
 function ReplyBox({ review }: { review: ShopReview }) {
+  const t = useTranslations("reviews");
   const [state, action, pending] = useActionState<FormState, FormData>(
     replyToReviewAction,
     {},
@@ -27,13 +29,13 @@ function ReplyBox({ review }: { review: ShopReview }) {
         rows={2}
         maxLength={1000}
         defaultValue={review.ownerReply ?? ""}
-        placeholder="ตอบกลับรีวิวนี้…"
+        placeholder={t("replyPlaceholder")}
       />
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
       <div>
         <Button type="submit" size="sm" variant="outline" disabled={pending}>
-          {pending ? "กำลังบันทึก…" : review.ownerReply ? "แก้ไขคำตอบ" : "ตอบกลับ"}
+          {pending ? t("saving") : review.ownerReply ? t("editReply") : t("reply")}
         </Button>
       </div>
     </form>
@@ -41,13 +43,14 @@ function ReplyBox({ review }: { review: ShopReview }) {
 }
 
 function OwnerReviewItem({ review }: { review: ShopReview }) {
+  const t = useTranslations("reviews");
   return (
     <ReviewItem
       review={review}
       actions={
         <>
           {review.isHidden && (
-            <Badge tone="danger">ถูกซ่อนโดยผู้ดูแล</Badge>
+            <Badge tone="danger">{t("hiddenByAdmin")}</Badge>
           )}
           <ReplyBox review={review} />
         </>

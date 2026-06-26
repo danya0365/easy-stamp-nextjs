@@ -1,4 +1,5 @@
 import { MessageSquare } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import type { Page } from "@/src/application/repositories/pagination";
 import type { ReviewSummary, ShopReview } from "@/src/domain/entities";
@@ -12,7 +13,7 @@ import { PublicReviewList } from "./PublicReviewList";
  * Public reviews block: average summary, the review form (bound members only),
  * and the paginated list.
  */
-export function ShopReviewsSection({
+export async function ShopReviewsSection({
   slug,
   shopId,
   summary,
@@ -27,14 +28,15 @@ export function ShopReviewsSection({
   myReview: ShopReview | null;
   canReview: boolean;
 }) {
+  const t = await getTranslations("reviews");
   return (
     <Card>
       <CardHeader
-        title="รีวิว"
+        title={t("sectionTitle")}
         subtitle={
           summary.count > 0
-            ? `${summary.average.toFixed(1)} จาก ${summary.count} รีวิว`
-            : "ยังไม่มีรีวิว"
+            ? t("summary", { avg: summary.average.toFixed(1), count: summary.count })
+            : t("noReviews")
         }
         action={
           summary.count > 0 ? (
@@ -48,13 +50,11 @@ export function ShopReviewsSection({
           <ReviewForm slug={slug} existing={myReview} />
         </div>
       ) : (
-        <p className="mb-4 text-xs text-muted">
-          ผูกบัตรสมาชิกกับร้านนี้ (สแกน QR ที่ร้าน) เพื่อรีวิว
-        </p>
+        <p className="mb-4 text-xs text-muted">{t("bindToReview")}</p>
       )}
 
       {initial.items.length === 0 ? (
-        <EmptyState icon={<MessageSquare />} title="ยังไม่มีรีวิว" />
+        <EmptyState icon={<MessageSquare />} title={t("noReviews")} />
       ) : (
         <PublicReviewList
           shopId={shopId}
