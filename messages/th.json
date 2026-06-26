@@ -547,5 +547,17 @@
     "logout": "ออกจากระบบ",
     "notificationsAria": "การแจ้งเตือน",
     "notificationsAriaUnread": "การแจ้งเตือน ({count} ใหม่)"
+  },
+  "map": {
+    "noPinnedShops": "ยังไม่มีร้านค้าที่ปักหมุดตำแหน่ง",
+    "viewShopReviews": "ดูร้าน & รีวิว",
+    "editLocation": "แก้ไขตำแหน่งบนแผนที่",
+    "setLocation": "ตั้งตำแหน่งบนแผนที่",
+    "tapToPin": "แตะบนแผนที่เพื่อปักหมุด หรือลากหมุดเพื่อปรับตำแหน่ง",
+    "locating": "กำลังหาตำแหน่ง…",
+    "addressPlaceholderOptional": "ที่อยู่ / จุดสังเกต (ไม่บังคับ)",
+    "notPinned": "ยังไม่ได้ปักหมุด",
+    "clearPin": "ล้างหมุด",
+    "saveLocation": "บันทึกตำแหน่ง"
   }
 }

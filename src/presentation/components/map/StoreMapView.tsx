@@ -8,6 +8,7 @@ import Map, {
   GeolocateControl,
 } from "react-map-gl/maplibre";
 import { ArrowRight, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { ShopMapLocation } from "@/src/application/repositories/IBranchRepository";
@@ -26,6 +27,7 @@ export default function StoreMapView({
 }: {
   locations: MapShopLocation[];
 }) {
+  const t = useTranslations("map");
   const [active, setActive] = useState<MapShopLocation | null>(null);
 
   const bounds = boundsOf(locations);
@@ -114,7 +116,7 @@ export default function StoreMapView({
               href={`/s/${active.shopSlug}`}
               className="mt-2.5 flex items-center justify-center gap-1 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-on-brand transition hover:bg-brand-600"
             >
-              ดูร้าน &amp; รีวิว
+              {t("viewShopReviews")}
               <ArrowRight className="size-3.5" />
             </a>
           </div>

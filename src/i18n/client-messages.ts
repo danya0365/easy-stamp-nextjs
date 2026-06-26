@@ -27,5 +27,6 @@ export async function getClientMessages() {
     stamp: messages.stamp,
     leads: messages.leads,
     layout: messages.layout,
+    map: messages.map,
   };
 }
