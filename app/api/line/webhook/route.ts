@@ -12,6 +12,20 @@ export const dynamic = "force-dynamic";
 
 const REPLY_ENDPOINT = "https://api.line.me/v2/bot/message/reply";
 
+/**
+ * True for a unique-constraint violation. Drizzle wraps the driver error as
+ * "Failed query: …", so the "UNIQUE constraint failed" text lives on the cause
+ * chain, not the top-level message — walk it rather than testing `e.message`.
+ */
+function isUniqueViolation(e: unknown): boolean {
+  let cur: unknown = e;
+  for (let i = 0; i < 5 && cur instanceof Error; i++) {
+    if (/UNIQUE/i.test(cur.message)) return true;
+    cur = (cur as { cause?: unknown }).cause;
+  }
+  return false;
+}
+
 function verifySignature(secret: string, raw: string, signature: string | null) {
   if (!signature) return false;
   const expected = createHmac("sha256", secret).update(raw).digest("base64");
@@ -103,7 +117,7 @@ export async function POST(req: Request) {
       if (event.replyToken) {
         // Only the unique-constraint case means "already linked elsewhere";
         // anything else is a generic error (don't leak linkage state).
-        const alreadyLinked = /UNIQUE/i.test((e as Error)?.message ?? "");
+        const alreadyLinked = isUniqueViolation(e);
         await reply(
           config.channelAccessToken,
           event.replyToken,
