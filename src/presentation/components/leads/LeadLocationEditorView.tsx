@@ -7,6 +7,7 @@ import Map, {
   type MapRef,
 } from "react-map-gl/maplibre";
 import { LocateFixed, MapPin, Navigation } from "lucide-react";
+import { useTranslations } from "next-intl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
@@ -30,6 +31,8 @@ export default function LeadLocationEditorView({
   longitude,
   address,
 }: Props) {
+  const t = useTranslations("leads");
+  const tc = useTranslations("common");
   const [pos, setPos] = useState<{ lng: number; lat: number } | null>(
     latitude !== null && longitude !== null
       ? { lng: longitude, lat: latitude }
@@ -45,7 +48,7 @@ export default function LeadLocationEditorView({
 
   function detectCurrentLocation() {
     if (!navigator.geolocation) {
-      setGeoError("อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง");
+      setGeoError(tc("geoUnsupported"));
       return;
     }
     setLocating(true);
@@ -61,8 +64,8 @@ export default function LeadLocationEditorView({
       (err) => {
         setGeoError(
           err.code === err.PERMISSION_DENIED
-            ? "กรุณาอนุญาตให้เข้าถึงตำแหน่งในเบราว์เซอร์"
-            : "ระบุตำแหน่งไม่สำเร็จ ลองใหม่อีกครั้ง",
+            ? tc("geoPermissionDenied")
+            : tc("geoFailed"),
         );
         setLocating(false);
       },
@@ -77,9 +80,7 @@ export default function LeadLocationEditorView({
   return (
     <form action={action} className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted">
-          แตะบนแผนที่เพื่อปักหมุด หรือลากหมุดเพื่อปรับตำแหน่ง
-        </p>
+        <p className="text-xs text-muted">{t("tapToPin")}</p>
         <Button
           type="button"
           variant="outline"
@@ -88,7 +89,7 @@ export default function LeadLocationEditorView({
           disabled={locating}
         >
           <LocateFixed size={14} />
-          {locating ? "กำลังหาตำแหน่ง…" : "ตำแหน่งปัจจุบัน"}
+          {locating ? t("locating") : tc("currentLocation")}
         </Button>
       </div>
       {geoError && <p className="text-xs text-error">{geoError}</p>}
@@ -128,7 +129,7 @@ export default function LeadLocationEditorView({
 
       <Input
         name="address"
-        placeholder="ที่อยู่ / จุดสังเกต (ไม่บังคับ)"
+        placeholder={t("addressPlaceholderOptional")}
         defaultValue={address ?? ""}
         maxLength={200}
       />
@@ -137,7 +138,7 @@ export default function LeadLocationEditorView({
         <span className="text-xs text-muted">
           {pos
             ? `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`
-            : "ยังไม่ได้ปักหมุด"}
+            : t("notPinned")}
         </span>
         <div className="flex gap-2">
           {pos && (
@@ -148,7 +149,7 @@ export default function LeadLocationEditorView({
             >
               <Button type="button" variant="outline" size="sm">
                 <Navigation size={14} />
-                นำทาง
+                {tc("navigate")}
               </Button>
             </a>
           )}
@@ -159,11 +160,11 @@ export default function LeadLocationEditorView({
               size="sm"
               onClick={() => setPos(null)}
             >
-              ล้างหมุด
+              {t("clearPin")}
             </Button>
           )}
           <Button type="submit" size="sm" disabled={pending}>
-            บันทึกตำแหน่ง
+            {t("saveLocation")}
           </Button>
         </div>
       </div>

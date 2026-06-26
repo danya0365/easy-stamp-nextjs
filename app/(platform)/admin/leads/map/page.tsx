@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { LeadMap } from "@/src/presentation/components/leads/LeadMap";
 import {
-  LEAD_STATUS_LABEL,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_ORDER,
   LEAD_STATUS_PIN,
 } from "@/src/presentation/lib/lead-display";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLeadsMapPage() {
   await requireRole("platform_admin");
+  const t = await getTranslations("leads");
   const locations = await container.leadRepository.listMapLocations();
 
   return (
@@ -37,7 +39,7 @@ export default async function AdminLeadsMapPage() {
               className="inline-block size-3 rounded-full"
               style={{ backgroundColor: LEAD_STATUS_PIN[s] }}
             />
-            {LEAD_STATUS_LABEL[s]}
+            {t(LEAD_STATUS_KEY[s])}
           </span>
         ))}
       </div>

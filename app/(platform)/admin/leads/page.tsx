@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPinned, Map as MapIcon, Plus } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -10,7 +11,7 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { LeadList } from "@/src/presentation/components/leads/LeadList";
 import type { LeadRow } from "@/src/presentation/actions/lead-actions";
 import {
-  LEAD_STATUS_LABEL,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_ORDER,
 } from "@/src/presentation/lib/lead-display";
 import { cn } from "@/src/presentation/components/ui/cn";
@@ -29,6 +30,7 @@ export default async function AdminLeadsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   await requireRole("platform_admin");
+  const t = await getTranslations("leads");
   const { status: statusParam } = await searchParams;
   const status = parseStatus(statusParam);
 
@@ -46,7 +48,7 @@ export default async function AdminLeadsPage({
 
   const filters: { value: LeadStatus | null; label: string }[] = [
     { value: null, label: "ทั้งหมด" },
-    ...LEAD_STATUS_ORDER.map((s) => ({ value: s, label: LEAD_STATUS_LABEL[s] })),
+    ...LEAD_STATUS_ORDER.map((s) => ({ value: s, label: t(LEAD_STATUS_KEY[s]) })),
   ];
 
   return (

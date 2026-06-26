@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   updateLeadAction,
@@ -22,6 +23,7 @@ export function LeadEditForm({
   lead: Lead;
   categories: { id: string; name: string }[];
 }) {
+  const t = useTranslations("leads");
   const [state, action, pending] = useActionState<LeadFormState, FormData>(
     updateLeadAction,
     {},
@@ -31,10 +33,10 @@ export function LeadEditForm({
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="leadId" value={lead.id} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="ชื่อร้าน" htmlFor="name">
+        <FormField label={t("shopName")} htmlFor="name">
           <Input id="name" name="name" defaultValue={lead.name} required />
         </FormField>
-        <FormField label="เบอร์โทร" htmlFor="phone">
+        <FormField label={t("phone")} htmlFor="phone">
           <Input
             id="phone"
             name="phone"
@@ -42,14 +44,14 @@ export function LeadEditForm({
             defaultValue={lead.phone ?? ""}
           />
         </FormField>
-        <FormField label="หมวดหมู่ร้าน" htmlFor="categoryId">
+        <FormField label={t("category")} htmlFor="categoryId">
           <select
             id="categoryId"
             name="categoryId"
             defaultValue={lead.categoryId ?? ""}
             className={SELECT_CLASS}
           >
-            <option value="">— ไม่ระบุ —</option>
+            <option value="">{t("categoryNone")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -57,7 +59,7 @@ export function LeadEditForm({
             ))}
           </select>
         </FormField>
-        <FormField label="นัดติดตามครั้งหน้า" htmlFor="nextFollowUpAt">
+        <FormField label={t("nextFollowUp")} htmlFor="nextFollowUpAt">
           <Input
             id="nextFollowUpAt"
             name="nextFollowUpAt"
@@ -67,7 +69,7 @@ export function LeadEditForm({
         </FormField>
       </div>
 
-      <FormField label="โน้ต" htmlFor="notes">
+      <FormField label={t("notes")} htmlFor="notes">
         <Textarea
           id="notes"
           name="notes"
@@ -80,7 +82,7 @@ export function LeadEditForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังบันทึก…" : "บันทึก"}
+        {pending ? t("saving") : t("save")}
       </Button>
     </form>
   );

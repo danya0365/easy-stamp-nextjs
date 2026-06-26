@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   addLeadVisitLogAction,
@@ -11,9 +12,9 @@ import { Textarea } from "@/src/presentation/components/ui/Textarea";
 import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
 import {
-  LEAD_REACTION_LABEL,
+  LEAD_REACTION_KEY,
   LEAD_REACTION_ORDER,
-  LEAD_STATUS_LABEL,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_ORDER,
 } from "@/src/presentation/lib/lead-display";
 
@@ -27,6 +28,7 @@ export function AddVisitLogForm({
   leadId: string;
   currentStatus: LeadStatus;
 }) {
+  const t = useTranslations("leads");
   const [state, action, pending] = useActionState<LeadFormState, FormData>(
     addLeadVisitLogAction,
     {},
@@ -36,35 +38,35 @@ export function AddVisitLogForm({
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="leadId" value={leadId} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="ปฏิกิริยา" htmlFor="reaction">
+        <FormField label={t("reaction")} htmlFor="reaction">
           <select id="reaction" name="reaction" className={SELECT_CLASS} required>
             {LEAD_REACTION_ORDER.map((r) => (
               <option key={r} value={r}>
-                {LEAD_REACTION_LABEL[r]}
+                {t(LEAD_REACTION_KEY[r])}
               </option>
             ))}
           </select>
         </FormField>
-        <FormField label="อัปเดตสถานะเป็น (ไม่บังคับ)" htmlFor="advanceTo">
+        <FormField label={t("advanceTo")} htmlFor="advanceTo">
           <select id="advanceTo" name="advanceTo" className={SELECT_CLASS}>
-            <option value="">— คงสถานะเดิม —</option>
+            <option value="">{t("keepStatus")}</option>
             {LEAD_STATUS_ORDER.filter(
               (s) => s !== "won" && s !== "lost" && s !== currentStatus,
             ).map((s) => (
               <option key={s} value={s}>
-                {LEAD_STATUS_LABEL[s]}
+                {t(LEAD_STATUS_KEY[s])}
               </option>
             ))}
           </select>
         </FormField>
       </div>
 
-      <FormField label="บันทึก" htmlFor="note">
+      <FormField label={t("noteLabel")} htmlFor="note">
         <Textarea
           id="note"
           name="note"
           rows={2}
-          placeholder="คุยกับใคร ได้ข้อมูลอะไร ติดขัดตรงไหน…"
+          placeholder={t("notePlaceholder")}
         />
       </FormField>
 
@@ -72,7 +74,7 @@ export function AddVisitLogForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "กำลังบันทึก…" : "บันทึกการเข้าพบ"}
+        {pending ? t("saving") : t("saveVisit")}
       </Button>
     </form>
   );

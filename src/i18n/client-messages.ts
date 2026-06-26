@@ -25,5 +25,6 @@ export async function getClientMessages() {
     admin: messages.admin,
     reviews: messages.reviews,
     stamp: messages.stamp,
+    leads: messages.leads,
   };
 }
