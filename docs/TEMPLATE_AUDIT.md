@@ -77,9 +77,13 @@ checkboxes as items land.
   type-safe keys via `global.d.ts`. Pilot-migrated `app/not-found.tsx` (server: `getTranslations`)
   and `app/error.tsx` (client: `useTranslations`). **Client bundle is scoped** — only namespaces in
   `src/i18n/client-messages.ts` reach the browser; server components translate via `getTranslations`
-  at zero client cost (per Next's i18n guide). **Remaining (incremental):** move the rest of the
-  hardcoded Thai strings into the catalog page-by-page. (`app/global-error.tsx` can't use it — it
-  replaces the root layout/provider — so it stays literal.)
+  at zero client cost (per Next's i18n guide). **First app slice migrated:** the shared-UI
+  components into an expanded `common` namespace (`LoadMore`, `ConfirmDialog`, `ImageCropField`) and
+  the login surface into a new `auth` namespace (`LoginForm` incl. an ICU rich-text line, `DeviceList`,
+  `ChangePasswordForm`); `auth` added to the `client-messages.ts` allowlist. **Remaining
+  (incremental):** the bulk of shop/admin/billing components (~500 strings) — migrate page-by-page
+  into per-area namespaces, adding each to the allowlist. (Leave inline: use-case/action `{ error }`
+  strings, audit text, and `app/global-error.tsx` — it replaces the root layout/provider.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.
@@ -104,8 +108,13 @@ checkboxes as items land.
   stubbing `next/headers`·`next/cache`·`next/navigation` with `mock.module` (runner now passes
   `--experimental-test-module-mocks`) and seeding a real session row; covers the auth matrix
   (owner / cross-shop / admin-impersonation w/ audit accountability / admin-without-impersonation /
-  unauthenticated). Pattern documented in TESTING.md. **Remaining:** apply per route as touched
-  (LINE webhook, auth actions).
+  unauthenticated). Pattern documented in TESTING.md. **Now covered:** the **LINE webhook**
+  (`app/api/line/webhook/route.test.ts` — HMAC signature, link-code success/lowercase/unknown,
+  non-code chat, already-bound conflict, follow event; the test also surfaced + fixed a bug where the
+  "already linked elsewhere" reply never fired because the UNIQUE error text is on the drizzle error's
+  `cause` chain, not `message`) and the **auth server actions**
+  (`auth-actions.integration.test.ts` — login / OTP / 2FA verify + setup / rate-limit / password
+  change / dev-login guard). **Remaining (optional):** more shop/admin actions as touched.
 - [x] **Negative tenant-isolation tests** — `tenant-isolation.integration.test.ts` asserts shop B
   can't see shop A's customers/cards/ledgers/reviews (4 cases). ⏳ **Coverage gate still deferred** —
   Node 20 `node:test` has no threshold flags (Node 22+); enforce via Node 22 `--test-coverage-lines`

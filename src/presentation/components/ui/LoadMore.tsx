@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState, useTransition, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "./Button";
 import { cn } from "./cn";
@@ -33,6 +34,7 @@ export function LoadMore<T>({
   getKey: (item: T) => string;
   listClassName?: string;
 }) {
+  const t = useTranslations("common");
   const [items, setItems] = useState<T[]>(initialItems);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function LoadMore<T>({
         setCursor(page.nextCursor);
         setError(null);
       } catch {
-        setError("โหลดเพิ่มไม่สำเร็จ ลองอีกครั้ง");
+        setError(t("loadMoreError"));
       }
     });
   }
@@ -70,7 +72,7 @@ export function LoadMore<T>({
             onClick={onLoad}
             loading={pending}
           >
-            {pending ? "กำลังโหลด…" : "โหลดเพิ่ม"}
+            {pending ? t("loading") : t("loadMore")}
           </Button>
         </div>
       )}

@@ -19,5 +19,6 @@ export async function getClientMessages() {
   return {
     common: messages.common,
     error: messages.error,
+    auth: messages.auth,
   };
 }

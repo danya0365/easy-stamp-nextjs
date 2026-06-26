@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "./Button";
 import { Modal } from "./Modal";
@@ -42,6 +43,7 @@ interface PendingConfirm {
  * onClick handlers (via useConfirm) and the ConfirmSubmitButton wrapper.
  */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations("common");
   const [pending, setPending] = useState<PendingConfirm | null>(null);
 
   const confirm = useCallback<ConfirmFn>(
@@ -69,14 +71,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         footer={
           <>
             <Button variant="ghost" size="sm" onClick={() => settle(false)}>
-              {opts?.cancelLabel ?? "ยกเลิก"}
+              {opts?.cancelLabel ?? t("cancel")}
             </Button>
             <Button
               variant={opts?.tone === "danger" ? "danger" : "primary"}
               size="sm"
               onClick={() => settle(true)}
             >
-              {opts?.confirmLabel ?? "ยืนยัน"}
+              {opts?.confirmLabel ?? t("confirm")}
             </Button>
           </>
         }

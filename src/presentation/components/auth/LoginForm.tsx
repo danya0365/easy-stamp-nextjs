@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { ArrowLeft, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   loginAction,
@@ -27,6 +28,7 @@ export function LoginForm({
 }: {
   knownAccounts?: KnownAccount[];
 }) {
+  const t = useTranslations("auth");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +138,7 @@ export function LoginForm({
     if (accounts.length > 0 && !manual) {
       return (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-muted">เลือกบัญชีเพื่อเข้าสู่ระบบ</p>
+          <p className="text-sm text-muted">{t("chooseAccount")}</p>
           <ul className="flex flex-col gap-2">
             {accounts.map((acc) => (
               <li key={acc.email} className="relative">
@@ -162,8 +164,8 @@ export function LoginForm({
                   type="button"
                   onClick={() => forget(acc.email)}
                   disabled={pending}
-                  aria-label={`ลบ ${acc.email} ออกจากเครื่องนี้`}
-                  title="ลบบัญชีนี้ออกจากเครื่อง"
+                  aria-label={t("removeAccountAria", { email: acc.email })}
+                  title={t("removeAccountTitle")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted transition hover:bg-muted-surface hover:text-foreground disabled:opacity-60"
                 >
                   <X className="size-4" />
@@ -180,7 +182,7 @@ export function LoginForm({
             }}
             className={`${linkCls} text-left`}
           >
-            เข้าด้วยอีเมลอื่น
+            {t("useAnotherEmail")}
           </button>
         </div>
       );
@@ -191,7 +193,7 @@ export function LoginForm({
       <form onSubmit={onSubmitEmail} className="flex flex-col gap-4" noValidate>
         <div className="flex flex-col gap-1">
           <label htmlFor="email" className="text-sm font-medium text-foreground">
-            อีเมล
+            {t("email")}
           </label>
           <input
             id="email"
@@ -206,7 +208,7 @@ export function LoginForm({
         </div>
         {errorBox}
         <button type="submit" disabled={pending} className={btnCls}>
-          {pending ? "กำลังดำเนินการ…" : "ดำเนินการต่อ"}
+          {pending ? t("processing") : t("continue")}
         </button>
         {knownAccounts.length > 0 && (
           <button
@@ -218,7 +220,7 @@ export function LoginForm({
             className={`${linkCls} inline-flex items-center gap-1 text-left`}
           >
             <ArrowLeft className="size-4" />
-            เลือกจากบัญชีที่เคยใช้
+            {t("pickRememberedAccount")}
           </button>
         )}
       </form>
@@ -231,12 +233,14 @@ export function LoginForm({
       <form onSubmit={onSubmitOtp} className="flex flex-col gap-4">
         <input type="hidden" name="email" value={email} />
         <p className="text-sm text-muted">
-          ส่งรหัส 6 หลักไปที่ LINE ของ <strong>{email}</strong> แล้ว
-          กรอกรหัสเพื่อเข้าสู่ระบบ
+          {t.rich("otpSentTo", {
+            email,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
         <div className="flex flex-col gap-1">
           <label htmlFor="otp" className="text-sm font-medium text-foreground">
-            รหัส OTP
+            {t("otpLabel")}
           </label>
           <input
             id="otp"
@@ -252,7 +256,7 @@ export function LoginForm({
         </div>
         {errorBox}
         <button type="submit" disabled={pending} className={btnCls}>
-          {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
+          {pending ? t("loggingIn") : t("login")}
         </button>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <button
@@ -261,7 +265,7 @@ export function LoginForm({
             disabled={pending || resendIn > 0}
             className={`${linkCls} disabled:text-muted disabled:no-underline`}
           >
-            {resendIn > 0 ? `ขอรหัสใหม่ได้ใน ${resendIn} วินาที` : "ขอรหัสใหม่"}
+            {resendIn > 0 ? t("otpResendIn", { sec: resendIn }) : t("otpResend")}
           </button>
           {passwordAllowed ? (
             <button
@@ -272,11 +276,11 @@ export function LoginForm({
               }}
               className={linkCls}
             >
-              ใช้รหัสผ่านแทน
+              {t("usePasswordInstead")}
             </button>
           ) : (
             <PublicContactButton
-              label="รับรหัสไม่ได้? ติดต่อผู้ดูแล"
+              label={t("cantGetCodeContact")}
               className={linkCls}
             />
           )}
@@ -287,7 +291,7 @@ export function LoginForm({
           className={`${linkCls} inline-flex items-center gap-1 text-left`}
         >
           <ArrowLeft className="size-4" />
-          เปลี่ยนอีเมล
+          {t("changeEmail")}
         </button>
       </form>
     );
@@ -298,11 +302,10 @@ export function LoginForm({
     return (
       <div className="flex flex-col gap-4">
         <div className="rounded-lg bg-warning-surface px-3 py-2 text-sm text-warning">
-          บัญชีนี้ต้องเข้าสู่ระบบผ่านรหัส OTP ทาง LINE แต่ตอนนี้ส่งรหัสไม่ได้
-          กรุณาติดต่อผู้ดูแลเพื่อขอความช่วยเหลือ
+          {t("otpUnavailable")}
         </div>
         <PublicContactButton
-          label="ติดต่อผู้ดูแล"
+          label={t("contactAdmin")}
           className={btnCls + " inline-flex items-center justify-center"}
         />
         <button
@@ -311,7 +314,7 @@ export function LoginForm({
           className={`${linkCls} inline-flex items-center gap-1 text-left`}
         >
           <ArrowLeft className="size-4" />
-          เปลี่ยนอีเมล
+          {t("changeEmail")}
         </button>
       </div>
     );
@@ -321,12 +324,10 @@ export function LoginForm({
   if (step === "twofa") {
     return (
       <form onSubmit={onSubmitTwoFactor} className="flex flex-col gap-4">
-        <p className="text-sm text-muted">
-          กรอกรหัส 6 หลักจากแอป Authenticator (หรือรหัสสำรอง 1 ครั้ง)
-        </p>
+        <p className="text-sm text-muted">{t("twoFactorPrompt")}</p>
         <div className="flex flex-col gap-1">
           <label htmlFor="code" className="text-sm font-medium text-foreground">
-            รหัสยืนยัน 2 ชั้น
+            {t("twoFactorLabel")}
           </label>
           <input
             id="code"
@@ -340,7 +341,7 @@ export function LoginForm({
         </div>
         {errorBox}
         <button type="submit" disabled={pending} className={btnCls}>
-          {pending ? "กำลังยืนยัน…" : "ยืนยัน"}
+          {pending ? t("verifying") : t("verify")}
         </button>
         <button
           type="button"
@@ -348,7 +349,7 @@ export function LoginForm({
           className={`${linkCls} inline-flex items-center gap-1 text-left`}
         >
           <ArrowLeft className="size-4" />
-          ยกเลิก
+          {t("cancel")}
         </button>
       </form>
     );
@@ -359,14 +360,14 @@ export function LoginForm({
     <form onSubmit={onSubmitPassword} className="flex flex-col gap-4">
       <input type="hidden" name="email" value={email} />
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-foreground">อีเมล</label>
+        <label className="text-sm font-medium text-foreground">{t("email")}</label>
         <p className="rounded-lg bg-muted-surface px-3 py-2 text-sm text-foreground">
           {email}
         </p>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-foreground">
-          รหัสผ่าน
+          {t("password")}
         </label>
         <input
           id="password"
@@ -380,7 +381,7 @@ export function LoginForm({
       </div>
       {errorBox}
       <button type="submit" disabled={pending} className={btnCls}>
-        {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
+        {pending ? t("loggingIn") : t("login")}
       </button>
       <button
         type="button"
@@ -388,7 +389,7 @@ export function LoginForm({
         className={`${linkCls} inline-flex items-center gap-1 text-left`}
       >
         <ArrowLeft className="size-4" />
-        กลับ
+        {t("back")}
       </button>
     </form>
   );
