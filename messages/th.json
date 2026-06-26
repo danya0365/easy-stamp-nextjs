@@ -108,5 +108,31 @@
     "preExpiryWarning": "วันใช้งานจะหมดในอีก <strong>{days} วัน</strong> — เติมวันล่วงหน้าเพื่อใช้งานต่อเนื่อง (วันที่เหลือไม่หาย ทบให้เลย)",
     "pausedNotice": "ร้านปิดชั่วคราวอยู่ — ระบบหยุดนับวันใช้งานไว้ วันคงเหลือ {days} วัน ไม่ถูกหักระหว่างปิด",
     "pausedUnderOneDay": " · ยังปิดไม่ครบ 1 วัน (ช่วงนี้ยังนับตามปกติ)"
+  },
+  "shop": {
+    "featuresTitle": "ฟีเจอร์ทั้งหมด",
+    "featuresSubtitle": "ทุกเครื่องมือสำหรับจัดการร้านของคุณ",
+    "featStampsLabel": "เพิ่ม/แลกแสตมป์",
+    "featStampsDesc": "กดแสตมป์หรือแลกรางวัลที่เคาน์เตอร์",
+    "featCustomersLabel": "ลูกค้า",
+    "featCustomersDesc": "รายชื่อลูกค้าและแต้มสะสม",
+    "featAnalyticsLabel": "สถิติร้าน",
+    "featAnalyticsDesc": "ยอดแสตมป์ แลกรางวัล ลูกค้าใหม่",
+    "featQrLabel": "ป้าย QR",
+    "featQrDesc": "พิมพ์ติดหน้าร้านให้ลูกค้าสแกน",
+    "featBranchesLabel": "สาขา",
+    "featBranchesDesc": "จัดการสาขาและตำแหน่งบนแผนที่",
+    "featStaffLabel": "พนักงาน",
+    "featStaffDesc": "เพิ่ม/จัดการบัญชีพนักงานสาขา",
+    "featPauseLabel": "ปิดร้านชั่วคราว",
+    "featPauseDesc": "หยุดนับวันใช้งานช่วงปิดร้าน",
+    "featLineLabel": "เชื่อม LINE / ความปลอดภัย",
+    "featLineDesc": "แจ้งเตือน + เข้าสู่ระบบด้วย OTP",
+    "featBillingLabel": "ชำระเงิน / เติมวัน",
+    "featBillingDesc": "เติมวันใช้งานและส่งสลิป",
+    "featNotificationsLabel": "แจ้งเตือน",
+    "featNotificationsDesc": "ข้อความและการแจ้งเตือนในแอป",
+    "featRedemptionsLabel": "ประวัติแลกรางวัล",
+    "featRedemptionsDesc": "รายการแลกรางวัลทั้งหมด"
   }
 }
