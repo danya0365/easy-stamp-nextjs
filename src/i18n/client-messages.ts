@@ -31,5 +31,6 @@ export async function getClientMessages() {
     channels: messages.channels,
     analytics: messages.analytics,
     promote: messages.promote,
+    theme: messages.theme,
   };
 }

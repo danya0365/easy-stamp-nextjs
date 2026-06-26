@@ -102,12 +102,19 @@ checkboxes as items land.
   (Toast/Spinner/StampDots/StarRatingInput/SimpleImageCropper/GeneratedPasswordField, plus
   notification/settings/pwa) folded into `common` alongside shared geolocation/map-loading strings (a
   reusable `MapLoading` placeholder lets `next/dynamic` translate its loading state). All client
-  namespaces are in `src/i18n/client-messages.ts`. **Remaining (incremental):** (1) `app/**` page files
-  — headings/empty states across ~42 routes; (2) a few still-inline component areas surfaced by a
-  full-tree sweep — `auth/` leftovers (TwoFactorPanel, MandatoryTwoFactorGate, ResetPasswordControl,
-  DevLoginPanel, PublicContactButton/Form), the whole `shop/promote/` poster-studio subtree, and
-  top-level `ThemeSwitcher`. Migrate as touched. (Leave inline: use-case/action `{ error }` strings,
-  audit text, and `app/global-error.tsx` — it replaces the root layout/provider.)
+  namespaces are in `src/i18n/client-messages.ts`. **Auth + promote + theme done — the component layer
+  is now complete:** the `auth` namespace was extended to the leftovers (TwoFactorPanel,
+  MandatoryTwoFactorGate, ResetPasswordControl, DevLoginPanel, PublicContactButton/Form); the
+  `shop/promote/` poster studio moved into a `promote` namespace (module-scope option arrays hold typed
+  message keys); and `ThemeSwitcher` into a `theme` namespace. A full-tree sweep of
+  `src/presentation/components/` now returns **zero** translatable Thai — the only residual is one
+  module-scope `FileReader.onerror` message (UploadBgPanel, an error-path string that can't use a hook).
+  **Remaining (incremental):** (1) `app/**` page files — headings/empty states across ~42 routes;
+  (2) **domain-layer** Thai still rendered through components but defined in pure-domain modules
+  (`domain/types/roles` ROLE_LABEL, `domain/services/promo-poster` POSTER_SIZES/PROMO_GOAL_PRESETS/
+  buildTemplateCopy) — these need a KEY-map refactor that keeps the domain layer pure; do as a dedicated
+  pass. (Leave inline: use-case/action `{ error }` strings, audit text, and `app/global-error.tsx` — it
+  replaces the root layout/provider.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.

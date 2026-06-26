@@ -668,5 +668,12 @@
     "exporting": "กำลังสร้างรูป…",
     "downloadPng": "ดาวน์โหลด PNG",
     "print": "พิมพ์"
+  },
+  "theme": {
+    "cafe": "คาเฟ่",
+    "minimal": "มินิมอล",
+    "retro": "เรโทร",
+    "lightMode": "โหมดสว่าง",
+    "darkMode": "โหมดมืด"
   }
 }
