@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { POSTER_SIZES, type PosterSize } from "@/src/domain/services/promo-poster";
 import { cn } from "@/src/presentation/components/ui/cn";
 
@@ -11,9 +13,10 @@ export function PosterSizeSwitcher({
   value: PosterSize;
   onChange: (size: PosterSize) => void;
 }) {
+  const t = useTranslations("promote");
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium text-foreground">ขนาด</p>
+      <p className="text-sm font-medium text-foreground">{t("size")}</p>
       <div className="flex flex-wrap gap-2">
         {POSTER_SIZES.map((size) => {
           const active = size.id === value;

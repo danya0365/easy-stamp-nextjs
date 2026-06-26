@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Copy, Check, Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   buildAiPromptSegments,
@@ -29,6 +30,7 @@ export function AiPromptPanel({
   size: PosterSize;
   ctx: PromoCopyContext;
 }) {
+  const t = useTranslations("promote");
   const seeded = buildAiPromptSegments(goal, ctx, size);
   const [subject, setSubject] = useState(seeded.editable.subject);
   const [vibe, setVibe] = useState(seeded.editable.vibe);
@@ -52,14 +54,11 @@ export function AiPromptPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted">
-        คัดลอกพรอมต์นี้ไปวางในเครื่องมือสร้างภาพ AI ที่คุณถนัด
-        แล้วนำรูปที่ได้กลับมาใส่ป้ายสะสมแต้มในแท็บ “อัปรูป AI”
-      </p>
+      <p className="text-sm text-muted">{t("aiIntro")}</p>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-foreground">
-          สิ่งที่อยากให้อยู่ในภาพ
+          {t("aiSubjectLabel")}
         </label>
         <textarea
           value={subject}
@@ -71,7 +70,7 @@ export function AiPromptPanel({
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-foreground">
-          โทน / บรรยากาศ
+          {t("aiVibeLabel")}
         </label>
         <textarea
           value={vibe}
@@ -84,7 +83,7 @@ export function AiPromptPanel({
       <div className="flex flex-col gap-1.5">
         <p className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
           <Lock className="size-3.5" />
-          ส่วนที่ล็อกไว้เพื่อให้ภาพตรงคอนเซ็ปต์ (สไตล์ · โทน · สัดส่วน · ห้ามมีตัวอักษร)
+          {t("aiLockedLabel")}
         </p>
         <p className="rounded-xl bg-muted-surface p-3 text-xs text-muted">
           {locked.style}, {locked.mood}, {locked.aspect}, {locked.noText}
@@ -92,7 +91,7 @@ export function AiPromptPanel({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-foreground">พรอมต์ที่ได้</label>
+        <label className="text-sm font-medium text-foreground">{t("aiPromptOutput")}</label>
         <textarea
           ref={outputRef}
           value={prompt}
@@ -103,7 +102,7 @@ export function AiPromptPanel({
         <div>
           <Button variant="outline" onClick={copy}>
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            {copied ? "คัดลอกแล้ว" : "คัดลอกพรอมต์"}
+            {copied ? t("copied") : t("copyPrompt")}
           </Button>
         </div>
       </div>

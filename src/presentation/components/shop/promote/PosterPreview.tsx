@@ -14,10 +14,14 @@ import type { PromoSeedData } from "./types";
 /** Ready-made background designs for path A (theme-token colored, no hex). */
 export type TemplateId = "classic" | "photo" | "minimal";
 
-export const TEMPLATE_OPTIONS: { id: TemplateId; label: string }[] = [
-  { id: "classic", label: "คลาสสิก" },
-  { id: "photo", label: "รูปร้าน" },
-  { id: "minimal", label: "มินิมอล" },
+/** `labelKey` is a `promote`-namespace message key (resolved by the consumer). */
+export const TEMPLATE_OPTIONS: {
+  id: TemplateId;
+  labelKey: "templateClassic" | "templatePhoto" | "templateMinimal";
+}[] = [
+  { id: "classic", labelKey: "templateClassic" },
+  { id: "photo", labelKey: "templatePhoto" },
+  { id: "minimal", labelKey: "templateMinimal" },
 ];
 
 export type PosterDesign =

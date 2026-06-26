@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Download, Printer } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type {
   PosterDimensions,
@@ -35,6 +36,7 @@ export function PosterExportArea({
   design: PosterDesign;
   fileName: string;
 }) {
+  const t = useTranslations("promote");
   const nodeRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function PosterExportArea({
     try {
       await action(nodeRef.current);
     } catch {
-      setError("สร้างรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+      setError(t("exportFailed"));
     } finally {
       setBusy(false);
     }
@@ -70,11 +72,11 @@ export function PosterExportArea({
           onClick={() => run((n) => exportPosterPng(n, fileName))}
         >
           <Download className="size-4" />
-          {busy ? "กำลังสร้างรูป…" : "ดาวน์โหลด PNG"}
+          {busy ? t("exporting") : t("downloadPng")}
         </Button>
         <Button disabled={busy} onClick={() => run(printPosterPng)}>
           <Printer className="size-4" />
-          พิมพ์
+          {t("print")}
         </Button>
       </div>
 

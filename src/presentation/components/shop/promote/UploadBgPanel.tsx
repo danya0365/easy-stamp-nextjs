@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type {
   PosterDimensions,
@@ -47,6 +48,8 @@ export function UploadBgPanel({
   bgDataUrl: string | null;
   onBgChange: (dataUrl: string | null) => void;
 }) {
+  const t = useTranslations("promote");
+  const tc = useTranslations("common");
   const cropperRef = useRef<SimpleCropperHandle>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
@@ -80,7 +83,7 @@ export function UploadBgPanel({
     setProcessing(true);
     try {
       const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 });
-      if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+      if (!canvas) throw new Error(tc("cropError"));
       const file = await canvasToCompressedFile(canvas, baseName);
       onBgChange(await fileToDataUrl(file));
       setError(null);
@@ -94,10 +97,7 @@ export function UploadBgPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted">
-        อัปรูปที่สร้างจาก AI (หรือรูปร้านของคุณ) แล้วระบบจะวางป้ายสะสมแต้ม + QR
-        ทับให้ตรงคอนเซ็ปต์เสมอ
-      </p>
+      <p className="text-sm text-muted">{t("uploadIntro")}</p>
 
       <input
         ref={pickRef}
@@ -114,7 +114,7 @@ export function UploadBgPanel({
           onClick={() => pickRef.current?.click()}
         >
           <ImagePlus className="size-4" />
-          {bgDataUrl ? "เปลี่ยนรูป" : "เลือกรูป"}
+          {bgDataUrl ? t("changeImage") : t("chooseImage")}
         </Button>
       </div>
 
@@ -130,18 +130,18 @@ export function UploadBgPanel({
         />
       ) : (
         <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted">
-          ยังไม่ได้เลือกรูป
+          {t("noImageSelected")}
         </p>
       )}
 
       <Modal
         open={src !== null}
         onClose={closeCropper}
-        title="ครอบรูปให้พอดีกับขนาดโปสเตอร์"
+        title={t("cropTitle")}
         footer={
           <>
             <Button type="button" variant="ghost" size="sm" onClick={closeCropper}>
-              ยกเลิก
+              {tc("cancel")}
             </Button>
             <Button
               type="button"
@@ -149,7 +149,7 @@ export function UploadBgPanel({
               disabled={processing}
               onClick={confirmCrop}
             >
-              {processing ? "กำลังประมวลผล…" : "ยืนยัน"}
+              {processing ? tc("processing") : tc("confirm")}
             </Button>
           </>
         }

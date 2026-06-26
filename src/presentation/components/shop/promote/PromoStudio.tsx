@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   buildTemplateCopy,
@@ -18,14 +19,19 @@ import { AiPromptPanel } from "./AiPromptPanel";
 import { UploadBgPanel } from "./UploadBgPanel";
 import type { PromoPath, PromoSeedData } from "./types";
 
-const PATHS: { id: PromoPath; label: string }[] = [
-  { id: "template", label: "เทมเพลตสำเร็จรูป" },
-  { id: "ai_prompt", label: "พรอมต์ AI" },
-  { id: "upload", label: "อัปรูป AI" },
+const PATHS: {
+  id: PromoPath;
+  labelKey: "pathTemplate" | "pathAiPrompt" | "pathUpload";
+}[] = [
+  { id: "template", labelKey: "pathTemplate" },
+  { id: "ai_prompt", labelKey: "pathAiPrompt" },
+  { id: "upload", labelKey: "pathUpload" },
 ];
 
 /** Client orchestrator for the 3 promo paths; shares goal/size/reward state. */
 export function PromoStudio({ seed }: { seed: PromoSeedData }) {
+  const t = useTranslations("promote");
+  const paths = PATHS.map((p) => ({ id: p.id, label: t(p.labelKey) }));
   const [goal, setGoal] = useState<PromoGoal>("new_customer");
   const [sizeId, setSizeId] = useState<PosterSize>("ig_square");
   const [rewardIdx, setRewardIdx] = useState(0);
@@ -48,7 +54,7 @@ export function PromoStudio({ seed }: { seed: PromoSeedData }) {
 
       {seed.rewardOptions.length > 1 && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">รางวัลที่จะโชว์</p>
+          <p className="text-sm font-medium text-foreground">{t("rewardToShow")}</p>
           <div className="flex flex-wrap gap-2">
             {seed.rewardOptions.map((opt, i) => {
               const active = i === rewardIdx;
@@ -78,14 +84,14 @@ export function PromoStudio({ seed }: { seed: PromoSeedData }) {
       {/* Path tabs — dropdown on phones, pill toggle on sm+. */}
       <div className="sm:hidden">
         <TabSelect
-          ariaLabel="วิธีสร้างโปสเตอร์"
-          options={PATHS}
+          ariaLabel={t("posterMethodAria")}
+          options={paths}
           value={path}
           onChange={(id) => setPath(id as PromoPath)}
         />
       </div>
       <div className="hidden gap-1 rounded-full bg-muted-surface p-1 sm:flex">
-        {PATHS.map((p) => {
+        {paths.map((p) => {
           const active = p.id === path;
           return (
             <button

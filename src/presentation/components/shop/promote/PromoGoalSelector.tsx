@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import {
   PROMO_GOAL_PRESETS,
   type PromoGoal,
@@ -14,9 +16,10 @@ export function PromoGoalSelector({
   value: PromoGoal;
   onChange: (goal: PromoGoal) => void;
 }) {
+  const t = useTranslations("promote");
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium text-foreground">เป้าหมายโปรโมท</p>
+      <p className="text-sm font-medium text-foreground">{t("goal")}</p>
       <div className="flex flex-wrap gap-2">
         {PROMO_GOAL_PRESETS.map((preset) => {
           const active = preset.goal === value;
