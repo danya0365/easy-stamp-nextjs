@@ -39,6 +39,7 @@ export default async function AdminLeadDetailPage({
 }) {
   await requireRole("platform_admin");
   const t = await getTranslations("leads");
+  const tp = await getTranslations("adminPages");
   const { leadId } = await params;
 
   const lead = await container.leadRepository.findById(leadId);
@@ -58,7 +59,7 @@ export default async function AdminLeadDetailPage({
         <Link href="/admin/leads">
           <Button variant="ghost" size="sm">
             <ArrowLeft size={14} />
-            รายการลีด
+            {tp("leadsListBack")}
           </Button>
         </Link>
         <Badge tone={LEAD_STATUS_TONE[lead.status]}>
@@ -78,14 +79,14 @@ export default async function AdminLeadDetailPage({
       </Card>
 
       <Card>
-        <CardHeader title="สถานะการขาย" />
+        <CardHeader title={tp("leadSalesStatus")} />
         <LeadStatusControl lead={lead} />
       </Card>
 
       <Card>
         <CardHeader
-          title="ตำแหน่งร้าน"
-          subtitle="ปักหมุดเพื่อให้แสดงบนแผนที่ลีด และใช้กดนำทาง"
+          title={tp("leadLocationTitle")}
+          subtitle={tp("leadLocationSubtitle")}
         />
         <LeadLocationEditor
           leadId={lead.id}
@@ -96,16 +97,16 @@ export default async function AdminLeadDetailPage({
       </Card>
 
       <Card>
-        <CardHeader title="รูปร้าน" />
+        <CardHeader title={tp("leadPhotoTitle")} />
         <LeadPhotoUpload leadId={lead.id} hasPhoto={lead.photoUrl !== null} />
       </Card>
 
       <Card>
-        <CardHeader title="บันทึกการเข้าพบ" />
+        <CardHeader title={tp("leadVisitLogTitle")} />
         <AddVisitLogForm leadId={lead.id} currentStatus={lead.status} />
         <div className="mt-4">
           {logs.length === 0 ? (
-            <EmptyState icon={<Phone />} title="ยังไม่มีบันทึกการเข้าพบ" />
+            <EmptyState icon={<Phone />} title={tp("leadNoVisitLogs")} />
           ) : (
             <ul className="flex flex-col divide-y divide-border">
               {logs.map((log) => (
@@ -137,7 +138,7 @@ export default async function AdminLeadDetailPage({
       </Card>
 
       <Card>
-        <CardHeader title="แปลงเป็นร้านจริง" />
+        <CardHeader title={tp("leadConvertTitle")} />
         {/* Always mounted (even after conversion) so the post-create credentials
             handoff survives the action's page refresh. */}
         <ConvertLeadButton

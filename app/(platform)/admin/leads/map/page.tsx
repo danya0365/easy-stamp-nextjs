@@ -17,16 +17,17 @@ export const dynamic = "force-dynamic";
 export default async function AdminLeadsMapPage() {
   await requireRole("platform_admin");
   const t = await getTranslations("leads");
+  const tp = await getTranslations("adminPages");
   const locations = await container.leadRepository.listMapLocations();
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-foreground">แผนที่ลีด</h1>
+        <h1 className="text-lg font-semibold text-foreground">{tp("leadsMapTitle")}</h1>
         <Link href="/admin/leads">
           <Button variant="ghost" size="sm">
             <ArrowLeft size={14} />
-            รายการลีด
+            {tp("leadsListBack")}
           </Button>
         </Link>
       </div>

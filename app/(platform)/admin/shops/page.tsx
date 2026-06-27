@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eye, LogOut, Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import {
@@ -22,6 +23,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminShopsPage() {
   await requireRole("platform_admin");
+  const t = await getTranslations("adminPages");
   const [shops, categories] = await Promise.all([
     container.shopRepository.list(),
     container.shopCategoryRepository.listActive(),
@@ -44,16 +46,16 @@ export default async function AdminShopsPage() {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="เพิ่มร้านค้าใหม่ (สร้างบัญชีเจ้าของร้านด้วย)" />
+        <CardHeader title={t("addShopTitle")} />
         <CreateShopForm
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         />
       </Card>
 
       <Card>
-        <CardHeader title={`ร้านค้าทั้งหมด (${shops.length})`} />
+        <CardHeader title={t("allShopsTitle", { count: shops.length })} />
         {shops.length === 0 ? (
-          <EmptyState icon={<Store />} title="ยังไม่มีร้านค้า" />
+          <EmptyState icon={<Store />} title={t("noShops")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {shops.map((shop, i) => {
@@ -81,20 +83,20 @@ export default async function AdminShopsPage() {
                       /s/{shop.slug}
                     </Link>
                     {owner && (
-                      <p className="text-xs text-muted">เจ้าของ: {owner.email}</p>
+                      <p className="text-xs text-muted">{t("ownerLabel", { email: owner.email })}</p>
                     )}
                   </div>
                   <div className="flex items-start gap-2">
                     {adminSuspended ? (
-                      <Badge tone="danger">ระงับโดยแอดมิน</Badge>
+                      <Badge tone="danger">{t("badgeAdminSuspended")}</Badge>
                     ) : status.isPaused ? (
-                      <Badge tone="warning">ปิดชั่วคราว</Badge>
+                      <Badge tone="warning">{t("badgePaused")}</Badge>
                     ) : status.isSuspended ? (
-                      <Badge tone="danger">ค้างชำระ (ระงับ)</Badge>
+                      <Badge tone="danger">{t("badgeOverdueSuspended")}</Badge>
                     ) : status.state === "overdue" ? (
-                      <Badge tone="warning">ค้าง {status.daysOverdue} วัน</Badge>
+                      <Badge tone="warning">{t("badgeOverdue", { days: status.daysOverdue })}</Badge>
                     ) : (
-                      <Badge tone="success">ปกติ</Badge>
+                      <Badge tone="success">{t("badgeNormal")}</Badge>
                     )}
                     {!adminSuspended && (
                       <PauseShopToggle
@@ -109,11 +111,11 @@ export default async function AdminShopsPage() {
                     <form action={startImpersonationAction.bind(null, shop.id)}>
                       <button
                         type="submit"
-                        title="ดูหน้าจอแบบร้านนี้ (อ่านอย่างเดียว)"
+                        title={t("impersonateTitle")}
                         className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
                       >
                         <Eye className="size-3.5" />
-                        ดูแบบร้าน
+                        {t("impersonateButton")}
                       </button>
                     </form>
                     {owner && (
@@ -125,14 +127,14 @@ export default async function AdminShopsPage() {
                             "use server";
                             await forceLogoutUserAction(owner.id);
                           }}
-                          title="บังคับออกจากระบบ?"
-                          message="อุปกรณ์ทั้งหมดของเจ้าของร้านจะถูกออกจากระบบทันที"
-                          confirmLabel="เตะออก"
-                          buttonTitle="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
+                          title={t("forceLogoutTitle")}
+                          message={t("forceLogoutOwnerMessage")}
+                          confirmLabel={t("forceLogoutConfirm")}
+                          buttonTitle={t("forceLogoutButtonTitle")}
                           className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
                         >
                           <LogOut className="size-3.5" />
-                          เตะออก
+                          {t("kickOut")}
                         </ConfirmSubmitButton>
                       </>
                     )}

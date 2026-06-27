@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import {
   requireRole,
@@ -18,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const user = await requireRole("platform_admin");
+  const t = await getTranslations("adminPages");
   const [shops, pending, openContacts, totpState, sessions, currentToken] =
     await Promise.all([
       container.shopRepository.list(),
@@ -37,14 +39,14 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-xl font-bold text-foreground">ภาพรวมระบบ</h1>
+      <h1 className="text-xl font-bold text-foreground">{t("overviewTitle")}</h1>
       <div className="grid grid-cols-2 gap-3">
         <Link href="/admin/shops">
           <Card className="flex flex-col gap-1">
             <span className="text-2xl font-bold text-brand-600">
               {shops.length}
             </span>
-            <span className="text-sm text-muted">ร้านค้าทั้งหมด</span>
+            <span className="text-sm text-muted">{t("statShops")}</span>
           </Card>
         </Link>
         <Link href="/admin/payments">
@@ -52,7 +54,7 @@ export default async function AdminDashboardPage() {
             <span className="text-2xl font-bold text-accent-500">
               {pending.length}
             </span>
-            <span className="text-sm text-muted">รอตรวจสอบการชำระเงิน</span>
+            <span className="text-sm text-muted">{t("statPendingPayments")}</span>
           </Card>
         </Link>
         <Link href="/admin/contacts">
@@ -60,15 +62,15 @@ export default async function AdminDashboardPage() {
             <span className="text-2xl font-bold text-accent-500">
               {openContacts}
             </span>
-            <span className="text-sm text-muted">คำขอติดต่อรอดำเนินการ</span>
+            <span className="text-sm text-muted">{t("statOpenContacts")}</span>
           </Card>
         </Link>
       </div>
 
       <Card>
         <CardHeader
-          title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
-          subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือน (แจ้งชำระเงิน/คำขอติดต่อ) และเข้าสู่ระบบด้วยรหัส OTP"
+          title={t("connectionsTitle")}
+          subtitle={t("connectionsSubtitle")}
         />
         <ConnectionsSection
           linked={!!user.lineUserId}
@@ -78,8 +80,8 @@ export default async function AdminDashboardPage() {
 
       <Card>
         <CardHeader
-          title="การยืนยันตัวตน 2 ชั้น (2FA)"
-          subtitle="ป้องกันบัญชีผู้ดูแลด้วย TOTP — แนะนำให้เปิดใช้งาน"
+          title={t("twoFactorTitle")}
+          subtitle={t("twoFactorSubtitle")}
         />
         <TwoFactorPanel
           enabled={user.totpEnabled}
@@ -88,14 +90,14 @@ export default async function AdminDashboardPage() {
       </Card>
 
       <Card>
-        <CardHeader title="เปลี่ยนรหัสผ่าน" />
+        <CardHeader title={t("changePasswordTitle")} />
         <ChangePasswordForm />
       </Card>
 
       <Card>
         <CardHeader
-          title="อุปกรณ์ที่เข้าสู่ระบบ"
-          subtitle="อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้"
+          title={t("devicesTitle")}
+          subtitle={t("devicesSubtitle")}
         />
         <DeviceList devices={devices} />
         <form
@@ -110,7 +112,7 @@ export default async function AdminDashboardPage() {
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted-surface"
           >
             <LogOut className="size-4" />
-            ออกจากระบบบนอุปกรณ์อื่นทั้งหมด
+            {t("signOutOthers")}
           </button>
         </form>
       </Card>

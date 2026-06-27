@@ -1,8 +1,10 @@
+import { MessageSquare } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
-import { MessageSquare } from "lucide-react";
 import {
   ContactInbox,
   type ContactRow,
@@ -12,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminContactsPage() {
   await requireRole("platform_admin");
+  const t = await getTranslations("adminPages");
   const [open, resolvedPage, shops] = await Promise.all([
     container.contactRequestRepository.listOpen(),
     container.contactRequestRepository.pageResolved(),
@@ -27,9 +30,9 @@ export default async function AdminContactsPage() {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="คำขอติดต่อ" />
+        <CardHeader title={t("contactsTitle")} />
         {rows.length === 0 ? (
-          <EmptyState icon={<MessageSquare />} title="ยังไม่มีคำขอติดต่อ" />
+          <EmptyState icon={<MessageSquare />} title={t("noContacts")} />
         ) : (
           <ContactInbox
             initialItems={rows}

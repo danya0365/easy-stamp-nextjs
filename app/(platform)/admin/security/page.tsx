@@ -1,4 +1,5 @@
 import { ShieldAlert } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -16,6 +17,7 @@ export default async function AdminSecurityPage({
   searchParams: Promise<{ action?: string }>;
 }) {
   const me = await requireRole("platform_admin");
+  const t = await getTranslations("adminPages");
   const { action } = await searchParams;
   const filter = action?.trim() ?? "";
   const [page, adminUsers] = await Promise.all([
@@ -32,19 +34,19 @@ export default async function AdminSecurityPage({
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader
-          title="ผู้ดูแลระบบ & 2FA"
-          subtitle="สถานะ 2FA ของผู้ดูแลแต่ละคน · รีเซ็ต 2FA ให้เพื่อนได้เมื่อทำอุปกรณ์หาย (break-glass)"
+          title={t("adminsTitle")}
+          subtitle={t("adminsSubtitle")}
         />
         <PeerAdminList admins={admins} currentAdminId={me.id} />
       </Card>
 
       <Card>
         <CardHeader
-          title="ความปลอดภัย & การตรวจสอบ"
-          subtitle="บันทึกเหตุการณ์สำคัญทั้งระบบ — เข้าสู่ระบบ, รีเซ็ตรหัส, ระงับร้าน, ตรวจสลิป ฯลฯ"
+          title={t("auditTitle")}
+          subtitle={t("auditSubtitle")}
         />
         {page.items.length === 0 ? (
-          <EmptyState icon={<ShieldAlert />} title="ยังไม่มีเหตุการณ์" />
+          <EmptyState icon={<ShieldAlert />} title={t("noEvents")} />
         ) : (
           <AuditTimeline
             initialItems={page.items}

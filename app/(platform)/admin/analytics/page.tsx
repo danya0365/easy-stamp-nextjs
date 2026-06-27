@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -25,6 +26,7 @@ export default async function AdminAnalyticsPage({
   searchParams: Promise<{ range?: string }>;
 }) {
   await requireRole("platform_admin");
+  const t = await getTranslations("adminPages");
   const { range } = await searchParams;
   const parsed = Number(range);
   const rangeDays: RangeDays = isValidRange(parsed) ? parsed : DEFAULT_RANGE;
@@ -39,7 +41,7 @@ export default async function AdminAnalyticsPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-foreground">สถิติระบบ</h1>
+        <h1 className="text-xl font-bold text-foreground">{t("analyticsTitle")}</h1>
         {/* Range selector — plain links re-render the server page */}
         <div className="inline-flex rounded-full bg-muted-surface p-0.5 text-sm">
           {RANGE_OPTIONS.map((d) => (
@@ -53,37 +55,37 @@ export default async function AdminAnalyticsPage({
                   : "text-muted hover:text-foreground",
               )}
             >
-              {d} วัน
+              {t("rangeDays", { days: d })}
             </Link>
           ))}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="แสตมป์ที่แจก" value={summary.stampsIssued} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="แลกรางวัล" value={summary.redemptions} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="ลูกค้าแอคทีฟ" value={summary.activeCustomers} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="อัตราการแลก" value={`${redemptionRate}%`} hint="ของลูกค้าแอคทีฟ" />
-        <StatCard label="ลูกค้าใหม่" value={summary.newCustomers} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="ลูกค้าทั้งหมด" value={summary.totalCustomers} hint="ทุกร้านรวมกัน" />
-        <StatCard label="ร้านทั้งหมด" value={summary.totalShops} hint="ในระบบ" />
-        <StatCard label="ร้านที่มีกิจกรรม" value={summary.activeShops} hint={`ใน ${rangeDays} วัน`} />
+        <StatCard label={t("statStampsIssued")} value={summary.stampsIssued} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statRedemptions")} value={summary.redemptions} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statActiveCustomers")} value={summary.activeCustomers} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statRedemptionRate")} value={`${redemptionRate}%`} hint={t("hintOfActive")} />
+        <StatCard label={t("statNewCustomers")} value={summary.newCustomers} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statTotalCustomers")} value={summary.totalCustomers} hint={t("hintAllShops")} />
+        <StatCard label={t("statTotalShops")} value={summary.totalShops} hint={t("hintInSystem")} />
+        <StatCard label={t("statActiveShops")} value={summary.activeShops} hint={t("hintInDays", { days: rangeDays })} />
       </div>
 
       {!hasActivity ? (
         <Card>
           <EmptyState
             icon={<BarChart3 />}
-            title="ยังไม่มีข้อมูลในช่วงนี้"
-            description="เมื่อมีร้านกดแสตมป์หรือแลกรางวัล สถิติจะแสดงที่นี่"
+            title={t("noDataTitle")}
+            description={t("noDataDescPlatform")}
           />
         </Card>
       ) : (
         <>
           <Card>
             <CardHeader
-              title="แนวโน้มรายวัน (ทุกร้าน)"
-              subtitle="แสตมป์ที่แจก (แท่ง) เทียบกับการแลกรางวัล (เส้น)"
+              title={t("dailyTrendTitle")}
+              subtitle={t("dailyTrendSubtitle")}
             />
             <DailyTrendChart data={view.daily} />
           </Card>
@@ -91,8 +93,8 @@ export default async function AdminAnalyticsPage({
           {view.byShop.length > 0 && (
             <Card>
               <CardHeader
-                title="ร้านค้าที่แอคทีฟสูงสุด"
-                subtitle="เรียงตามจำนวนแสตมป์ที่แจกในช่วงนี้"
+                title={t("topShopsTitle")}
+                subtitle={t("topShopsSubtitle")}
               />
               <BreakdownList rows={view.byShop} />
             </Card>
