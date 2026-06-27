@@ -35,8 +35,8 @@ export default async function HomePage() {
   // Logged-in operators skip the /login round-trip and go straight to their
   // dashboard; everyone else goes to the login form.
   const entry = user
-    ? { href: ROLE_HOME[user.role], label: t("goToDashboard") }
-    : { href: "/login", label: t("adminLogin") };
+    ? { href: ROLE_HOME[user.role], label: t("goToDashboard"), icon: "dashboard" as const }
+    : { href: "/login", label: t("adminLogin"), icon: "login" as const };
 
   return (
     // Fill the viewport minus the bottom tab bar (h-16) so the map sits above it.
@@ -53,7 +53,7 @@ export default async function HomePage() {
             </p>
           </div>
         </div>
-        <AdminEntryButton href={entry.href} label={entry.label} />
+        <AdminEntryButton href={entry.href} label={entry.label} icon={entry.icon} />
       </header>
 
       <section className="relative flex-1">
