@@ -18,6 +18,11 @@ Cross-cutting pure constants (e.g. [`src/config/brand.ts`](../src/config/brand.t
 ## Add a new persisted entity (end to end)
 Example: a `Coupon` owned by a shop.
 
+> **Shortcut:** `npm run scaffold <PascalName> [table_name]` generates the three
+> boilerplate files (repo interface, Drizzle repo, create use-case) as
+> TODO-stubbed skeletons and prints the remaining manual wiring. The numbered
+> guide below is the full version the scaffolder is based on.
+
 1. **Schema** — `src/infrastructure/db/schema/coupons.ts` (Drizzle table, scope by `shopId` with `onDelete: "cascade"`, add indexes for hot queries). Export it from `src/infrastructure/db/schema/index.ts`.
 2. **Migration** — `npm run db:generate` (writes SQL to `drizzle/`), review the SQL, commit it. (Prod applies it automatically on build.)
 3. **Domain entity** — add the `Coupon` type to `src/domain/entities`.
