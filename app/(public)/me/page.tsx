@@ -110,12 +110,14 @@ export default async function MyCardsPage() {
         </div>
       )}
 
-      <Link
-        href="/privacy"
-        className="mt-2 text-center text-xs text-muted hover:underline"
-      >
-        {tr("privacyPolicy")}
-      </Link>
+      <div className="mt-2 flex justify-center gap-4 text-xs text-muted">
+        <Link href="/privacy" className="hover:underline">
+          {tr("privacyPolicy")}
+        </Link>
+        <Link href="/tos" className="hover:underline">
+          {tr("termsOfService")}
+        </Link>
+      </div>
     </main>
   );
 }

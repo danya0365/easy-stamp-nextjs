@@ -231,12 +231,14 @@ export default async function PublicShopCheckPage({
         canReview={!!view}
       />
 
-      <Link
-        href="/privacy"
-        className="mt-auto text-center text-xs text-muted hover:underline"
-      >
-        {t("privacyPolicy")}
-      </Link>
+      <div className="mt-auto flex justify-center gap-4 text-xs text-muted">
+        <Link href="/privacy" className="hover:underline">
+          {t("privacyPolicy")}
+        </Link>
+        <Link href="/tos" className="hover:underline">
+          {t("termsOfService")}
+        </Link>
+      </div>
     </main>
   );
 }
