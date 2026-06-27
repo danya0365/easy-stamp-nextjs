@@ -31,7 +31,7 @@ test("every preset is resolvable and has non-empty copy + prompt seeds", () => {
   assert.equal(PROMO_GOAL_PRESETS.length, 5);
   for (const goal of ALL_GOALS) {
     const p = getPromoPreset(goal);
-    assert.ok(p.label.length > 0, `${goal} label`);
+    assert.ok(p.labelKey.length > 0, `${goal} labelKey`);
     assert.ok(p.headline.length > 0, `${goal} headline`);
     assert.ok(p.valueLine.length > 0, `${goal} valueLine`);
     assert.ok(p.promptMood.length > 0, `${goal} mood`);

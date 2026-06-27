@@ -11,7 +11,7 @@ import {
   verifyLoginTwoFactorAction,
   forgetAccountAction,
 } from "@/src/presentation/actions/auth-actions";
-import { ROLE_LABEL } from "@/src/domain/types/roles";
+import { ROLE_LABEL_KEY } from "@/src/domain/types/roles";
 import type { KnownAccount } from "@/src/domain/entities";
 import { PublicContactButton } from "./PublicContactButton";
 
@@ -29,6 +29,7 @@ export function LoginForm({
   knownAccounts?: KnownAccount[];
 }) {
   const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -156,7 +157,7 @@ export function LoginForm({
                       {acc.email}
                     </span>
                     <span className="text-xs text-muted">
-                      {ROLE_LABEL[acc.role]}
+                      {tc(ROLE_LABEL_KEY[acc.role])}
                     </span>
                   </span>
                 </button>

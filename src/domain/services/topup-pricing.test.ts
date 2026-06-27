@@ -19,8 +19,8 @@ import { computeBillingState } from "./subscription-status";
 
 const RATE = DEFAULT_PRICE_PER_DAY_SATANG; // 1000 satang = ฿10/วัน
 const DAY = 864e5;
-const NO_PROMO: PromoConfig = { active: false, percentOff: 0, label: "" };
-const PROMO50: PromoConfig = { active: true, percentOff: 50, label: "x" };
+const NO_PROMO: PromoConfig = { active: false, percentOff: 0 };
+const PROMO50: PromoConfig = { active: true, percentOff: 50 };
 
 test("presets resolve to correct total days + price = days × rate (no promo)", () => {
   const q90 = resolveTopupQuote({ packageId: "d90" }, RATE, NO_PROMO);

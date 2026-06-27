@@ -5,7 +5,7 @@ import { Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { Role } from "@/src/domain/types/roles";
-import { ROLE_LABEL } from "@/src/domain/types/roles";
+import { ROLE_LABEL_KEY } from "@/src/domain/types/roles";
 import { devLoginAsAction } from "@/src/presentation/actions/auth-actions";
 
 export interface DevUser {
@@ -21,6 +21,7 @@ export interface DevUser {
  */
 export function DevLoginPanel({ users }: { users: DevUser[] }) {
   const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [pending, startTransition] = useTransition();
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -51,7 +52,7 @@ export function DevLoginPanel({ users }: { users: DevUser[] }) {
               >
                 <span className="min-w-0 truncate text-foreground">{u.email}</span>
                 <span className="shrink-0 rounded-full bg-muted-surface px-2 py-0.5 text-[11px] text-muted">
-                  {pending && activeId === u.id ? t("devLoggingIn") : ROLE_LABEL[u.role]}
+                  {pending && activeId === u.id ? t("devLoggingIn") : tc(ROLE_LABEL_KEY[u.role])}
                 </span>
               </button>
             </li>

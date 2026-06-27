@@ -115,13 +115,19 @@ checkboxes as items land.
   labels), `staffPages` ((staff)/*), `publicPages` (home/shops/me/s-[slug], with login-page strings in
   `auth`); `metadata` exports that needed translation became `generateMetadata`. A full-tree sweep of
   `app/**` now returns zero translatable Thai outside the intentional exclusions.
-  **Remaining (by design / dedicated pass):** (1) the long marketing/legal **prose** in
-  `(public)/{tutorial,privacy,info}/page.tsx` — per-clone content (see the brand bullet), left inline;
-  (2) `app/preview/page.tsx` — an unlinked dev component gallery; (3) **domain-layer** Thai rendered
-  through components but defined in pure-domain modules (`domain/types/roles` ROLE_LABEL,
-  `domain/services/promo-poster` + `topup-pricing` labels) — need a KEY-map refactor that keeps the
-  domain pure. (Leave inline: use-case/action `{ error }` strings, audit text, and
-  `app/global-error.tsx` — it replaces the root layout/provider.)
+  **Domain-layer UI labels done:** the chrome labels that lived in pure-domain modules moved out —
+  `domain/types/roles` ROLE_LABEL → `ROLE_LABEL_KEY` (`common` keys, resolved in DevLoginPanel/
+  LoginForm/AuditTimeline); `topup-pricing` dropped its Thai `label` fields (preset label derives from
+  `days` via `billing.daysValue`; promo banner copy is `billing.promoLabel` keyed off `percentOff`);
+  `promo-poster` POSTER_SIZES/PROMO_GOAL_PRESETS labels → `labelKey`s in the `promote` namespace. The
+  domain layer now carries no UI-chrome Thai.
+  **Remaining (by design):** (1) the long marketing/legal **prose** in
+  `(public)/{tutorial,privacy,info}/page.tsx` — per-clone content (see the brand bullet); (2)
+  `app/preview/page.tsx` — an unlinked dev component gallery; (3) the **generated poster copy** in
+  `promo-poster` (headline/subcopy/valueLine/AI-prompt seeds) — marketing CONTENT a clone rewrites,
+  same category as the prose, and asserted by `promo-poster.test.ts`; (4) **error-path** `throw new
+  Error("…")` strings in domain services (topup-pricing/geo) and use-case/action `{ error }` strings;
+  (5) `app/global-error.tsx` (outside the i18n provider). Everything user-facing chrome is now migrated.
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.

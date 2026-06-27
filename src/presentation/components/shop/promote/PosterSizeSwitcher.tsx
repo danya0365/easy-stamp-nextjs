@@ -33,7 +33,7 @@ export function PosterSizeSwitcher({
                   : "border-border text-muted hover:text-foreground",
               )}
             >
-              {size.label}
+              {t(size.labelKey)}
             </button>
           );
         })}

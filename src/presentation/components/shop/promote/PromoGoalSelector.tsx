@@ -36,7 +36,7 @@ export function PromoGoalSelector({
                   : "border-border text-muted hover:text-foreground",
               )}
             >
-              {preset.label}
+              {t(preset.labelKey)}
             </button>
           );
         })}

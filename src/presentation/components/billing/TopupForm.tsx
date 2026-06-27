@@ -155,7 +155,7 @@ export function TopupForm({
       {/* Launch promo banner */}
       {promoOn && (
         <div className="rounded-2xl bg-accent-500 px-4 py-3 text-white">
-          <p className="text-sm font-bold">🎉 {TOPUP_PROMO.label}</p>
+          <p className="text-sm font-bold">🎉 {t("promoLabel", { percent: TOPUP_PROMO.percentOff })}</p>
           <p className="text-xs opacity-90">{t("promoSubtitle")}</p>
         </div>
       )}
@@ -188,7 +188,7 @@ export function TopupForm({
                   </span>
                 )
               )}
-              <span className="text-base font-bold text-foreground">{p.label}</span>
+              <span className="text-base font-bold text-foreground">{t("daysValue", { days: p.days })}</span>
               {p.bonusDays > 0 ? (
                 <span className="text-xs font-medium text-success">
                   {t("presetBonus", { days: p.bonusDays })}

@@ -8,7 +8,7 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { loadMoreAuditAction } from "@/src/presentation/actions/security-actions";
 import { loadMoreShopAuditAction } from "@/src/presentation/actions/shop-actions";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
-import { ROLE_LABEL } from "@/src/domain/types/roles";
+import { ROLE_LABEL_KEY, type Role } from "@/src/domain/types/roles";
 import type { AuditLog } from "@/src/domain/entities";
 
 /** Message key per well-known audit action; unknown actions show the raw name. */
@@ -74,9 +74,9 @@ function Icon({ action }: { action: string }) {
   return <Shield className="size-4 shrink-0 text-muted" />;
 }
 
-function summarize(e: AuditLog): string {
+function summarize(e: AuditLog, roleLabel: (role: Role) => string): string {
   const parts: string[] = [];
-  if (e.actorRole) parts.push(ROLE_LABEL[e.actorRole]);
+  if (e.actorRole) parts.push(roleLabel(e.actorRole));
   if (e.metadata) {
     try {
       const m = JSON.parse(e.metadata) as Record<string, unknown>;
@@ -105,6 +105,7 @@ export function AuditTimeline({
   scope?: "admin" | "shop";
 }) {
   const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const loadMore =
     scope === "shop"
       ? (cursor: string) => loadMoreShopAuditAction(cursor)
@@ -123,7 +124,7 @@ export function AuditTimeline({
               {ACTION_KEY[e.action] ? t(ACTION_KEY[e.action]) : e.action}
             </p>
             <p className="mt-0.5 truncate text-xs text-muted">
-              {summarize(e) || "—"}
+              {summarize(e, (role) => tc(ROLE_LABEL_KEY[role])) || "—"}
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1">
