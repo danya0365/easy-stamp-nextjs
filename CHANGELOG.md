@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-06-27
+
+ปิด milestone **i18n เต็มรูปแบบ + ยกระดับเป็น SaaS starter ที่ clone ได้จริง** — ไม่กระทบฟีเจอร์/พฤติกรรมเดิมของผู้ใช้
+
+### Added
+- **i18n ครบทั้งแอป** — ย้ายสตริงไทยที่ผู้ใช้เห็นทั้งหมดเข้า message catalog (`messages/th.json`): ทุกกลุ่ม component (stamp/leads/layout/map/channels/analytics/auth/promote/theme/reviews/billing/shop/admin) + ทุกหน้า `app/**` (shop/admin/staff/public/login) + label ที่เคยฝังใน domain layer — พร้อมต่อยอดหลายภาษาในอนาคต (เหลือไว้ตั้งใจ: prose การตลาด privacy/tutorial/info, generated poster copy, ข้อความ error-path)
+- **ส่งอีเมล (transactional email)** — abstraction `IEmailSender` (vendor-neutral, no-op จนกว่าจะตั้งค่า) + ตัวส่งผ่าน Resend (env `RESEND_API_KEY`/`EMAIL_FROM`, fail-soft + retry); ต่อเป็นช่องทางที่ 3 ใน NotificationService (in-app + LINE + email) — การแจ้งเตือนทุกอย่างส่งเข้าอีเมลผู้ใช้ได้เมื่อเปิดใช้
+- **หน้าข้อกำหนดการใช้งาน (Terms of Service)** + `/.well-known/security.txt` (RFC 9116, responsible disclosure)
+- **ตัวช่วยสร้าง entity** — `npm run scaffold <Name>` สร้างไฟล์ boilerplate (repo interface / Drizzle repo / use-case) แบบ stub + พิมพ์ขั้นตอน wiring ที่เหลือ
+- **CI/ops** — Dependabot (npm + actions), CodeQL, และ CI เพิ่ม job `build` + `npm audit`; คู่มือ clone แบบ step-by-step ([docs/FORKING.md](docs/FORKING.md))
+
+### Changed
+- **แยก DI container เป็น generic core + domain** ([`container.generic.ts`](src/infrastructure/di/container.generic.ts) + [`container.ts`](src/infrastructure/di/container.ts)) — clone ไป product ใหม่ = ลบโดเมน + แก้ไฟล์เดียว
+- **รวม logo/icon/สี PWA ไว้ที่ [`src/config/brand.ts`](src/config/brand.ts)** (`BRAND.assets` / `BRAND.pwa`) แทนการ hardcode กระจายใน Logo + manifest
+
 ## [1.18.0] - 2026-06-23
 
 ปิด milestone **เตรียมโปรเจคให้เป็นต้นแบบ SaaS (template-readiness)** — เน้น ops/security พื้นฐาน + โครงสร้างสำหรับ clone ไปทำ product อื่น (โดยไม่กระทบฟีเจอร์ผู้ใช้เดิม)
