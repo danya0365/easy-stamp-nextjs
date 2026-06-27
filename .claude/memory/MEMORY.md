@@ -1,0 +1,16 @@
+- [project-easy-stamp](project-easy-stamp.md) — what Easy Stamp is, stack (Next16/Turso/Drizzle/custom-auth/Tailwind-v4 multi-theme), SKILL deviations, seed logins
+- [drizzle-kit-targets-prod](drizzle-kit-targets-prod.md) — drizzle-kit db:migrate/push hits REMOTE prod Turso (loads .env.production.local); override env inline for local
+- [billing-daytopup-phases](billing-daytopup-phases.md) — billing is now prepaid day-topup (Phase A shipped); Phase B (LINE/email reminders) + C (referral) deferred
+- [billing-pause-freeze](billing-pause-freeze.md) — pause freezes billing days (due-timestamp model); whole-day-floor resume credit + cooldown/cap/audit guard-rails close the off-hours free-usage loophole
+- [r2-slip-storage](r2-slip-storage.md) — slip uploads use Cloudflare R2 on prod (Vercel needs R2_* env or uploads break); password reset/change model
+- [notifications-line](notifications-line.md) — in-app noti + LINE OA push (Messaging API, env-gated) + contact-admin; prod needs migration 0003 + LINE_* env + webhook URL
+- [multi-stamp-types](multi-stamp-types.md) — Phase 3: multiple stamp types/shop (stamp_types + stamp_balances, migration 0005); stamp_cards balance cols + shop.stampThreshold now legacy
+- [cursor-pagination](cursor-pagination.md) — Phase 4: app-wide cursor "load more" (page* repo methods + LoadMore + (createdAt,id) keyset, migration 0006 indexes); how to add a new paginated list
+- [line-otp-login](line-otp-login.md) — passwordless login via LINE OTP for linked accounts (email→OTP→verify, password fallback); migration 0007; OTP use cases + multi-step LoginForm
+- [shop-analytics](shop-analytics.md) — Phase 6: /shop/analytics dashboard + platform-admin /admin/analytics (cross-shop, IPlatformAnalyticsRepository, migration 0008 createdAt indexes); recharts, Bangkok-day SQL, globalThis container restart gotcha
+- [leads-crm](leads-crm.md) — Phase 7: admin field-sales CRM (leads table separate from shops, migration 0011); map/navigate, photos, visit-log, convert-to-shop, follow-up cron; local.db is push-based (no journal)
+- [shop-images-reviews](shop-images-reviews.md) — shop profile image + gallery (public route /api/shop-images) and customer reviews (rating+reply+admin hide, bound-customers only), migration 0012; dev uploads go to R2 not disk
+- [css-lint-enforcement](css-lint-enforcement.md) — theme-token CSS rules now enforced by ESLint (no hardcoded colors in className) + stylelint (var-only token layers); npm run lint:all
+- [testing-setup](testing-setup.md) — node:test runner (in-memory libSQL integration via DI container + seedShop) + Playwright E2E smoke; npm test / test:cov / test:e2e; how to add tests
+- [saas-starter-roadmap](saas-starter-roadmap.md) — easy-stamp hardened into Thai-vertical SaaS starter; ALL tiers shipped (clone-ability/email/legal/ops), released v1.19.0, PAUSED 2026-06-27 to start new system; clone via FORKING.md + DI generic-domain split; CodeQL/GitGuardian on PR#31 handled
+- [verify-git-before-claiming](verify-git-before-claiming.md) — ALWAYS run git to check commit/push state before claiming it; harness auto-pushes so my "unpushed" tallies are often wrong
