@@ -109,12 +109,19 @@ checkboxes as items land.
   message keys); and `ThemeSwitcher` into a `theme` namespace. A full-tree sweep of
   `src/presentation/components/` now returns **zero** translatable Thai — the only residual is one
   module-scope `FileReader.onerror` message (UploadBgPanel, an error-path string that can't use a hook).
-  **Remaining (incremental):** (1) `app/**` page files — headings/empty states across ~42 routes;
-  (2) **domain-layer** Thai still rendered through components but defined in pure-domain modules
-  (`domain/types/roles` ROLE_LABEL, `domain/services/promo-poster` POSTER_SIZES/PROMO_GOAL_PRESETS/
-  buildTemplateCopy) — these need a KEY-map refactor that keeps the domain layer pure; do as a dedicated
-  pass. (Leave inline: use-case/action `{ error }` strings, audit text, and `app/global-error.tsx` — it
-  replaces the root layout/provider.)
+  **App pages done too:** all `app/**` route files migrated into server-only page namespaces —
+  `shopPages` ((shop)/* incl. layout, billing status matrix, settings tabs), `adminPages`
+  ((platform)/admin/* incl. the leads pages' headings, which keep their `leads` translator for enum
+  labels), `staffPages` ((staff)/*), `publicPages` (home/shops/me/s-[slug], with login-page strings in
+  `auth`); `metadata` exports that needed translation became `generateMetadata`. A full-tree sweep of
+  `app/**` now returns zero translatable Thai outside the intentional exclusions.
+  **Remaining (by design / dedicated pass):** (1) the long marketing/legal **prose** in
+  `(public)/{tutorial,privacy,info}/page.tsx` — per-clone content (see the brand bullet), left inline;
+  (2) `app/preview/page.tsx` — an unlinked dev component gallery; (3) **domain-layer** Thai rendered
+  through components but defined in pure-domain modules (`domain/types/roles` ROLE_LABEL,
+  `domain/services/promo-poster` + `topup-pricing` labels) — need a KEY-map refactor that keeps the
+  domain pure. (Leave inline: use-case/action `{ error }` strings, audit text, and
+  `app/global-error.tsx` — it replaces the root layout/provider.)
 - [x] **Fork docs** — `docs/DEPLOYMENT.md` (Vercel/R2/LINE/Turso checklist + env + cron),
   `docs/TESTING.md` (runner/in-memory DB/helpers/e2e), `docs/EXTENDING.md` (add an
   entity/repo/use-case/action + the enforced rules). Indexed from the README.

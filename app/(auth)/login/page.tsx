@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { getSession, getKnownAccounts } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -13,17 +14,21 @@ import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
 import { Logo } from "@/src/presentation/components/layout/Logo";
 import { BRAND } from "@/src/config/brand";
 
-export const metadata: Metadata = {
-  title: `เข้าสู่ระบบ | ${BRAND.name}`,
-  // Auth page — keep it out of search indexes.
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth");
+  return {
+    title: t("loginMetaTitle", { brand: BRAND.name }),
+    // Auth page — keep it out of search indexes.
+    robots: { index: false, follow: false },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   const user = await getSession();
   if (user) redirect(ROLE_HOME[user.role]);
+  const t = await getTranslations("auth");
 
   // Accounts previously used on this device — offered as one-tap picks.
   const knownAccounts = await getKnownAccounts();
@@ -44,7 +49,7 @@ export default async function LoginPage() {
           <span className="mx-auto mb-3 inline-flex rounded-xl bg-white p-3 shadow-sm ring-1 ring-border">
             <Logo variant="wordmark" className="h-10 w-auto" />
           </span>
-          <p className="text-sm text-muted">เข้าสู่ระบบผู้ดูแล</p>
+          <p className="text-sm text-muted">{t("loginAdminSubtitle")}</p>
         </div>
         <LoginForm knownAccounts={knownAccounts} />
 
@@ -54,7 +59,7 @@ export default async function LoginPage() {
         <div className="mt-6">
           <div className="flex items-center gap-3 text-xs text-muted">
             <span className="h-px flex-1 bg-border" />
-            หรือ
+            {t("or")}
             <span className="h-px flex-1 bg-border" />
           </div>
           <div className="mt-3 flex flex-col gap-2">
@@ -63,12 +68,12 @@ export default async function LoginPage() {
                 key={provider}
                 type="button"
                 disabled
-                title="เร็วๆ นี้"
+                title={t("comingSoon")}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted opacity-60"
               >
-                เข้าสู่ระบบด้วย {provider}
+                {t("loginWithProvider", { provider })}
                 <span className="rounded-full bg-muted-surface px-1.5 py-0.5 text-[10px]">
-                  เร็วๆ นี้
+                  {t("comingSoon")}
                 </span>
               </button>
             ))}
@@ -76,12 +81,12 @@ export default async function LoginPage() {
         </div>
 
         <div className="mt-6 border-t border-border pt-4 text-center">
-          <PublicContactButton label="มีปัญหาในการเข้าสู่ระบบ? ติดต่อผู้ดูแล" />
+          <PublicContactButton label={t("loginContactHelp")} />
           <Link
             href="/tutorial"
             className="mt-3 block text-sm font-medium text-brand-700 hover:underline"
           >
-            ดูวิธีใช้งาน
+            {t("seeTutorial")}
           </Link>
         </div>
       </div>

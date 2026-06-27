@@ -1,4 +1,5 @@
 import { Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { getSession } from "@/src/infrastructure/auth/session";
@@ -17,6 +18,7 @@ export default async function HomePage() {
     container.branchRepository.listMapLocations(),
     getSession(),
   ]);
+  const t = await getTranslations("publicPages");
 
   // Enrich map pins with each shop's rating + profile image (batched, no N+1).
   const shopIds = [...new Set(locations.map((l) => l.shopId))];
@@ -33,8 +35,8 @@ export default async function HomePage() {
   // Logged-in operators skip the /login round-trip and go straight to their
   // dashboard; everyone else goes to the login form.
   const entry = user
-    ? { href: ROLE_HOME[user.role], label: "ไปที่แดชบอร์ด" }
-    : { href: "/login", label: "เข้าสู่ระบบผู้ดูแล" };
+    ? { href: ROLE_HOME[user.role], label: t("goToDashboard") }
+    : { href: "/login", label: t("adminLogin") };
 
   return (
     // Fill the viewport minus the bottom tab bar (h-16) so the map sits above it.
@@ -47,7 +49,7 @@ export default async function HomePage() {
               {BRAND.name}
             </h1>
             <p className="truncate text-xs text-muted sm:text-sm">
-              ระบบบัตรสะสมแสตมป์สำหรับร้านค้าหลายสาขา
+              {t("tagline")}
             </p>
           </div>
         </div>
@@ -61,7 +63,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center">
           <span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-1.5 text-sm font-medium text-foreground shadow-sm backdrop-blur">
             <Store size={16} className="text-brand-600" />
-            ร้านค้าที่ร่วมรายการ {locations.length} แห่ง
+            {t("shopsParticipating", { count: locations.length })}
           </span>
         </div>
       </section>
