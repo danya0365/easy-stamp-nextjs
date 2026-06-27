@@ -1,4 +1,5 @@
 import { LogOut, User } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopStaffPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const [branches, users] = await Promise.all([
     container.branchRepository.listByShop(shopId),
     container.userRepository.listByShop(shopId),
@@ -24,14 +26,14 @@ export default async function ShopStaffPage() {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="เพิ่มพนักงานสาขา" />
+        <CardHeader title={t("addStaffTitle")} />
         <AddStaffForm branches={branches.map((b) => ({ id: b.id, name: b.name }))} />
       </Card>
 
       <Card>
-        <CardHeader title={`พนักงานทั้งหมด (${staff.length})`} />
+        <CardHeader title={t("allStaffTitle", { count: staff.length })} />
         {staff.length === 0 ? (
-          <EmptyState icon={<User />} title="ยังไม่มีพนักงาน" />
+          <EmptyState icon={<User />} title={t("noStaff")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {staff.map((s) => (
@@ -57,14 +59,14 @@ export default async function ShopStaffPage() {
                       "use server";
                       await forceLogoutStaffAction(s.id);
                     }}
-                    title="บังคับออกจากระบบ?"
-                    message="อุปกรณ์ทั้งหมดของพนักงานคนนี้จะถูกออกจากระบบทันที"
-                    confirmLabel="เตะออก"
-                    buttonTitle="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
+                    title={t("forceLogoutTitle")}
+                    message={t("forceLogoutMessage")}
+                    confirmLabel={t("forceLogoutConfirm")}
+                    buttonTitle={t("forceLogoutButtonTitle")}
                     className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
                   >
                     <LogOut className="size-3.5" />
-                    เตะออก
+                    {t("kickOut")}
                   </ConfirmSubmitButton>
                 </div>
               </li>

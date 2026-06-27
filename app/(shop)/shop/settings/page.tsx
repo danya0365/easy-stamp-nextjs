@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { LogOut } from "lucide-react";
 
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopSettingsPage() {
   const { user, shopId, impersonating } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
   const [
@@ -77,23 +79,23 @@ export default async function ShopSettingsPage() {
       tabs={[
         {
           id: "shop",
-          label: "แสตมป์ & ร้านค้า",
+          label: t("tabShop"),
           icon: "stamp",
           content: (
             <>
               <Card>
                 <CardHeader
-                  title="ประเภทแสตมป์"
+                  title={t("stampTypesTitle")}
                   subtitle={
                     <>
-                      กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง ·{" "}
+                      {t("stampTypesSubtitlePrefix")}{" "}
                       <a
                         href={`/s/${shop.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium text-brand-700 hover:underline"
                       >
-                        เปิดหน้าร้าน /s/{shop.slug} ↗
+                        {t("openShopLink", { slug: shop.slug })}
                       </a>
                     </>
                   }
@@ -104,14 +106,14 @@ export default async function ShopSettingsPage() {
                   className="mt-4 inline-flex items-center gap-1 text-sm text-brand-700 hover:underline"
                 >
                   <ArrowRight className="size-4" />
-                  เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
+                  {t("openQrPoster")}
                 </Link>
               </Card>
 
               <Card>
                 <CardHeader
-                  title="ปิดร้านชั่วคราว"
-                  subtitle="หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ"
+                  title={t("pauseShopTitle")}
+                  subtitle={t("pauseShopSubtitle")}
                 />
                 <PauseShopControl
                   paused={!!subscription?.pausedAt}
@@ -127,13 +129,13 @@ export default async function ShopSettingsPage() {
         },
         {
           id: "details",
-          label: "รายละเอียดร้าน",
+          label: t("tabDetails"),
           icon: "info",
           content: (
             <Card>
               <CardHeader
-                title="รายละเอียดร้าน (แสดงบนหน้าร้านสาธารณะ)"
-                subtitle={`เกี่ยวกับร้าน เวลาทำการ ช่องทางติดต่อ · /s/${shop.slug}`}
+                title={t("shopDetailsTitle")}
+                subtitle={t("shopDetailsSubtitle", { slug: shop.slug })}
               />
               <ShopProfileForm profile={shopProfile} />
             </Card>
@@ -141,22 +143,22 @@ export default async function ShopSettingsPage() {
         },
         {
           id: "images",
-          label: "ภาพร้าน",
+          label: t("tabImages"),
           icon: "image",
           content: (
             <Card>
               <CardHeader
-                title="รูปโปรไฟล์ & แกลเลอรี่"
+                title={t("imagesTitle")}
                 subtitle={
                   <>
-                    รูปจะแสดงบนหน้าร้านสาธารณะ · หรือแก้แบบเห็นภาพจริงได้ที่{" "}
+                    {t("imagesSubtitlePrefix")}{" "}
                     <a
                       href={`/s/${shop.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-medium text-brand-700 hover:underline"
                     >
-                      หน้าร้านของฉัน (แตะรูปเพื่อแก้) ↗
+                      {t("myShopLink")}
                     </a>
                   </>
                 }
@@ -167,19 +169,19 @@ export default async function ShopSettingsPage() {
         },
         {
           id: "security",
-          label: "บัญชี & ความปลอดภัย",
+          label: t("tabSecurity"),
           icon: "shield",
           content: (
             <>
               <Card>
-                <CardHeader title="เปลี่ยนรหัสผ่าน" />
+                <CardHeader title={t("changePasswordTitle")} />
                 <ChangePasswordForm />
               </Card>
 
               <Card>
                 <CardHeader
-                  title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
-                  subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP"
+                  title={t("connectionsTitle")}
+                  subtitle={t("connectionsSubtitle")}
                 />
                 <ConnectionsSection
                   linked={!!user.lineUserId}
@@ -190,8 +192,8 @@ export default async function ShopSettingsPage() {
               {!impersonating && (
                 <Card>
                   <CardHeader
-                    title="อุปกรณ์ที่เข้าสู่ระบบ"
-                    subtitle="อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้"
+                    title={t("devicesTitle")}
+                    subtitle={t("devicesSubtitle")}
                   />
                   <DeviceList devices={devices} />
                   <form
@@ -206,7 +208,7 @@ export default async function ShopSettingsPage() {
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted-surface"
                     >
                       <LogOut className="size-4" />
-                      ออกจากระบบบนอุปกรณ์อื่นทั้งหมด
+                      {t("signOutOthers")}
                     </button>
                   </form>
                 </Card>
@@ -218,8 +220,8 @@ export default async function ShopSettingsPage() {
       footer={
         <Card>
           <CardHeader
-            title="ติดต่อผู้ดูแลระบบ"
-            subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแลได้ที่นี่"
+            title={t("contactAdminTitle")}
+            subtitle={t("contactAdminSubtitle")}
           />
           <ContactAdminButton />
         </Card>

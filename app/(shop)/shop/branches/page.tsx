@@ -1,4 +1,5 @@
 import { Building2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -12,19 +13,20 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopBranchesPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const branches = await container.branchRepository.listByShop(shopId);
 
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="เพิ่มสาขา" />
+        <CardHeader title={t("addBranchTitle")} />
         <AddBranchForm />
       </Card>
 
       <Card>
-        <CardHeader title={`สาขาทั้งหมด (${branches.length})`} />
+        <CardHeader title={t("allBranchesTitle", { count: branches.length })} />
         {branches.length === 0 ? (
-          <EmptyState icon={<Building2 />} title="ยังไม่มีสาขา" />
+          <EmptyState icon={<Building2 />} title={t("noBranches")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {branches.map((b) => (

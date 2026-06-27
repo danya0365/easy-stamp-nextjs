@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BookOpen, ExternalLink } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopDashboardPage() {
   const { user, shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const [shop, branches, users, customers, redemptions, stampTypes] =
     await Promise.all([
       container.shopRepository.findById(shopId),
@@ -33,15 +35,18 @@ export default async function ShopDashboardPage() {
           <h1 className="text-xl font-bold text-foreground">{shop?.name}</h1>
           <p className="mt-1 text-sm text-muted">
             {stampTypes.length === 1
-              ? `ครบ ${stampTypes[0].threshold} ดวง = ${stampTypes[0].rewardText || "ของรางวัล"}`
-              : `${stampTypes.length} ประเภทแสตมป์`}
+              ? t("dashThreshold", {
+                  threshold: stampTypes[0].threshold,
+                  reward: stampTypes[0].rewardText || t("defaultReward"),
+                })
+              : t("stampTypesCount", { count: stampTypes.length })}
           </p>
         </div>
         {shop && (
           <a href={`/s/${shop.slug}`} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm">
               <ExternalLink size={14} />
-              หน้าร้านของฉัน (แตะรูปเพื่อแก้)
+              {t("myShopButton")}
             </Button>
           </a>
         )}
@@ -50,11 +55,11 @@ export default async function ShopDashboardPage() {
       <FeatureCarousel />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="ประเภทแสตมป์" value={stampTypes.length} />
-        <StatCard label="สาขา" value={branches.length} />
-        <StatCard label="พนักงาน" value={staffCount} />
-        <StatCard label="ลูกค้า" value={customers.length} />
-        <StatCard label="แลกรางวัลแล้ว" value={redemptions.length} />
+        <StatCard label={t("statStampTypes")} value={stampTypes.length} />
+        <StatCard label={t("statBranches")} value={branches.length} />
+        <StatCard label={t("statStaff")} value={staffCount} />
+        <StatCard label={t("statCustomers")} value={customers.length} />
+        <StatCard label={t("statRedeemed")} value={redemptions.length} />
       </div>
 
       <OnboardingSuggestions
@@ -72,8 +77,8 @@ export default async function ShopDashboardPage() {
 
       <Card>
         <CardHeader
-          title="ต้องการความช่วยเหลือ?"
-          subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ติดต่อผู้ดูแลได้เลย"
+          title={t("needHelpTitle")}
+          subtitle={t("needHelpSubtitle")}
         />
         <div className="flex flex-wrap items-center gap-3">
           <ContactAdminButton />
@@ -82,7 +87,7 @@ export default async function ShopDashboardPage() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
           >
             <BookOpen className="size-4" />
-            วิธีใช้งาน
+            {t("howToUse")}
           </Link>
         </div>
       </Card>
