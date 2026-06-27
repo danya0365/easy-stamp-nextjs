@@ -24,4 +24,20 @@ export const BRAND = {
   totpIssuer: NAME,
   /** User-Agent for outbound geocoding requests (OSM politeness policy). */
   userAgent: "EasyStamp/1.0 (+admin lead tool)",
+  /**
+   * Logo / icon asset paths (under `public/`). Centralized so a clone can point
+   * at differently-named files in one place — the image files themselves still
+   * get replaced per clone (see docs/FORKING.md).
+   */
+  assets: {
+    logoMark: "/icons/logo-mark.png",
+    logoWordmark: "/icons/logo-wordmark.png",
+    icon192: "/icons/icon-192.png",
+    icon512: "/icons/icon-512.png",
+  },
+  /** PWA chrome colors for the installed-app manifest (match the default theme). */
+  pwa: {
+    backgroundColor: "#fff7ed",
+    themeColor: "#f97316",
+  },
 } as const;

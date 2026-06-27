@@ -18,6 +18,6 @@ export function Logo({
   alt?: string;
 }) {
   const src =
-    variant === "wordmark" ? "/icons/logo-wordmark.png" : "/icons/logo-mark.png";
+    variant === "wordmark" ? BRAND.assets.logoWordmark : BRAND.assets.logoMark;
   return <img src={src} alt={alt} className={className} />;
 }
