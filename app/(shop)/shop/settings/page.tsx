@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { LogOut } from "lucide-react";
 
@@ -8,6 +9,8 @@ import {
   getCurrentSessionToken,
 } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
+import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
+import { PAUSE_MAX_PER_30D } from "@/src/domain/services/subscription-status";
 import { signOutEverywhereAction } from "@/src/presentation/actions/auth-actions";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { StampTypesManager } from "@/src/presentation/components/shop/StampTypesManager";
@@ -24,20 +27,45 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopSettingsPage() {
   const { user, shopId, impersonating } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
-  const [stampTypes, subscription, shopImages, shopProfile, sessions, currentToken] =
-    await Promise.all([
-      container.stampTypeRepository.listByShop(shop.id),
-      container.subscriptionRepository.findByShop(shop.id),
-      container.shopImageRepository.listByShop(shop.id),
-      container.shopProfileRepository.get(shop.id),
-      // Device list is the owner's own account; skip while an admin impersonates.
-      impersonating
-        ? Promise.resolve([])
-        : container.sessionRepository.listByUser(user.id, new Date()),
-      impersonating ? Promise.resolve(null) : getCurrentSessionToken(),
-    ]);
+  const [
+    stampTypes,
+    subscription,
+    shopImages,
+    shopProfile,
+    sessions,
+    currentToken,
+    billing,
+    pauseCapPeek,
+    pauseCdPeek,
+  ] = await Promise.all([
+    container.stampTypeRepository.listByShop(shop.id),
+    container.subscriptionRepository.findByShop(shop.id),
+    container.shopImageRepository.listByShop(shop.id),
+    container.shopProfileRepository.get(shop.id),
+    // Device list is the owner's own account; skip while an admin impersonates.
+    impersonating
+      ? Promise.resolve([])
+      : container.sessionRepository.listByUser(user.id, new Date()),
+    impersonating ? Promise.resolve(null) : getCurrentSessionToken(),
+    getBillingState(shop.id),
+    container.rateLimitRepository.peek(`shop_pause_cap:${shop.id}`),
+    container.rateLimitRepository.peek(`shop_pause_cd:${shop.id}`),
+  ]);
+
+  // Pause quota/cooldown snapshot for the UI (read-only — does not consume).
+  const pausesUsed = pauseCapPeek?.count ?? 0;
+  const cooldownRemainingSec = pauseCdPeek
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(pauseCdPeek.resetAt).getTime() - new Date().getTime()) /
+            1000,
+        ),
+      )
+    : 0;
   const devices = sessions.map((s) => ({
     id: s.id,
     userAgent: s.userAgent,
@@ -51,23 +79,23 @@ export default async function ShopSettingsPage() {
       tabs={[
         {
           id: "shop",
-          label: "แสตมป์ & ร้านค้า",
+          label: t("tabShop"),
           icon: "stamp",
           content: (
             <>
               <Card>
                 <CardHeader
-                  title="ประเภทแสตมป์"
+                  title={t("stampTypesTitle")}
                   subtitle={
                     <>
-                      กำหนดได้หลายประเภท แต่ละประเภทมีจำนวนครบ + ของรางวัลของตัวเอง ·{" "}
+                      {t("stampTypesSubtitlePrefix")}{" "}
                       <a
                         href={`/s/${shop.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium text-brand-700 hover:underline"
                       >
-                        เปิดหน้าร้าน /s/{shop.slug} ↗
+                        {t("openShopLink", { slug: shop.slug })}
                       </a>
                     </>
                   }
@@ -78,29 +106,36 @@ export default async function ShopSettingsPage() {
                   className="mt-4 inline-flex items-center gap-1 text-sm text-brand-700 hover:underline"
                 >
                   <ArrowRight className="size-4" />
-                  เปิดป้าย QR ร้าน (พิมพ์ติดหน้าร้าน)
+                  {t("openQrPoster")}
                 </Link>
               </Card>
 
               <Card>
                 <CardHeader
-                  title="ปิดร้านชั่วคราว"
-                  subtitle="หยุดให้บริการชั่วคราวโดยไม่เสียวันใช้งานที่เหลือ"
+                  title={t("pauseShopTitle")}
+                  subtitle={t("pauseShopSubtitle")}
                 />
-                <PauseShopControl paused={!!subscription?.pausedAt} />
+                <PauseShopControl
+                  paused={!!subscription?.pausedAt}
+                  daysUntilDue={billing.status.daysUntilDue}
+                  frozenDaysSoFar={billing.status.frozenDaysSoFar}
+                  pausesUsed={pausesUsed}
+                  pauseCap={PAUSE_MAX_PER_30D}
+                  cooldownRemainingSec={cooldownRemainingSec}
+                />
               </Card>
             </>
           ),
         },
         {
           id: "details",
-          label: "รายละเอียดร้าน",
+          label: t("tabDetails"),
           icon: "info",
           content: (
             <Card>
               <CardHeader
-                title="รายละเอียดร้าน (แสดงบนหน้าร้านสาธารณะ)"
-                subtitle={`เกี่ยวกับร้าน เวลาทำการ ช่องทางติดต่อ · /s/${shop.slug}`}
+                title={t("shopDetailsTitle")}
+                subtitle={t("shopDetailsSubtitle", { slug: shop.slug })}
               />
               <ShopProfileForm profile={shopProfile} />
             </Card>
@@ -108,13 +143,25 @@ export default async function ShopSettingsPage() {
         },
         {
           id: "images",
-          label: "ภาพร้าน",
+          label: t("tabImages"),
           icon: "image",
           content: (
             <Card>
               <CardHeader
-                title="รูปโปรไฟล์ & แกลเลอรี่"
-                subtitle={`รูปจะแสดงบนหน้าร้านสาธารณะ /s/${shop.slug}`}
+                title={t("imagesTitle")}
+                subtitle={
+                  <>
+                    {t("imagesSubtitlePrefix")}{" "}
+                    <a
+                      href={`/s/${shop.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-brand-700 hover:underline"
+                    >
+                      {t("myShopLink")}
+                    </a>
+                  </>
+                }
               />
               <ShopImagesManager images={shopImages} />
             </Card>
@@ -122,19 +169,19 @@ export default async function ShopSettingsPage() {
         },
         {
           id: "security",
-          label: "บัญชี & ความปลอดภัย",
+          label: t("tabSecurity"),
           icon: "shield",
           content: (
             <>
               <Card>
-                <CardHeader title="เปลี่ยนรหัสผ่าน" />
+                <CardHeader title={t("changePasswordTitle")} />
                 <ChangePasswordForm />
               </Card>
 
               <Card>
                 <CardHeader
-                  title="ช่องทางเชื่อมต่อ & ความปลอดภัย"
-                  subtitle="เชื่อมช่องทางเพื่อรับการแจ้งเตือนผลอนุมัติการชำระเงิน และเข้าสู่ระบบด้วยรหัส OTP"
+                  title={t("connectionsTitle")}
+                  subtitle={t("connectionsSubtitle")}
                 />
                 <ConnectionsSection
                   linked={!!user.lineUserId}
@@ -145,8 +192,8 @@ export default async function ShopSettingsPage() {
               {!impersonating && (
                 <Card>
                   <CardHeader
-                    title="อุปกรณ์ที่เข้าสู่ระบบ"
-                    subtitle="อุปกรณ์ที่มี session ใช้งานอยู่ — ออกจากระบบรายเครื่อง หรือทุกเครื่องยกเว้นนี้"
+                    title={t("devicesTitle")}
+                    subtitle={t("devicesSubtitle")}
                   />
                   <DeviceList devices={devices} />
                   <form
@@ -161,7 +208,7 @@ export default async function ShopSettingsPage() {
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted-surface"
                     >
                       <LogOut className="size-4" />
-                      ออกจากระบบบนอุปกรณ์อื่นทั้งหมด
+                      {t("signOutOthers")}
                     </button>
                   </form>
                 </Card>
@@ -173,8 +220,8 @@ export default async function ShopSettingsPage() {
       footer={
         <Card>
           <CardHeader
-            title="ติดต่อผู้ดูแลระบบ"
-            subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแลได้ที่นี่"
+            title={t("contactAdminTitle")}
+            subtitle={t("contactAdminSubtitle")}
           />
           <ContactAdminButton />
         </Card>

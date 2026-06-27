@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
+import { retry } from "@/src/infrastructure/services/retry";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 export interface LineConfig {
   channelAccessToken: string;
@@ -23,24 +25,43 @@ export class LineMessagingPusher implements IMessagePusher {
 
   async pushText(channelUserId: string, text: string): Promise<void> {
     try {
-      const res = await fetch(PUSH_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.config.channelAccessToken}`,
+      // Retry transient failures (network/timeout) — each attempt has its own
+      // 5s timeout so it never blocks the triggering request for long. A non-ok
+      // HTTP response is NOT retried (e.g. a 4xx auth/recipient error is permanent).
+      const res = await retry(
+        () =>
+          fetch(PUSH_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.config.channelAccessToken}`,
+            },
+            body: JSON.stringify({
+              to: channelUserId,
+              messages: [{ type: "text", text }],
+            }),
+            signal: AbortSignal.timeout(5000),
+          }),
+        {
+          retries: 2,
+          baseDelayMs: 300,
+          onRetry: (e, n) =>
+            logger.warn("LINE push retry", {
+              scope: "line",
+              attempt: n,
+              err: (e as Error).message,
+            }),
         },
-        body: JSON.stringify({
-          to: channelUserId,
-          messages: [{ type: "text", text }],
-        }),
-      });
+      );
       if (!res.ok) {
-        console.error(
-          `[LINE] push failed (${res.status}): ${await res.text().catch(() => "")}`,
-        );
+        logger.error("LINE push failed", {
+          scope: "line",
+          status: res.status,
+          body: await res.text().catch(() => ""),
+        });
       }
     } catch (e) {
-      console.error("[LINE] push error:", e);
+      logger.captureException(e, { scope: "line", op: "pushText" });
     }
   }
 }

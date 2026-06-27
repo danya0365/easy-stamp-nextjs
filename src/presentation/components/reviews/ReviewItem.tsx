@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { CornerDownRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { ShopReview } from "@/src/domain/entities";
 import { StarRating } from "@/src/presentation/components/ui/StarRating";
@@ -11,7 +14,8 @@ function day(iso: string): string {
 
 /**
  * Presentational review row: stars, comment, date, and the owner's reply.
- * `actions` renders a trailing control slot (reply box / hide button).
+ * `actions` renders a trailing control slot (reply box / hide button). Always
+ * rendered inside a client list (LoadMore), so it's a client component.
  */
 export function ReviewItem({
   review,
@@ -20,6 +24,7 @@ export function ReviewItem({
   review: ShopReview;
   actions?: ReactNode;
 }) {
+  const t = useTranslations("reviews");
   return (
     <li className="flex flex-col gap-1.5 py-3">
       <div className="flex items-center justify-between gap-2">
@@ -34,7 +39,7 @@ export function ReviewItem({
         <div className="ml-3 flex gap-1.5 rounded-lg bg-muted-surface px-3 py-2">
           <CornerDownRight className="mt-0.5 size-3.5 shrink-0 text-muted" />
           <div>
-            <p className="text-xs font-medium text-muted">ร้านตอบกลับ</p>
+            <p className="text-xs font-medium text-muted">{t("ownerReplied")}</p>
             <p className="text-sm text-foreground">{review.ownerReply}</p>
           </div>
         </div>

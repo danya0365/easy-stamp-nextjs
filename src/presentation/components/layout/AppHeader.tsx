@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { logoutAction } from "@/src/presentation/actions/auth-actions";
 import { ThemeSwitcher } from "@/src/presentation/components/ThemeSwitcher";
 import { Logo } from "@/src/presentation/components/layout/Logo";
+import { BRAND } from "@/src/config/brand";
 
 interface AppHeaderProps {
-  /** App name, always shown (e.g. "Easy Stamp"). */
-  brand: string;
+  /** App name, always shown. Defaults to the central brand name. */
+  brand?: string;
   /** Role suffix shown only on sm+ (e.g. "ร้านค้า"). */
   role?: string;
   userEmail: string;
@@ -21,11 +23,12 @@ interface AppHeaderProps {
  * On mobile the role suffix, email, and logout label collapse to save space.
  */
 export function AppHeader({
-  brand,
+  brand = BRAND.name,
   role,
   userEmail,
   notifications,
 }: AppHeaderProps) {
+  const t = useTranslations("layout");
   return (
     <header className="border-b border-border bg-card print:hidden">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
@@ -44,7 +47,11 @@ export function AppHeader({
           {notifications && (
             <Link
               href={notifications.href}
-              aria-label={`การแจ้งเตือน${notifications.unread > 0 ? ` (${notifications.unread} ใหม่)` : ""}`}
+              aria-label={
+                notifications.unread > 0
+                  ? t("notificationsAriaUnread", { count: notifications.unread })
+                  : t("notificationsAria")
+              }
               className="relative inline-flex size-9 items-center justify-center rounded-lg text-foreground transition hover:bg-muted-surface"
             >
               <Bell className="size-5" />
@@ -62,12 +69,12 @@ export function AppHeader({
           <form action={logoutAction}>
             <button
               type="submit"
-              aria-label="ออกจากระบบ"
-              title="ออกจากระบบ"
+              aria-label={t("logout")}
+              title={t("logout")}
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-foreground transition hover:bg-muted-surface sm:px-3"
             >
               <LogOut className="size-4 shrink-0" />
-              <span className="hidden sm:inline">ออกจากระบบ</span>
+              <span className="hidden sm:inline">{t("logout")}</span>
             </button>
           </form>
         </div>

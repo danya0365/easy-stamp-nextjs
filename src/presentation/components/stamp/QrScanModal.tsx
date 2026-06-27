@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Modal } from "@/src/presentation/components/ui/Modal";
 import { Button } from "@/src/presentation/components/ui/Button";
@@ -14,6 +15,7 @@ interface QrScanModalProps {
 export function QrScanModal({ open, onClose, onResult }: QrScanModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("stamp");
 
   useEffect(() => {
     if (!open) return;
@@ -38,7 +40,7 @@ export function QrScanModal({ open, onClose, onResult }: QrScanModalProps) {
         );
         await (scanner as unknown as { start: () => Promise<void> }).start();
       } catch {
-        if (!cancelled) setError("ไม่สามารถเปิดกล้องได้ — ตรวจสอบสิทธิ์กล้องและใช้งานผ่าน HTTPS");
+        if (!cancelled) setError(t("cameraError"));
       }
     })();
 
@@ -47,16 +49,16 @@ export function QrScanModal({ open, onClose, onResult }: QrScanModalProps) {
       scanner?.stop();
       scanner?.destroy();
     };
-  }, [open, onResult]);
+  }, [open, onResult, t]);
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="สแกน QR ลูกค้า"
+      title={t("scanModalTitle")}
       footer={
         <Button variant="ghost" onClick={onClose}>
-          ปิด
+          {t("close")}
         </Button>
       }
     >
@@ -70,9 +72,7 @@ export function QrScanModal({ open, onClose, onResult }: QrScanModalProps) {
             muted
             playsInline
           />
-          <p className="text-center text-xs text-muted">
-            เล็ง QR บนมือถือลูกค้าให้อยู่ในกรอบ
-          </p>
+          <p className="text-center text-xs text-muted">{t("scanAim")}</p>
         </div>
       )}
     </Modal>

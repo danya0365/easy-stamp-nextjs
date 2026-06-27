@@ -1,6 +1,6 @@
 {
   "name": "easy-stamp",
-  "version": "1.16.0",
+  "version": "1.19.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -20,6 +20,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:prod": "tsx scripts/seed.ts production",
     "gen:cron-secret": "node scripts/gen-cron-secret.mjs",
+    "scaffold": "node scripts/scaffold-entity.mjs",
     "reset-2fa": "node scripts/reset-2fa.mjs",
     "release:patch": "npm version patch -m \"chore(release): v%s\"",
     "release:minor": "npm version minor -m \"chore(release): v%s\"",
@@ -39,6 +40,7 @@
     "maplibre-gl": "^5.24.0",
     "nanoid": "^5.1.11",
     "next": "16.2.9",
+    "next-intl": "^4.13.0",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "19.2.4",

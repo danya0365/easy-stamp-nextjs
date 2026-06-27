@@ -1,4 +1,5 @@
 import { container } from "@/src/infrastructure/di/container";
+import { BRAND } from "@/src/config/brand";
 
 // Per-shop web app manifest so an installed icon opens THIS shop's card.
 export async function GET(
@@ -15,17 +16,17 @@ export async function GET(
     start_url: `/s/${slug}`,
     scope: `/s/${slug}`,
     display: "standalone",
-    background_color: "#fff7ed",
-    theme_color: "#f97316",
+    background_color: BRAND.pwa.backgroundColor,
+    theme_color: BRAND.pwa.themeColor,
     icons: [
       {
-        src: "/icons/icon-192.png",
+        src: BRAND.assets.icon192,
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png",
+        src: BRAND.assets.icon512,
         sizes: "512x512",
         type: "image/png",
         purpose: "any maskable",

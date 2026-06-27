@@ -1,35 +1,56 @@
 "use client";
 
 import { ShieldAlert, ShieldCheck, Shield } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { loadMoreAuditAction } from "@/src/presentation/actions/security-actions";
 import { loadMoreShopAuditAction } from "@/src/presentation/actions/shop-actions";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
-import { ROLE_LABEL } from "@/src/domain/types/roles";
+import { ROLE_LABEL_KEY, type Role } from "@/src/domain/types/roles";
 import type { AuditLog } from "@/src/domain/entities";
 
-/** Thai labels for well-known audit actions; unknown actions show the raw name. */
-const ACTION_LABEL: Record<string, string> = {
-  login_succeeded: "เข้าสู่ระบบสำเร็จ",
-  login_failed: "เข้าสู่ระบบล้มเหลว",
-  otp_failed: "OTP ไม่ถูกต้อง",
-  account_locked: "บัญชีถูกล็อก",
-  password_changed: "เปลี่ยนรหัสผ่าน",
-  password_reset_by_admin: "แอดมินรีเซ็ตรหัสผ่าน",
-  staff_created: "เพิ่มพนักงาน",
-  shop_status_changed: "เปลี่ยนสถานะร้าน",
-  shop_paused: "พักร้าน",
-  shop_resumed: "เปิดร้านต่อ",
-  payment_verified: "ตรวจสลิป",
-  sessions_revoked: "ออกจากระบบทุกอุปกรณ์",
-  force_logout: "บังคับออกจากระบบ",
-  impersonation_started: "เริ่มสวมสิทธิ์ร้าน",
-  impersonation_stopped: "ออกจากสวมสิทธิ์ร้าน",
-  abuse_velocity_tripped: "พบกิจกรรมผิดปกติ",
-  two_factor_enabled: "เปิด 2FA",
-  two_factor_disabled: "ปิด 2FA",
+/** Message key per well-known audit action; unknown actions show the raw name. */
+const ACTION_KEY: Record<
+  string,
+  | "auditLoginSucceeded"
+  | "auditLoginFailed"
+  | "auditOtpFailed"
+  | "auditAccountLocked"
+  | "auditPasswordChanged"
+  | "auditPasswordResetByAdmin"
+  | "auditStaffCreated"
+  | "auditShopStatusChanged"
+  | "auditShopPaused"
+  | "auditShopResumed"
+  | "auditPaymentVerified"
+  | "auditSessionsRevoked"
+  | "auditForceLogout"
+  | "auditImpersonationStarted"
+  | "auditImpersonationStopped"
+  | "auditAbuseVelocityTripped"
+  | "auditTwoFactorEnabled"
+  | "auditTwoFactorDisabled"
+> = {
+  login_succeeded: "auditLoginSucceeded",
+  login_failed: "auditLoginFailed",
+  otp_failed: "auditOtpFailed",
+  account_locked: "auditAccountLocked",
+  password_changed: "auditPasswordChanged",
+  password_reset_by_admin: "auditPasswordResetByAdmin",
+  staff_created: "auditStaffCreated",
+  shop_status_changed: "auditShopStatusChanged",
+  shop_paused: "auditShopPaused",
+  shop_resumed: "auditShopResumed",
+  payment_verified: "auditPaymentVerified",
+  sessions_revoked: "auditSessionsRevoked",
+  force_logout: "auditForceLogout",
+  impersonation_started: "auditImpersonationStarted",
+  impersonation_stopped: "auditImpersonationStopped",
+  abuse_velocity_tripped: "auditAbuseVelocityTripped",
+  two_factor_enabled: "auditTwoFactorEnabled",
+  two_factor_disabled: "auditTwoFactorDisabled",
 };
 
 /** Actions that signal a problem → render with a warning tone. */
@@ -53,9 +74,9 @@ function Icon({ action }: { action: string }) {
   return <Shield className="size-4 shrink-0 text-muted" />;
 }
 
-function summarize(e: AuditLog): string {
+function summarize(e: AuditLog, roleLabel: (role: Role) => string): string {
   const parts: string[] = [];
-  if (e.actorRole) parts.push(ROLE_LABEL[e.actorRole]);
+  if (e.actorRole) parts.push(roleLabel(e.actorRole));
   if (e.metadata) {
     try {
       const m = JSON.parse(e.metadata) as Record<string, unknown>;
@@ -83,6 +104,8 @@ export function AuditTimeline({
   /** "admin" = whole platform; "shop" = the owner's own shop only. */
   scope?: "admin" | "shop";
 }) {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const loadMore =
     scope === "shop"
       ? (cursor: string) => loadMoreShopAuditAction(cursor)
@@ -98,15 +121,15 @@ export function AuditTimeline({
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 font-medium text-foreground">
               <Icon action={e.action} />
-              {ACTION_LABEL[e.action] ?? e.action}
+              {ACTION_KEY[e.action] ? t(ACTION_KEY[e.action]) : e.action}
             </p>
             <p className="mt-0.5 truncate text-xs text-muted">
-              {summarize(e) || "—"}
+              {summarize(e, (role) => tc(ROLE_LABEL_KEY[role])) || "—"}
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1">
             <span className="text-xs text-muted">{formatDateTime(e.createdAt)}</span>
-            {tone(e.action) === "danger" && <Badge tone="danger">ตรวจสอบ</Badge>}
+            {tone(e.action) === "danger" && <Badge tone="danger">{t("auditReviewBadge")}</Badge>}
           </div>
         </li>
       )}

@@ -6,12 +6,21 @@ import type {
 
 type BadgeTone = "neutral" | "success" | "warning" | "danger" | "brand";
 
-export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
-  new: "ใหม่",
-  visited: "เข้าพบแล้ว",
-  interested: "สนใจ",
-  won: "ปิดการขายได้",
-  lost: "ไม่สำเร็จ",
+/**
+ * Maps each enum value to a `leads`-namespace message key (resolve with a
+ * `leads` translator: `t(LEAD_STATUS_KEY[status])`). Labels live in
+ * `messages/th.json` so they stay in the i18n catalog; tone/pin/order are
+ * presentation metadata and stay here.
+ */
+export const LEAD_STATUS_KEY: Record<
+  LeadStatus,
+  "statusNew" | "statusVisited" | "statusInterested" | "statusWon" | "statusLost"
+> = {
+  new: "statusNew",
+  visited: "statusVisited",
+  interested: "statusInterested",
+  won: "statusWon",
+  lost: "statusLost",
 };
 
 export const LEAD_STATUS_TONE: Record<LeadStatus, BadgeTone> = {
@@ -39,13 +48,21 @@ export const LEAD_STATUS_ORDER: LeadStatus[] = [
   "lost",
 ];
 
-export const LEAD_LOST_REASON_LABEL: Record<LeadLostReason, string> = {
-  not_interested: "ไม่สนใจ",
-  too_expensive: "ราคาสูงไป",
-  no_smartphone: "ไม่สะดวกใช้แอป",
-  closed_business: "ปิดกิจการ/ย้าย",
-  competitor: "ใช้เจ้าอื่นอยู่",
-  other: "อื่นๆ",
+export const LEAD_LOST_REASON_KEY: Record<
+  LeadLostReason,
+  | "lostNotInterested"
+  | "lostTooExpensive"
+  | "lostNoSmartphone"
+  | "lostClosedBusiness"
+  | "lostCompetitor"
+  | "lostOther"
+> = {
+  not_interested: "lostNotInterested",
+  too_expensive: "lostTooExpensive",
+  no_smartphone: "lostNoSmartphone",
+  closed_business: "lostClosedBusiness",
+  competitor: "lostCompetitor",
+  other: "lostOther",
 };
 
 export const LEAD_LOST_REASON_ORDER: LeadLostReason[] = [
@@ -57,11 +74,14 @@ export const LEAD_LOST_REASON_ORDER: LeadLostReason[] = [
   "other",
 ];
 
-export const LEAD_REACTION_LABEL: Record<LeadVisitReaction, string> = {
-  positive: "ตอบรับดี",
-  neutral: "เฉยๆ",
-  negative: "ปฏิเสธ",
-  no_answer: "ไม่อยู่/ไม่ได้คุย",
+export const LEAD_REACTION_KEY: Record<
+  LeadVisitReaction,
+  "reactionPositive" | "reactionNeutral" | "reactionNegative" | "reactionNoAnswer"
+> = {
+  positive: "reactionPositive",
+  neutral: "reactionNeutral",
+  negative: "reactionNegative",
+  no_answer: "reactionNoAnswer",
 };
 
 export const LEAD_REACTION_ORDER: LeadVisitReaction[] = [

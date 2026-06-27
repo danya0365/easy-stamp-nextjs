@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
@@ -10,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopPromotePage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const shop = await container.shopRepository.findById(shopId);
   if (!shop) return null;
 
@@ -31,7 +34,7 @@ export default async function ShopPromotePage() {
       : [
           {
             id: null,
-            label: "ค่าเริ่มต้นของร้าน",
+            label: t("shopDefaultRewardLabel"),
             rewardText: shop.rewardText,
             threshold: shop.stampThreshold,
           },
@@ -62,8 +65,8 @@ export default async function ShopPromotePage() {
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader
-          title="โปสเตอร์โปรโมท"
-          subtitle="สร้างสื่อโปรโมทร้านพร้อมใช้ — เลือกเทมเพลต, สร้างพรอมต์ AI หรืออัปรูปมาวางป้ายสะสมแต้มทับ"
+          title={t("promoteTitle")}
+          subtitle={t("promoteSubtitle")}
         />
         <PromoStudio seed={seed} />
       </Card>

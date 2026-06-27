@@ -88,4 +88,11 @@ export class DrizzleShopImageRepository implements IShopImageRepository {
   async delete(id: string): Promise<void> {
     await db.delete(schema.shopImages).where(eq(schema.shopImages.id, id));
   }
+
+  async allStorageKeys(): Promise<string[]> {
+    const rows = await db
+      .select({ key: schema.shopImages.storageKey })
+      .from(schema.shopImages);
+    return rows.map((r) => r.key).filter(Boolean);
+  }
 }

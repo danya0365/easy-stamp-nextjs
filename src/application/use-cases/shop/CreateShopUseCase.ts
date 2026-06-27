@@ -1,14 +1,18 @@
-import type { Shop } from "@/src/domain/entities";
+import type { Branch, Shop } from "@/src/domain/entities";
 import type { IShopRepository } from "@/src/application/repositories/IShopRepository";
 import type { IShopCategoryRepository } from "@/src/application/repositories/IShopCategoryRepository";
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
 import type { ISubscriptionRepository } from "@/src/application/repositories/ISubscriptionRepository";
 import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
+import type { IBranchRepository } from "@/src/application/repositories/IBranchRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import { DEFAULT_PRICE_PER_DAY_SATANG } from "@/src/domain/services/topup-pricing";
 
 /** New shops get a free trial before their first top-up is required. */
 const TRIAL_DAYS = 30;
+
+/** Name of the first branch every shop is created with (location set later). */
+export const DEFAULT_BRANCH_NAME = "สาขาหลัก";
 
 export interface CreateShopInput {
   name: string;
@@ -21,7 +25,12 @@ export interface CreateShopInput {
   rewardText?: string;
 }
 
-/** Onboard a new tenant: shop + owner account + a 30-day trial subscription. */
+/**
+ * Onboard a new tenant: shop + owner account + 30-day trial subscription +
+ * default stamp type + a first branch ("สาขาหลัก", location unset). The branch
+ * is created here so EVERY entry point (admin form + lead convert) gets one —
+ * without it, staff can't be added.
+ */
 export class CreateShopUseCase {
   constructor(
     private readonly shops: IShopRepository,
@@ -30,9 +39,10 @@ export class CreateShopUseCase {
     private readonly hasher: IPasswordHasher,
     private readonly categories: IShopCategoryRepository,
     private readonly stampTypes: IStampTypeRepository,
+    private readonly branches: IBranchRepository,
   ) {}
 
-  async execute(input: CreateShopInput): Promise<Shop> {
+  async execute(input: CreateShopInput): Promise<{ shop: Shop; branch: Branch }> {
     const slug = input.slug
       .trim()
       .toLowerCase()
@@ -104,6 +114,13 @@ export class CreateShopUseCase {
       branchId: null,
     });
 
-    return shop;
+    // First branch (no coordinates yet — set later from /shop/branches; a
+    // branch without a location simply doesn't appear on the public map).
+    const branch = await this.branches.create({
+      shopId: shop.id,
+      name: DEFAULT_BRANCH_NAME,
+    });
+
+    return { shop, branch };
   }
 }

@@ -1,4 +1,5 @@
 import { Users } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -16,6 +17,7 @@ export default async function ShopCustomersPage({
   searchParams: Promise<{ phone?: string }>;
 }) {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const { phone } = await searchParams;
   const search = phone?.trim() ?? "";
 
@@ -31,18 +33,18 @@ export default async function ShopCustomersPage({
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="ค้นหาลูกค้า" />
+        <CardHeader title={t("searchCustomerTitle")} />
         <PhoneLookupForm
           action="/shop/customers"
           defaultPhone={phone ?? ""}
-          placeholder="ค้นด้วยเบอร์โทร"
+          placeholder={t("searchByPhone")}
         />
       </Card>
 
       <Card>
-        <CardHeader title="ลูกค้า" />
+        <CardHeader title={t("customersTitle")} />
         {rows.length === 0 ? (
-          <EmptyState icon={<Users />} title="ยังไม่มีลูกค้า" />
+          <EmptyState icon={<Users />} title={t("noCustomers")} />
         ) : (
           <CustomerList
             initialItems={rows}

@@ -45,6 +45,19 @@ Clean Architecture layering:
 
 Deliberate (approved) deviations from the base init SKILL: **Turso instead of Supabase**, `Drizzle*Repository` implementations, **Server Actions** instead of an HTTP `Api*Repository` layer, and the `@/src/...` import alias.
 
+## Documentation
+
+| Doc | What |
+| --- | --- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layering diagram + enforced rules |
+| [docs/EXTENDING.md](docs/EXTENDING.md) | How to add an entity / repo / use case / action |
+| [docs/REUSE_MAP.md](docs/REUSE_MAP.md) | Generic vs domain — what to keep/rewrite when forking |
+| [docs/FORKING.md](docs/FORKING.md) | Step-by-step clone runbook + delete-manifest (new product) |
+| [docs/TESTING.md](docs/TESTING.md) | Test runner, in-memory DB, helpers, e2e |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel / Turso / R2 / LINE setup + env + cron |
+| [docs/TEMPLATE_AUDIT.md](docs/TEMPLATE_AUDIT.md) | Template-readiness audit + P0/P1/P2 roadmap |
+| [VERSIONING.md](VERSIONING.md) | SemVer + release flow |
+
 ## Getting started
 
 **Prerequisites:** Node.js 20+. For local dev the database defaults to a SQLite file (`file:./local.db`) — no Turso account needed. For production, create a Turso database.

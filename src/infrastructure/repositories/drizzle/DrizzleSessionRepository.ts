@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, lt } from "drizzle-orm";
 import { db, schema } from "@/src/infrastructure/db/client";
 import type { Session, User } from "@/src/domain/entities";
 import type {
@@ -93,5 +93,12 @@ export class DrizzleSessionRepository implements ISessionRepository {
     await db
       .delete(schema.sessions)
       .where(and(eq(schema.sessions.id, id), eq(schema.sessions.userId, userId)));
+  }
+
+  async deleteExpired(now: Date): Promise<number> {
+    const res = await db
+      .delete(schema.sessions)
+      .where(lt(schema.sessions.expiresAt, now.toISOString()));
+    return (res as { rowsAffected?: number }).rowsAffected ?? 0;
   }
 }

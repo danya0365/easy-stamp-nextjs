@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3, Trophy } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -25,6 +26,7 @@ export default async function ShopAnalyticsPage({
   searchParams: Promise<{ range?: string }>;
 }) {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const { range } = await searchParams;
   const parsed = Number(range);
   const rangeDays: RangeDays = isValidRange(parsed) ? parsed : DEFAULT_RANGE;
@@ -39,7 +41,7 @@ export default async function ShopAnalyticsPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-foreground">สถิติร้าน</h1>
+        <h1 className="text-xl font-bold text-foreground">{t("analyticsTitle")}</h1>
         {/* Range selector — plain links re-render the server page */}
         <div className="inline-flex rounded-full bg-muted-surface p-0.5 text-sm">
           {RANGE_OPTIONS.map((d) => (
@@ -53,56 +55,56 @@ export default async function ShopAnalyticsPage({
                   : "text-muted hover:text-foreground",
               )}
             >
-              {d} วัน
+              {t("rangeDays", { days: d })}
             </Link>
           ))}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard label="แสตมป์ที่แจก" value={summary.stampsIssued} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="แลกรางวัล" value={summary.redemptions} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="ลูกค้าแอคทีฟ" value={summary.activeCustomers} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="อัตราการแลก" value={`${redemptionRate}%`} hint="ของลูกค้าแอคทีฟ" />
-        <StatCard label="ลูกค้าใหม่" value={summary.newCustomers} hint={`ใน ${rangeDays} วัน`} />
-        <StatCard label="ลูกค้าทั้งหมด" value={summary.totalCustomers} hint="ตั้งแต่เปิดร้าน" />
+        <StatCard label={t("statStampsIssued")} value={summary.stampsIssued} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statRedemptions")} value={summary.redemptions} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statActiveCustomers")} value={summary.activeCustomers} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statRedemptionRate")} value={`${redemptionRate}%`} hint={t("hintOfActive")} />
+        <StatCard label={t("statNewCustomers")} value={summary.newCustomers} hint={t("hintInDays", { days: rangeDays })} />
+        <StatCard label={t("statTotalCustomers")} value={summary.totalCustomers} hint={t("hintSinceOpen")} />
       </div>
 
       {!hasActivity ? (
         <Card>
           <EmptyState
             icon={<BarChart3 />}
-            title="ยังไม่มีข้อมูลในช่วงนี้"
-            description="เมื่อมีการกดแสตมป์หรือแลกรางวัล สถิติจะแสดงที่นี่"
+            title={t("noDataTitle")}
+            description={t("noDataDesc")}
           />
         </Card>
       ) : (
         <>
           <Card>
             <CardHeader
-              title="แนวโน้มรายวัน"
-              subtitle="แสตมป์ที่แจก (แท่ง) เทียบกับการแลกรางวัล (เส้น)"
+              title={t("dailyTrendTitle")}
+              subtitle={t("dailyTrendSubtitle")}
             />
             <DailyTrendChart data={view.daily} />
           </Card>
 
           {view.byType.length > 0 && (
             <Card>
-              <CardHeader title="แยกตามประเภทแสตมป์" />
+              <CardHeader title={t("byTypeTitle")} />
               <BreakdownList rows={view.byType} />
             </Card>
           )}
 
           {view.byBranch.length > 0 && (
             <Card>
-              <CardHeader title="แยกตามสาขา" />
+              <CardHeader title={t("byBranchTitle")} />
               <BreakdownList rows={view.byBranch} />
             </Card>
           )}
 
           {view.topCustomers.length > 0 && (
             <Card>
-              <CardHeader title="ลูกค้าที่สะสมมากสุด" />
+              <CardHeader title={t("topCustomersTitle")} />
               <ul className="flex flex-col divide-y divide-border">
                 {view.topCustomers.map((c, i) => (
                   <li
@@ -113,7 +115,7 @@ export default async function ShopAnalyticsPage({
                       {i === 0 && <Trophy className="size-4 text-brand-500" />}
                       {c.label}
                     </span>
-                    <span className="text-muted">{c.stamps} แสตมป์</span>
+                    <span className="text-muted">{t("stampsUnit", { count: c.stamps })}</span>
                   </li>
                 ))}
               </ul>

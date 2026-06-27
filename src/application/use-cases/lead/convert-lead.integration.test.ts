@@ -54,6 +54,10 @@ test("convert a won lead → creates shop + branch (carrying coords) + links lea
 
   assert.equal(shop.name, "ร้านเป้าหมาย");
   assert.equal((await container.shopRepository.findBySlug("converted-shop"))?.id, shop.id);
+  // Exactly ONE branch — CreateShopUseCase makes it, convert just adds location
+  // (regression guard against creating a second duplicate branch).
+  const branches = await container.branchRepository.listByShop(shop.id);
+  assert.equal(branches.length, 1);
   // Branch carries the lead's coordinates/address (read from DB — source of truth).
   const savedBranch = await container.branchRepository.findById(branch.id);
   assert.equal(savedBranch?.latitude, 13.7);

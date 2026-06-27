@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   createBranchAction,
@@ -10,6 +11,7 @@ import { Input } from "@/src/presentation/components/ui/Input";
 import { Button } from "@/src/presentation/components/ui/Button";
 
 export function AddBranchForm() {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     createBranchAction,
     {},
@@ -18,9 +20,9 @@ export function AddBranchForm() {
   return (
     <form action={action} className="flex flex-col gap-2">
       <div className="flex gap-2">
-        <Input name="name" placeholder="ชื่อสาขาใหม่" required />
+        <Input name="name" placeholder={t("branchNamePlaceholder")} required />
         <Button type="submit" disabled={pending}>
-          เพิ่มสาขา
+          {t("branchAdd")}
         </Button>
       </div>
       {state.error && <p className="text-sm text-error">{state.error}</p>}

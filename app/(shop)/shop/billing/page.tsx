@@ -1,4 +1,5 @@
 import { CalendarClock, Package, Receipt, TriangleAlert } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopBillingPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const { subscription, status } = await getBillingState(shopId);
   const paymentsPage = await container.paymentRepository.pageByShop(shopId);
   const topupsPage = await container.topupTransactionRepository.pageByShop(shopId);
@@ -29,14 +31,12 @@ export default async function ShopBillingPage() {
           <div className="flex items-start gap-3">
             <TriangleAlert className="mt-0.5 size-6 shrink-0 text-error" />
             <div>
-              <p className="font-semibold text-error">
-                ระบบถูกระงับ — เติมวันเพื่อเปิดใช้งานต่อ
-              </p>
+              <p className="font-semibold text-error">{t("suspendedTitle")}</p>
               <p className="mt-1 text-sm text-foreground">
-                ตอนนี้พนักงานกดแสตมป์และแลกของรางวัลให้ลูกค้าไม่ได้
-                ลูกค้า <strong>{customers.length} คน</strong> ของคุณกำลังสะสมแต้มค้างอยู่
-                และจะสะสมต่อไม่ได้จนกว่าคุณจะเติมวัน — ทุกวันที่ปล่อยไว้
-                คือโอกาสที่ลูกค้าจะหายไปหาคู่แข่ง
+                {t.rich("suspendedBody", {
+                  count: customers.length,
+                  b: (chunks) => <strong>{chunks}</strong>,
+                })}
               </p>
             </div>
           </div>
@@ -45,44 +45,44 @@ export default async function ShopBillingPage() {
 
       {/* Status */}
       <Card>
-        <CardHeader title="วันใช้งานคงเหลือ" />
+        <CardHeader title={t("daysRemainingTitle")} />
         {!subscription ? (
           <EmptyState
             icon={<Package />}
-            title="ยังไม่มีแพ็กเกจ"
-            description="กรุณาติดต่อผู้ดูแลระบบเพื่อเปิดใช้งาน"
+            title={t("noPackageTitle")}
+            description={t("noPackageDesc")}
           />
         ) : (
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted">สถานะ</span>
+              <span className="text-muted">{t("statusLabel")}</span>
               {status.isSuspended ? (
-                <Badge tone="danger">ถูกระงับ (หมดอายุ)</Badge>
+                <Badge tone="danger">{t("statusSuspended")}</Badge>
               ) : status.state === "overdue" ? (
                 <Badge tone="warning">
-                  หมดอายุแล้ว {status.daysOverdue} วัน
+                  {t("statusOverdue", { days: status.daysOverdue })}
                 </Badge>
               ) : subscription.status === "trialing" ? (
-                <Badge tone="success">ทดลองใช้งาน</Badge>
+                <Badge tone="success">{t("statusTrialing")}</Badge>
               ) : (
-                <Badge tone="success">ใช้งานปกติ</Badge>
+                <Badge tone="success">{t("statusActive")}</Badge>
               )}
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">ใช้งานได้ถึง</span>
+              <span className="text-muted">{t("usableUntil")}</span>
               <span className="inline-flex items-center gap-1.5 text-foreground">
                 <CalendarClock className="size-4 text-muted" />
                 {formatDate(subscription.currentPeriodDueAt)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">คงเหลือ</span>
+              <span className="text-muted">{t("remaining")}</span>
               <span className="font-semibold text-foreground">
                 {status.state === "active"
-                  ? `${status.daysUntilDue} วัน`
+                  ? t("remainingDays", { days: status.daysUntilDue })
                   : status.isSuspended
                     ? "—"
-                    : `หมดอายุ — เติมได้อีก ${status.graceDaysLeft} วันก่อนถูกระงับ`}
+                    : t("overdueTopup", { days: status.graceDaysLeft })}
               </span>
             </div>
           </div>
@@ -93,8 +93,8 @@ export default async function ShopBillingPage() {
       {subscription && (
         <Card>
           <CardHeader
-            title="เติมวัน"
-            subtitle="เลือกแพ็กเกจหรือเติมวันอิสระ — เติมยิ่งเยอะ ยิ่งได้วันแถม"
+            title={t("topupTitle")}
+            subtitle={t("topupSubtitle")}
           />
           <TopupForm pricePerDaySatang={subscription.pricePerDaySatang} />
         </Card>
@@ -104,8 +104,8 @@ export default async function ShopBillingPage() {
       {topupsPage.items.length > 0 && (
         <Card>
           <CardHeader
-            title="ประวัติวันใช้งานที่ได้รับ"
-            subtitle="วันที่ถูกเติมเข้าระบบ (รวมที่แอดมินปรับให้)"
+            title={t("creditedHistoryTitle")}
+            subtitle={t("creditedHistorySubtitle")}
           />
           <TopupHistoryList
             initialItems={topupsPage.items}
@@ -116,9 +116,9 @@ export default async function ShopBillingPage() {
 
       {/* Slip submission history */}
       <Card>
-        <CardHeader title="ประวัติการแจ้งชำระเงิน" />
+        <CardHeader title={t("paymentHistoryTitle")} />
         {paymentsPage.items.length === 0 ? (
-          <EmptyState icon={<Receipt />} title="ยังไม่มีประวัติ" />
+          <EmptyState icon={<Receipt />} title={t("noPaymentHistory")} />
         ) : (
           <PaymentHistoryList
             initialItems={paymentsPage.items}
@@ -130,8 +130,8 @@ export default async function ShopBillingPage() {
       {/* Help: contacting the admin is most useful here (rejected / suspended). */}
       <Card>
         <CardHeader
-          title="มีปัญหาการชำระเงิน?"
-          subtitle="ถูกปฏิเสธ โอนแล้วยังไม่ได้รับวัน หรือสอบถามอื่น ๆ ติดต่อผู้ดูแลได้เลย"
+          title={t("paymentProblemTitle")}
+          subtitle={t("paymentProblemSubtitle")}
         />
         <ContactAdminButton />
       </Card>

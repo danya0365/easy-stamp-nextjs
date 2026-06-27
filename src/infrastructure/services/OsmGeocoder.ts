@@ -13,6 +13,9 @@ import {
   type OsmPoi,
   type OsmTags,
 } from "@/src/domain/services/osm-poi";
+import { BRAND } from "@/src/config/brand";
+import { retry } from "@/src/infrastructure/services/retry";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 interface GeocoderConfig {
   overpassUrl: string;
@@ -27,7 +30,7 @@ export function geocoderConfigFromEnv(): GeocoderConfig {
       process.env.OSM_OVERPASS_URL ?? "https://overpass-api.de/api/interpreter",
     nominatimUrl:
       process.env.OSM_NOMINATIM_URL ?? "https://nominatim.openstreetmap.org",
-    userAgent: process.env.GEO_USER_AGENT ?? "EasyStamp/1.0 (+admin lead tool)",
+    userAgent: process.env.GEO_USER_AGENT ?? BRAND.userAgent,
   };
 }
 
@@ -95,29 +98,60 @@ export class OsmGeocoder implements IGeocoder {
     url: string,
     init?: RequestInit,
   ): Promise<T | null> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    // Retry transient failures (network/timeout, plus 5xx/429 — the community
+    // OSM endpoints rate-limit and hiccup). A 4xx is permanent, so we return
+    // null without retrying. Fail-soft: any leftover error → null (no throw).
     try {
-      const res = await fetch(url, {
-        ...init,
-        signal: controller.signal,
-        headers: {
-          "User-Agent": this.config.userAgent,
-          "Accept-Language": "th",
-          ...(init?.headers ?? {}),
+      return await retry(
+        async () => {
+          const controller = new AbortController();
+          const timer = setTimeout(
+            () => controller.abort(),
+            REQUEST_TIMEOUT_MS,
+          );
+          try {
+            const res = await fetch(url, {
+              ...init,
+              signal: controller.signal,
+              headers: {
+                "User-Agent": this.config.userAgent,
+                "Accept-Language": "th",
+                ...(init?.headers ?? {}),
+              },
+              cache: "no-store",
+            });
+            if (!res.ok) {
+              if (res.status >= 500 || res.status === 429) {
+                throw new Error(`${res.status} from ${url}`);
+              }
+              logger.warn("geo non-retryable response", {
+                scope: "geo",
+                status: res.status,
+                url,
+              });
+              return null;
+            }
+            return (await res.json()) as T;
+          } finally {
+            clearTimeout(timer);
+          }
         },
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        console.error(`[geo] ${res.status} from ${url}`);
-        return null;
-      }
-      return (await res.json()) as T;
+        {
+          retries: 2,
+          onRetry: (e, n) =>
+            logger.warn("geo retry", {
+              scope: "geo",
+              attempt: n,
+              err: (e as Error).message,
+            }),
+        },
+      );
     } catch (e) {
-      console.error("[geo] request failed:", (e as Error).message);
+      logger.error("geo request failed", {
+        scope: "geo",
+        err: (e as Error).message,
+      });
       return null;
-    } finally {
-      clearTimeout(timer);
     }
   }
 

@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
   NoSuchKey,
 } from "@aws-sdk/client-s3";
 
@@ -12,12 +13,14 @@ import type {
   ISlipStorage,
   SaveObjectInput,
   SaveSlipInput,
+  StoredObject,
 } from "@/src/application/services/ISlipStorage";
 import {
   contentTypeForKey,
   extFor,
   slipKey,
 } from "@/src/application/services/slip-media";
+import { logger } from "@/src/infrastructure/observability/logger";
 
 export interface R2Config {
   accountId: string;
@@ -73,6 +76,9 @@ export class R2SlipStorage implements ISlipStorage {
   }
 
   async saveObject(input: SaveObjectInput): Promise<{ url: string }> {
+    // No app-level retry here: the AWS SDK S3Client already retries transient
+    // errors (maxAttempts, adaptive backoff). Wrapping again would just compound
+    // latency. (Plain fetch callers like LineMessagingPusher use retry() instead.)
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
@@ -109,7 +115,28 @@ export class R2SlipStorage implements ISlipStorage {
         new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
       );
     } catch (e) {
-      console.error("[r2] delete failed:", (e as Error).message);
+      logger.error("R2 delete failed", { scope: "r2", err: (e as Error).message });
     }
+  }
+
+  async list(prefix: string): Promise<StoredObject[]> {
+    const out: StoredObject[] = [];
+    let token: string | undefined;
+    do {
+      const res = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          ContinuationToken: token,
+        }),
+      );
+      for (const o of res.Contents ?? []) {
+        if (o.Key && o.LastModified) {
+          out.push({ key: o.Key, lastModified: o.LastModified });
+        }
+      }
+      token = res.IsTruncated ? res.NextContinuationToken : undefined;
+    } while (token);
+    return out;
   }
 }

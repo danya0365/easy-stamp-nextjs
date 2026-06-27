@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Camera, PauseCircle, Smartphone, TriangleAlert } from "lucide-react";
+import { Camera, PauseCircle, Pencil, Smartphone, TriangleAlert } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { GetCardByDeviceTokenUseCase } from "@/src/application/use-cases/member/GetCardByDeviceTokenUseCase";
 import { getMemberToken } from "@/src/infrastructure/auth/member";
+import { getSession } from "@/src/infrastructure/auth/session";
 import { renderQrDataUrl } from "@/src/infrastructure/services/qr";
 import { getBaseUrl } from "@/src/presentation/lib/base-url";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -17,6 +19,10 @@ import { MemberQr } from "@/src/presentation/components/stamp/MemberQr";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
 import { ShopHero } from "@/src/presentation/components/shop/ShopHero";
 import { ShopGallery } from "@/src/presentation/components/shop/ShopGallery";
+import {
+  ShopImageEditButton,
+  EditableShopGallery,
+} from "@/src/presentation/components/shop/ShopImageEditor";
 import { ShopDetails } from "@/src/presentation/components/shop/ShopDetails";
 import { ShopReviewsSection } from "@/src/presentation/components/reviews/ShopReviewsSection";
 
@@ -29,8 +35,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const shop = await container.shopRepository.findBySlug(slug);
+  const t = await getTranslations("publicPages");
   return {
-    title: shop ? `${shop.name} · สะสมแสตมป์` : "ไม่พบร้านค้า",
+    title: shop
+      ? t("metaShopTitle", { name: shop.name })
+      : t("metaShopNotFound"),
     // Per-shop manifest → installed icon opens this shop's card.
     manifest: shop ? `/s/${slug}/site.webmanifest` : undefined,
   };
@@ -45,6 +54,7 @@ export default async function PublicShopCheckPage({
 }) {
   const { slug } = await params;
   const { bind } = await searchParams;
+  const t = await getTranslations("publicPages");
 
   const shop = await container.shopRepository.findBySlug(slug);
   if (!shop) notFound();
@@ -85,6 +95,13 @@ export default async function PublicShopCheckPage({
       ).forCustomer(shop.id, historyPage.items)
     : [];
 
+  // Owner-of-this-shop viewing their own page → show Facebook-style inline image
+  // edit overlays. Writes are still guarded server-side (uploadShopImageAction
+  // scopes to the session's own shop), so this only gates the UI affordance.
+  const sessionUser = await getSession();
+  const isOwner =
+    sessionUser?.role === "shop_owner" && sessionUser.shopId === shop.id;
+
   // Shop imagery + reviews (public).
   const images = await container.shopImageRepository.listByShop(shop.id);
   const coverImage = images.find((i) => i.kind === "cover") ?? null;
@@ -115,7 +132,14 @@ export default async function PublicShopCheckPage({
       {isPaused && (
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-800">
           <PauseCircle className="mr-1 inline size-4 align-text-bottom" />
-          ร้านนี้ปิดให้บริการชั่วคราว — ดูแต้มสะสมได้ แต่ยังสะสม/แลกไม่ได้จนกว่าจะเปิดอีกครั้ง
+          {t("pausedNotice")}
+        </p>
+      )}
+
+      {isOwner && (
+        <p className="rounded-xl bg-brand-50 px-4 py-2.5 text-center text-sm text-brand-700 ring-1 ring-brand-100">
+          <Pencil className="mr-1 inline size-4 align-text-bottom" />
+          {t("ownerViewNotice")}
         </p>
       )}
 
@@ -125,8 +149,22 @@ export default async function PublicShopCheckPage({
         shopName={shop.name}
         categoryName={category?.name ?? null}
         rating={reviewSummary}
+        coverOverlay={
+          isOwner ? (
+            <ShopImageEditButton kind="cover" imageId={coverImage?.id} />
+          ) : undefined
+        }
+        profileOverlay={
+          isOwner ? (
+            <ShopImageEditButton kind="profile" imageId={profileImage?.id} />
+          ) : undefined
+        }
       />
-      <ShopGallery images={gallery} />
+      {isOwner ? (
+        <EditableShopGallery images={gallery} />
+      ) : (
+        <ShopGallery images={gallery} />
+      )}
 
       {view ? (
         <>
@@ -137,13 +175,12 @@ export default async function PublicShopCheckPage({
 
           <p className="rounded-xl bg-brand-50 px-4 py-3 text-center text-sm text-brand-700 ring-1 ring-brand-100">
             <Camera className="mr-1 inline size-4 align-text-bottom" />
-            <strong>เปิดบัตรซ้ำง่ายๆ:</strong> ครั้งหน้าแค่สแกน QR ที่ร้านอีกครั้ง
-            — ไม่ต้องติดตั้งอะไร
+            <strong>{t("reopenStrong")}</strong> {t("reopenRest")}
           </p>
 
           <details className="text-center">
             <summary className="cursor-pointer text-xs text-muted">
-              หรือเพิ่มลงหน้าจอหลัก (ไม่บังคับ)
+              {t("addToHomeOptional")}
             </summary>
             <div className="mt-2">
               <InstallHint />
@@ -152,7 +189,7 @@ export default async function PublicShopCheckPage({
 
           {historyItems.length > 0 && (
             <Card>
-              <CardHeader title="ประวัติการแลกรางวัล" />
+              <CardHeader title={t("redemptionHistoryTitle")} />
               <RedemptionList
                 initialItems={historyItems}
                 initialCursor={historyPage.nextCursor}
@@ -165,16 +202,15 @@ export default async function PublicShopCheckPage({
       ) : bind === "invalid" ? (
         <EmptyState
           icon={<TriangleAlert />}
-          title="QR ผูกบัตรหมดอายุหรือถูกใช้แล้ว"
-          description="แจ้งพนักงานที่ร้านให้ออก QR ผูกบัตรใหม่ แล้วสแกนด้วยกล้องมือถือของคุณ"
+          title={t("bindInvalidTitle")}
+          description={t("bindInvalidDesc")}
         />
-      ) : (
+      ) : isOwner ? null : (
         <Card className="bg-brand-50 ring-brand-100">
           <p className="flex items-center gap-2 text-sm text-brand-700">
             <Smartphone className="size-5 shrink-0" />
             <span>
-              <strong>อยากสะสมแสตมป์ร้านนี้?</strong> สแกน QR ผูกบัตรที่ร้าน
-              แล้วสะสมแต้ม/ดูรางวัลได้เลย
+              <strong>{t("wantStampsStrong")}</strong> {t("wantStampsRest")}
             </span>
           </p>
         </Card>
@@ -195,12 +231,14 @@ export default async function PublicShopCheckPage({
         canReview={!!view}
       />
 
-      <Link
-        href="/privacy"
-        className="mt-auto text-center text-xs text-muted hover:underline"
-      >
-        นโยบายความเป็นส่วนตัว
-      </Link>
+      <div className="mt-auto flex justify-center gap-4 text-xs text-muted">
+        <Link href="/privacy" className="hover:underline">
+          {t("privacyPolicy")}
+        </Link>
+        <Link href="/tos" className="hover:underline">
+          {t("termsOfService")}
+        </Link>
+      </div>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import type { ReviewSummary } from "@/src/domain/entities";
 import { StarRating } from "@/src/presentation/components/ui/StarRating";
@@ -13,7 +14,8 @@ export interface ShopDirectoryItem {
 }
 
 /** One row in the public shop directory. */
-export function ShopDirectoryCard({ shop }: { shop: ShopDirectoryItem }) {
+export async function ShopDirectoryCard({ shop }: { shop: ShopDirectoryItem }) {
+  const t = await getTranslations("shop");
   return (
     <li>
       <Link
@@ -50,7 +52,7 @@ export function ShopDirectoryCard({ shop }: { shop: ShopDirectoryItem }) {
               </span>
             </div>
           ) : (
-            <p className="mt-0.5 text-xs text-muted">ยังไม่มีรีวิว</p>
+            <p className="mt-0.5 text-xs text-muted">{t("noReviews")}</p>
           )}
         </div>
 

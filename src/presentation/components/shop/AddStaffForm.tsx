@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   createStaffAction,
@@ -15,22 +16,19 @@ export function AddStaffForm({
 }: {
   branches: { id: string; name: string }[];
 }) {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     createStaffAction,
     {},
   );
 
   if (branches.length === 0) {
-    return (
-      <p className="text-sm text-muted">
-        กรุณาเพิ่มสาขาก่อน จึงจะเพิ่มพนักงานได้
-      </p>
-    );
+    return <p className="text-sm text-muted">{t("staffNeedBranch")}</p>;
   }
 
   return (
     <form action={action} className="flex flex-col gap-3">
-      <FormField label="สาขา" htmlFor="branchId">
+      <FormField label={t("staffBranch")} htmlFor="branchId">
         <select
           id="branchId"
           name="branchId"
@@ -44,10 +42,10 @@ export function AddStaffForm({
           ))}
         </select>
       </FormField>
-      <FormField label="อีเมลพนักงาน" htmlFor="email">
+      <FormField label={t("staffEmail")} htmlFor="email">
         <Input id="email" name="email" type="email" required />
       </FormField>
-      <FormField label="รหัสผ่าน" htmlFor="password" hint="อย่างน้อย 6 ตัวอักษร">
+      <FormField label={t("staffPassword")} htmlFor="password" hint={t("staffPasswordHint")}>
         <Input id="password" name="password" type="text" required />
       </FormField>
 
@@ -55,7 +53,7 @@ export function AddStaffForm({
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังเพิ่ม…" : "เพิ่มพนักงาน"}
+        {pending ? t("staffAdding") : t("staffAdd")}
       </Button>
     </form>
   );

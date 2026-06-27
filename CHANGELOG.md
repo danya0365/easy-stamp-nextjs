@@ -5,6 +5,53 @@
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-06-27
+
+ปิด milestone **i18n เต็มรูปแบบ + ยกระดับเป็น SaaS starter ที่ clone ได้จริง** — ไม่กระทบฟีเจอร์/พฤติกรรมเดิมของผู้ใช้
+
+### Added
+- **i18n ครบทั้งแอป** — ย้ายสตริงไทยที่ผู้ใช้เห็นทั้งหมดเข้า message catalog (`messages/th.json`): ทุกกลุ่ม component (stamp/leads/layout/map/channels/analytics/auth/promote/theme/reviews/billing/shop/admin) + ทุกหน้า `app/**` (shop/admin/staff/public/login) + label ที่เคยฝังใน domain layer — พร้อมต่อยอดหลายภาษาในอนาคต (เหลือไว้ตั้งใจ: prose การตลาด privacy/tutorial/info, generated poster copy, ข้อความ error-path)
+- **ส่งอีเมล (transactional email)** — abstraction `IEmailSender` (vendor-neutral, no-op จนกว่าจะตั้งค่า) + ตัวส่งผ่าน Resend (env `RESEND_API_KEY`/`EMAIL_FROM`, fail-soft + retry); ต่อเป็นช่องทางที่ 3 ใน NotificationService (in-app + LINE + email) — การแจ้งเตือนทุกอย่างส่งเข้าอีเมลผู้ใช้ได้เมื่อเปิดใช้
+- **หน้าข้อกำหนดการใช้งาน (Terms of Service)** + `/.well-known/security.txt` (RFC 9116, responsible disclosure)
+- **ตัวช่วยสร้าง entity** — `npm run scaffold <Name>` สร้างไฟล์ boilerplate (repo interface / Drizzle repo / use-case) แบบ stub + พิมพ์ขั้นตอน wiring ที่เหลือ
+- **CI/ops** — Dependabot (npm + actions), CodeQL, และ CI เพิ่ม job `build` + `npm audit`; คู่มือ clone แบบ step-by-step ([docs/FORKING.md](docs/FORKING.md))
+
+### Changed
+- **แยก DI container เป็น generic core + domain** ([`container.generic.ts`](src/infrastructure/di/container.generic.ts) + [`container.ts`](src/infrastructure/di/container.ts)) — clone ไป product ใหม่ = ลบโดเมน + แก้ไฟล์เดียว
+- **รวม logo/icon/สี PWA ไว้ที่ [`src/config/brand.ts`](src/config/brand.ts)** (`BRAND.assets` / `BRAND.pwa`) แทนการ hardcode กระจายใน Logo + manifest
+
+## [1.18.0] - 2026-06-23
+
+ปิด milestone **เตรียมโปรเจคให้เป็นต้นแบบ SaaS (template-readiness)** — เน้น ops/security พื้นฐาน + โครงสร้างสำหรับ clone ไปทำ product อื่น (โดยไม่กระทบฟีเจอร์ผู้ใช้เดิม)
+
+### Added
+- **เอกสารต้นแบบ SaaS** — audit + roadmap ([docs/TEMPLATE_AUDIT.md](docs/TEMPLATE_AUDIT.md)), แผนที่ generic-vs-domain บอกว่าตอน clone เก็บอะไร/เขียนใหม่อะไร ([docs/REUSE_MAP.md](docs/REUSE_MAP.md)), และคู่มือ fork (DEPLOYMENT/TESTING/EXTENDING) + ดัชนีเอกสารใน README
+- **i18n (next-intl)** — วางโครงรองรับหลายภาษาแบบ single-locale (`th`) ไม่มี routing: message catalog (`messages/*.json`), `getTranslations`/`useTranslations`, keys ตรวจชนิดอัตโนมัติ, และส่งเฉพาะ namespace ที่ client ใช้เพื่อไม่ให้ bundle บวม — นำร่องหน้า error/not-found
+- **`/api/health`** — endpoint ตรวจสุขภาพ (ping ฐานข้อมูล) สำหรับ uptime monitor
+- **ตรวจ environment ตอนบูต** — `instrumentation.ts` → `validateEnv()` fail-fast บน Vercel เมื่อ config ฐานข้อมูลผิด (กันข้อมูลหายตอน deploy)
+- **`app/global-error.tsx`** — error boundary ระดับรากแบบมีแบรนด์
+
+### Changed
+- **รวม brand identity ไว้ที่เดียว** — [`src/config/brand.ts`](src/config/brand.ts) (ชื่อแอป/tagline/ฯลฯ) แทนการ hardcode "Easy Stamp" กระจายหลายไฟล์ → เปลี่ยนชื่อ product ที่เดียวจบ
+- **รวม cron เหลือ schedule เดียว** — `/api/cron` dispatcher ให้พอดีโควตา Vercel free (1 cron); เปิด/ปิดงานย่อยด้วย env และแยก schedule ได้เมื่ออัปเกรดแพ็กเกจ
+
+### Security
+- **rate-limit ขั้นยืนยัน 2FA** (`verifyLoginTwoFactorAction`) — กัน brute-force โค้ด 2FA
+- **ล้าง session หมดอายุอัตโนมัติ** ผ่าน cron cleanup (กันตารางโตไม่จำกัด)
+
+## [1.17.0] - 2026-06-23
+
+### Added
+- **แก้รูปร้านแบบ Facebook บนหน้าร้านจริง** — เจ้าของร้านเปิดหน้าร้านสาธารณะ ([/s/[slug]](app/(public)/s/[slug]/page.tsx)) แล้ว**แตะรูปปก/โปรไฟล์/แกลเลอรี่เพื่อเปลี่ยนได้ทันที** (ครอป+อัปโหลด) เห็น preview จริงไปพร้อมแก้ · ลูกค้าทั่วไปเห็นหน้าเดิมไม่มีปุ่มแก้ · ยังแก้จากแท็บ "ภาพร้าน" ในตั้งค่าได้เหมือนเดิม
+- **ตัวเลือกแบบ dropdown บนมือถือสำหรับหน้าที่มีแท็บ** — หน้าตั้งค่า + สตูดิโอโปสเตอร์ บนจอเล็กเปลี่ยนแถบแท็บเป็น custom dropdown ([TabSelect](src/presentation/components/ui/TabSelect.tsx)) แตะเลือกง่าย ไม่ต้องเลื่อนหา · จอใหญ่คงรูปแบบเดิม (sidebar/pill)
+
+### Changed
+- **แอดมิน "เข้าสู่ระบบในนามร้าน" แก้ข้อมูลแทนได้แล้ว (read-write)** — เดิม impersonation เป็นอ่านอย่างเดียว (กด submit แล้ว error) · ตอนนี้แอดมินช่วยแก้ข้อมูลที่ผูกกับร้านได้ทุกอย่าง (ตั้งค่า/รายละเอียด/รูป/ประเภทแสตมป์/สาขา/พนักงาน/รีวิว/บิล) · ทุกการแก้บันทึก audit ในชื่อแอดมินตัวจริง · รหัสผ่าน/2FA ของบัญชียังเป็นของเจ้าของเท่านั้น
+- **UX "ปิดร้านชั่วคราว" — อธิบายชัด + โชว์ตัวเลขสด** — ก่อนปิดแสดง "เหลือ X วันใช้งาน · เดือนนี้ปิดไปแล้ว k/8 ครั้ง" + กฎแบบ bullet · ตอนปิดอยู่สื่อชัดว่า**หยุดนับวันใช้งาน วันคงเหลือเท่าเดิม** (ไม่ใช่บวกวันเพิ่ม) · ติด cooldown/เพดานปุ่มจะถูกปิดพร้อมบอกเหตุผล
+
+### Security
+- **อุดช่องโหว่ "ปิดร้านชั่วคราว" เพื่อใช้ฟรี** — เดิมการคืนวันคิดละเอียดระดับวินาที ทำให้ปิดช่วงนอกเวลาทำการเพื่อยืดวันใช้งานข้ามหลายวันปฏิทินได้ (~ใช้ฟรีหลายเท่า) · ตอนนี้**หยุดนับเป็นวันเต็มเท่านั้น** (ปิดสั้นกว่า 1 วันไม่ได้วันคืน) + **จำกัดปิดไม่เกิน 8 ครั้ง/30 วัน** + **เว้นอย่างน้อย 24 ชม.** ระหว่างการปิด + บันทึก audit ทุกครั้งและแจ้งแอดมินเมื่อผิดปกติ
+
 ## [1.16.0] - 2026-06-21
 
 ### Added

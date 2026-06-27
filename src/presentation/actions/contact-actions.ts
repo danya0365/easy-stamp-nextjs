@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { container } from "@/src/infrastructure/di/container";
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireRole, requireShopWrite } from "@/src/infrastructure/auth/session";
 import { getClientIp } from "@/src/presentation/lib/request-ip";
 import { SubmitPublicContactRequestUseCase } from "@/src/application/use-cases/contact/SubmitPublicContactRequestUseCase";
 import { SubmitOwnerContactRequestUseCase } from "@/src/application/use-cases/contact/SubmitOwnerContactRequestUseCase";
@@ -93,8 +93,7 @@ export async function contactAdminAction(
   formData: FormData,
 ): Promise<ContactFormState> {
   try {
-    const user = await requireRole("shop_owner");
-    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    const { actor, shopId } = await requireShopWrite();
 
     const subject = String(formData.get("subject") ?? "").trim();
     const message = String(formData.get("message") ?? "").trim();
@@ -108,8 +107,8 @@ export async function contactAdminAction(
       container.shopRepository,
       container.notificationService,
     ).execute({
-      shopId: user.shopId,
-      userId: user.id,
+      shopId,
+      userId: actor.id,
       subject,
       message,
       contactChannel,

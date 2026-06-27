@@ -12,10 +12,7 @@ before(async () => {
 });
 
 function submit() {
-  return new SubmitReviewUseCase(
-    container.shopReviewRepository,
-    container.notificationService,
-  );
+  return new SubmitReviewUseCase(container.shopReviewRepository);
 }
 
 async function customer(shopId: string, phone: string) {
@@ -27,7 +24,8 @@ test("submit reviews → summary averages (hidden excluded), upsert edits", asyn
   const c1 = await customer(shop.id, "0810000001");
   const c2 = await customer(shop.id, "0810000002");
 
-  await submit().execute({ shopId: shop.id, customerId: c1.id, rating: 5, comment: "ดีมาก" });
+  const first = await submit().execute({ shopId: shop.id, customerId: c1.id, rating: 5, comment: "ดีมาก" });
+  assert.equal(first.isNewReview, true, "first review is new → owner notified");
   await submit().execute({ shopId: shop.id, customerId: c2.id, rating: 3, comment: null });
 
   let summary = await container.shopReviewRepository.summary(shop.id);
@@ -35,7 +33,8 @@ test("submit reviews → summary averages (hidden excluded), upsert edits", asyn
   assert.equal(summary.average, 4);
 
   // Same customer re-submits → upsert (still 2 reviews, new average).
-  await submit().execute({ shopId: shop.id, customerId: c1.id, rating: 1, comment: "เปลี่ยนใจ" });
+  const edit = await submit().execute({ shopId: shop.id, customerId: c1.id, rating: 1, comment: "เปลี่ยนใจ" });
+  assert.equal(edit.isNewReview, false, "edit is not new → no owner notification");
   summary = await container.shopReviewRepository.summary(shop.id);
   assert.equal(summary.count, 2);
   assert.equal(summary.average, 2);
@@ -53,7 +52,7 @@ test("rating must be 1–5", async () => {
 test("admin hide removes from public summary; owner reply scoped to shop", async () => {
   const { shop } = await seedShop("rev-c");
   const c = await customer(shop.id, "0810000004");
-  const review = await submit().execute({
+  const { review } = await submit().execute({
     shopId: shop.id,
     customerId: c.id,
     rating: 4,

@@ -23,6 +23,16 @@ function toCustomer(r: Row): Customer {
 }
 
 export class DrizzleCustomerRepository implements ICustomerRepository {
+  async findById(shopId: string, id: string): Promise<Customer | null> {
+    const r = await db.query.customers.findFirst({
+      where: and(
+        eq(schema.customers.shopId, shopId),
+        eq(schema.customers.id, id),
+      ),
+    });
+    return r ? toCustomer(r) : null;
+  }
+
   async findByPhone(shopId: string, phone: string): Promise<Customer | null> {
     const r = await db.query.customers.findFirst({
       where: and(
@@ -31,6 +41,21 @@ export class DrizzleCustomerRepository implements ICustomerRepository {
       ),
     });
     return r ? toCustomer(r) : null;
+  }
+
+  async anonymize(id: string): Promise<void> {
+    // Synthetic, per-customer-unique values so the (shopId, phone) and publicCode
+    // unique constraints still hold while the real PII is gone. The old phone /
+    // QR code no longer resolve to this person.
+    await db
+      .update(schema.customers)
+      .set({
+        phone: `erased:${id}`,
+        displayName: "(ลบข้อมูลแล้ว)",
+        publicCode: `erased:${id}`,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(schema.customers.id, id));
   }
 
   async findByPublicCode(

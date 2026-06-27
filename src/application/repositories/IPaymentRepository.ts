@@ -31,4 +31,6 @@ export interface IPaymentRepository {
   /** Cursor-paginated, newest first (admin review queue). */
   pageByStatus(status: PaymentStatus, opts?: PageOpts): Promise<Page<Payment>>;
   resolve(id: string, input: ResolvePaymentInput): Promise<Payment>;
+  /** Every slip storage key — for orphaned-file cleanup. */
+  allSlipKeys(): Promise<string[]>;
 }

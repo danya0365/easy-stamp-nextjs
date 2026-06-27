@@ -2,6 +2,7 @@ import type {
   CreateAuditLogInput,
   IAuditLogRepository,
 } from "@/src/application/repositories/IAuditLogRepository";
+import { type ILogger, noopLogger } from "@/src/application/services/ILogger";
 
 /** Well-known audit action names (free-text column — these are just the canonical set). */
 export const AUDIT_ACTIONS = {
@@ -27,6 +28,7 @@ export const AUDIT_ACTIONS = {
   twoFactorResetByAdmin: "two_factor_reset_by_admin",
   recoveryCodesRegenerated: "recovery_codes_regenerated",
   sessionRevoked: "session_revoked",
+  customerErased: "customer_erased",
 } as const;
 
 /**
@@ -35,13 +37,19 @@ export const AUDIT_ACTIONS = {
  * triggering business flow (mirrors NotificationService).
  */
 export class AuditLogger {
-  constructor(private readonly repo: IAuditLogRepository) {}
+  constructor(
+    private readonly repo: IAuditLogRepository,
+    private readonly logger: ILogger = noopLogger,
+  ) {}
 
   async record(input: CreateAuditLogInput): Promise<void> {
     try {
       await this.repo.create(input);
     } catch (e) {
-      console.error("[audit] failed to record", input.action, e);
+      this.logger.captureException(e, {
+        scope: "audit",
+        action: input.action,
+      });
     }
   }
 }

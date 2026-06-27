@@ -2,10 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { Monitor } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import { revokeSessionAction } from "@/src/presentation/actions/auth-actions";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
+
+type AuthT = ReturnType<typeof useTranslations<"auth">>;
 
 export interface DeviceRow {
   id: string;
@@ -16,8 +19,8 @@ export interface DeviceRow {
 }
 
 /** Rough, friendly label from a UA string (browser · OS). */
-function deviceLabel(ua: string | null): string {
-  if (!ua) return "อุปกรณ์ไม่ทราบ";
+function deviceLabel(ua: string | null, t: AuthT): string {
+  if (!ua) return t("unknownDevice");
   const os = /iPhone|iPad/.test(ua)
     ? "iOS"
     : /Android/.test(ua)
@@ -28,7 +31,7 @@ function deviceLabel(ua: string | null): string {
           ? "Windows"
           : /Linux/.test(ua)
             ? "Linux"
-            : "อื่นๆ";
+            : t("otherOs");
   const br = /Edg\//.test(ua)
     ? "Edge"
     : /Chrome\//.test(ua)
@@ -37,11 +40,12 @@ function deviceLabel(ua: string | null): string {
         ? "Firefox"
         : /Safari\//.test(ua)
           ? "Safari"
-          : "เบราว์เซอร์";
+          : t("browser");
   return `${br} · ${os}`;
 }
 
 export function DeviceList({ devices }: { devices: DeviceRow[] }) {
+  const t = useTranslations("auth");
   const [pending, start] = useTransition();
   const [gone, setGone] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -66,16 +70,16 @@ export function DeviceList({ devices }: { devices: DeviceRow[] }) {
               <Monitor className="mt-0.5 size-4 shrink-0 text-muted" />
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-foreground">
-                  {deviceLabel(d.userAgent)}
+                  {deviceLabel(d.userAgent, t)}
                   {d.isCurrent && (
                     <Badge tone="success" className="ml-2">
-                      เครื่องนี้
+                      {t("thisDevice")}
                     </Badge>
                   )}
                 </span>
                 <span className="block truncate text-xs text-muted">
                   {d.ip && d.ip !== "unknown" ? `IP ${d.ip} · ` : ""}
-                  เข้าเมื่อ {formatDateTime(d.createdAt)}
+                  {t("lastSeen", { when: formatDateTime(d.createdAt) })}
                 </span>
               </span>
             </span>
@@ -86,7 +90,7 @@ export function DeviceList({ devices }: { devices: DeviceRow[] }) {
                 onClick={() => revoke(d.id)}
                 className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:text-error disabled:opacity-60"
               >
-                ออกจากระบบ
+                {t("signOut")}
               </button>
             )}
           </li>

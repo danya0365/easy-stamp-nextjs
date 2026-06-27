@@ -3,11 +3,11 @@ import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { Card } from "@/src/presentation/components/ui/Card";
+import { BRAND } from "@/src/config/brand";
 
 export const metadata: Metadata = {
-  title: "นโยบายความเป็นส่วนตัว · Easy Stamp",
-  description:
-    "ข้อมูลส่วนบุคคลที่ Easy Stamp เก็บ วัตถุประสงค์ และสิทธิ์ของเจ้าของข้อมูลตาม PDPA",
+  title: `นโยบายความเป็นส่วนตัว · ${BRAND.name}`,
+  description: `ข้อมูลส่วนบุคคลที่ ${BRAND.name} เก็บ วัตถุประสงค์ และสิทธิ์ของเจ้าของข้อมูลตาม PDPA`,
 };
 
 interface Section {
@@ -55,8 +55,8 @@ export default function PrivacyPage() {
           นโยบายความเป็นส่วนตัว
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Easy Stamp เคารพข้อมูลส่วนบุคคลของคุณตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล
-          (PDPA)
+          {BRAND.name} เคารพข้อมูลส่วนบุคคลของคุณตาม พ.ร.บ.
+          คุ้มครองข้อมูลส่วนบุคคล (PDPA)
         </p>
       </header>
 

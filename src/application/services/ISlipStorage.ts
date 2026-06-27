@@ -28,4 +28,15 @@ export interface ISlipStorage {
   read(url: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
   /** Best-effort delete by key (e.g. removing a shop image). Never throws. */
   delete(key: string): Promise<void>;
+  /**
+   * List every stored object under a key prefix (e.g. "leads/"), with its last
+   * modified time — used by orphaned-file cleanup to find unreferenced blobs.
+   */
+  list(prefix: string): Promise<StoredObject[]>;
+}
+
+export interface StoredObject {
+  /** Full storage key (same value stored in DB columns). */
+  key: string;
+  lastModified: Date;
 }

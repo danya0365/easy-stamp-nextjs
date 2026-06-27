@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Phone } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -15,8 +16,8 @@ import { LeadPhotoUpload } from "@/src/presentation/components/leads/LeadPhotoUp
 import { AddVisitLogForm } from "@/src/presentation/components/leads/AddVisitLogForm";
 import { ConvertLeadButton } from "@/src/presentation/components/leads/ConvertLeadButton";
 import {
-  LEAD_REACTION_LABEL,
-  LEAD_STATUS_LABEL,
+  LEAD_REACTION_KEY,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_TONE,
 } from "@/src/presentation/lib/lead-display";
 
@@ -37,6 +38,8 @@ export default async function AdminLeadDetailPage({
   params: Promise<{ leadId: string }>;
 }) {
   await requireRole("platform_admin");
+  const t = await getTranslations("leads");
+  const tp = await getTranslations("adminPages");
   const { leadId } = await params;
 
   const lead = await container.leadRepository.findById(leadId);
@@ -56,11 +59,11 @@ export default async function AdminLeadDetailPage({
         <Link href="/admin/leads">
           <Button variant="ghost" size="sm">
             <ArrowLeft size={14} />
-            รายการลีด
+            {tp("leadsListBack")}
           </Button>
         </Link>
         <Badge tone={LEAD_STATUS_TONE[lead.status]}>
-          {LEAD_STATUS_LABEL[lead.status]}
+          {t(LEAD_STATUS_KEY[lead.status])}
         </Badge>
       </div>
 
@@ -76,14 +79,14 @@ export default async function AdminLeadDetailPage({
       </Card>
 
       <Card>
-        <CardHeader title="สถานะการขาย" />
+        <CardHeader title={tp("leadSalesStatus")} />
         <LeadStatusControl lead={lead} />
       </Card>
 
       <Card>
         <CardHeader
-          title="ตำแหน่งร้าน"
-          subtitle="ปักหมุดเพื่อให้แสดงบนแผนที่ลีด และใช้กดนำทาง"
+          title={tp("leadLocationTitle")}
+          subtitle={tp("leadLocationSubtitle")}
         />
         <LeadLocationEditor
           leadId={lead.id}
@@ -94,23 +97,23 @@ export default async function AdminLeadDetailPage({
       </Card>
 
       <Card>
-        <CardHeader title="รูปร้าน" />
+        <CardHeader title={tp("leadPhotoTitle")} />
         <LeadPhotoUpload leadId={lead.id} hasPhoto={lead.photoUrl !== null} />
       </Card>
 
       <Card>
-        <CardHeader title="บันทึกการเข้าพบ" />
+        <CardHeader title={tp("leadVisitLogTitle")} />
         <AddVisitLogForm leadId={lead.id} currentStatus={lead.status} />
         <div className="mt-4">
           {logs.length === 0 ? (
-            <EmptyState icon={<Phone />} title="ยังไม่มีบันทึกการเข้าพบ" />
+            <EmptyState icon={<Phone />} title={tp("leadNoVisitLogs")} />
           ) : (
             <ul className="flex flex-col divide-y divide-border">
               {logs.map((log) => (
                 <li key={log.id} className="flex flex-col gap-0.5 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      {LEAD_REACTION_LABEL[log.reaction]}
+                      {t(LEAD_REACTION_KEY[log.reaction])}
                     </span>
                     <span className="text-xs text-muted">
                       {fmt(log.createdAt)}
@@ -120,8 +123,8 @@ export default async function AdminLeadDetailPage({
                     log.statusAfter &&
                     log.statusBefore !== log.statusAfter && (
                       <p className="text-xs text-muted">
-                        {LEAD_STATUS_LABEL[log.statusBefore]} →{" "}
-                        {LEAD_STATUS_LABEL[log.statusAfter]}
+                        {t(LEAD_STATUS_KEY[log.statusBefore])} →{" "}
+                        {t(LEAD_STATUS_KEY[log.statusAfter])}
                       </p>
                     )}
                   {log.note && (
@@ -135,7 +138,7 @@ export default async function AdminLeadDetailPage({
       </Card>
 
       <Card>
-        <CardHeader title="แปลงเป็นร้านจริง" />
+        <CardHeader title={tp("leadConvertTitle")} />
         {/* Always mounted (even after conversion) so the post-create credentials
             handoff survives the action's page refresh. */}
         <ConvertLeadButton

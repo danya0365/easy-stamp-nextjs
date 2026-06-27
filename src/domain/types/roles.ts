@@ -13,9 +13,16 @@ export const ROLE_HOME: Record<Role, string> = {
   branch_staff: "/staff",
 };
 
-/** Thai display label per role (for UI: account pickers, badges). */
-export const ROLE_LABEL: Record<Role, string> = {
-  platform_admin: "ผู้ดูแลระบบ",
-  shop_owner: "เจ้าของร้าน",
-  branch_staff: "พนักงานสาขา",
+/**
+ * `common`-namespace message key per role (for UI: account pickers, badges).
+ * Resolve with a `common` translator: `t(ROLE_LABEL_KEY[role])`. Keeps this
+ * domain module free of user-facing copy.
+ */
+export const ROLE_LABEL_KEY: Record<
+  Role,
+  "rolePlatformAdmin" | "roleShopOwner" | "roleBranchStaff"
+> = {
+  platform_admin: "rolePlatformAdmin",
+  shop_owner: "roleShopOwner",
+  branch_staff: "roleBranchStaff",
 };

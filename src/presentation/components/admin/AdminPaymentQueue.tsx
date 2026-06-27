@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { Payment } from "@/src/domain/entities";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
@@ -16,6 +17,7 @@ export interface PendingPaymentRow {
 }
 
 function Row({ payment: p, shopName }: PendingPaymentRow) {
+  const t = useTranslations("admin");
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 py-3">
       <div>
@@ -24,13 +26,13 @@ function Row({ payment: p, shopName }: PendingPaymentRow) {
           ฿{satangToBaht(p.amountSatang)} · {formatDateTime(p.createdAt)}
         </p>
         <p className="text-xs text-brand-700">
-          เติม {p.daysToAdd} วัน
-          {p.bonusDays > 0 ? ` + โบนัส ${p.bonusDays} วัน` : ""}
+          {t("pqTopupDays", { days: p.daysToAdd })}
+          {p.bonusDays > 0 ? t("pqBonus", { days: p.bonusDays }) : ""}
           {p.coversPeriodDueAt && (
             <>
               {" "}
-              <ArrowRight className="inline size-3 align-text-bottom" /> ใช้ได้ถึง{" "}
-              {formatDateTime(p.coversPeriodDueAt)}
+              <ArrowRight className="inline size-3 align-text-bottom" />{" "}
+              {t("pqValidUntil", { date: formatDateTime(p.coversPeriodDueAt) })}
             </>
           )}
         </p>
@@ -39,7 +41,7 @@ function Row({ payment: p, shopName }: PendingPaymentRow) {
           target="_blank"
           className="inline-flex items-center gap-1 text-xs text-brand-600 hover:underline"
         >
-          ดูสลิป
+          {t("pqViewSlip")}
           <ArrowRight className="size-3.5" />
         </Link>
       </div>

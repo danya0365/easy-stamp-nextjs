@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { Wrench } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { Role } from "@/src/domain/types/roles";
-import { ROLE_LABEL } from "@/src/domain/types/roles";
+import { ROLE_LABEL_KEY } from "@/src/domain/types/roles";
 import { devLoginAsAction } from "@/src/presentation/actions/auth-actions";
 
 export interface DevUser {
@@ -19,6 +20,8 @@ export interface DevUser {
  * independently gated server-side with the same flag.
  */
 export function DevLoginPanel({ users }: { users: DevUser[] }) {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [pending, startTransition] = useTransition();
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -33,10 +36,10 @@ export function DevLoginPanel({ users }: { users: DevUser[] }) {
     <div className="mt-6 rounded-xl border border-dashed border-amber-400/60 bg-amber-50/50 p-3">
       <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
         <Wrench className="size-3.5" />
-        Dev: เข้าใช้งานด่วน (เฉพาะ local)
+        {t("devQuickLogin")}
       </p>
       {users.length === 0 ? (
-        <p className="text-xs text-muted">ยังไม่มีผู้ใช้ในระบบ</p>
+        <p className="text-xs text-muted">{t("devNoUsers")}</p>
       ) : (
         <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto">
           {users.map((u) => (
@@ -49,7 +52,7 @@ export function DevLoginPanel({ users }: { users: DevUser[] }) {
               >
                 <span className="min-w-0 truncate text-foreground">{u.email}</span>
                 <span className="shrink-0 rounded-full bg-muted-surface px-2 py-0.5 text-[11px] text-muted">
-                  {pending && activeId === u.id ? "กำลังเข้า…" : ROLE_LABEL[u.role]}
+                  {pending && activeId === u.id ? t("devLoggingIn") : tc(ROLE_LABEL_KEY[u.role])}
                 </span>
               </button>
             </li>

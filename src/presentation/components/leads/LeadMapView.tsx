@@ -8,6 +8,7 @@ import Map, {
   GeolocateControl,
 } from "react-map-gl/maplibre";
 import { ArrowRight, MapPin, Navigation } from "lucide-react";
+import { useTranslations } from "next-intl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { LeadMapLocation } from "@/src/domain/entities";
@@ -17,7 +18,7 @@ import {
   boundsOf,
 } from "@/src/presentation/components/map/osm-style";
 import {
-  LEAD_STATUS_LABEL,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_PIN,
 } from "@/src/presentation/lib/lead-display";
 
@@ -26,6 +27,7 @@ export default function LeadMapView({
 }: {
   locations: LeadMapLocation[];
 }) {
+  const t = useTranslations("leads");
   const [active, setActive] = useState<LeadMapLocation | null>(null);
 
   const bounds = boundsOf(locations);
@@ -81,7 +83,7 @@ export default function LeadMapView({
           <div className="flex flex-col gap-1 p-1">
             <p className="font-semibold text-foreground">{active.name}</p>
             <p className="text-xs text-muted">
-              {LEAD_STATUS_LABEL[active.status]}
+              {t(LEAD_STATUS_KEY[active.status])}
               {active.phone ? ` · ${active.phone}` : ""}
             </p>
             {active.address && (
@@ -94,13 +96,13 @@ export default function LeadMapView({
               className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
             >
               <Navigation className="size-3.5" />
-              นำทางด้วย Google Maps
+              {t("navigateGoogle")}
             </a>
             <a
               href={`/admin/leads/${active.leadId}`}
               className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
             >
-              ดูรายละเอียดลีด
+              {t("viewLeadDetail")}
               <ArrowRight className="size-3.5" />
             </a>
           </div>

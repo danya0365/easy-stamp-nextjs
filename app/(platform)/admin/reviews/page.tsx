@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminReviewsPage() {
   await requireRole("platform_admin");
+  const t = await getTranslations("adminPages");
   const [page, shops] = await Promise.all([
     container.shopReviewRepository.pageAll(),
     container.shopRepository.list(),
@@ -25,11 +27,11 @@ export default async function AdminReviewsPage() {
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader
-          title="รีวิวทั้งหมด"
-          subtitle="ซ่อนรีวิวที่ไม่เหมาะสม/สแปม — รีวิวที่ซ่อนจะไม่แสดงบนหน้าร้าน"
+          title={t("reviewsTitle")}
+          subtitle={t("reviewsSubtitle")}
         />
         {rows.length === 0 ? (
-          <EmptyState icon={<Star />} title="ยังไม่มีรีวิว" />
+          <EmptyState icon={<Star />} title={t("noReviews")} />
         ) : (
           <AdminReviewList
             initialItems={rows}

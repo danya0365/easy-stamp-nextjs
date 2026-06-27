@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   changeMyPasswordAction,
@@ -11,6 +12,7 @@ import { Button } from "@/src/presentation/components/ui/Button";
 import { FormField } from "@/src/presentation/components/ui/FormField";
 
 export function ChangePasswordForm() {
+  const t = useTranslations("auth");
   const [state, action, pending] = useActionState<PasswordFormState, FormData>(
     changeMyPasswordAction,
     {},
@@ -18,7 +20,7 @@ export function ChangePasswordForm() {
 
   return (
     <form action={action} className="flex flex-col gap-3">
-      <FormField label="รหัสผ่านปัจจุบัน" htmlFor="currentPassword">
+      <FormField label={t("currentPassword")} htmlFor="currentPassword">
         <Input
           id="currentPassword"
           name="currentPassword"
@@ -28,9 +30,9 @@ export function ChangePasswordForm() {
         />
       </FormField>
       <FormField
-        label="รหัสผ่านใหม่"
+        label={t("newPassword")}
         htmlFor="newPassword"
-        hint="อย่างน้อย 6 ตัวอักษร"
+        hint={t("newPasswordHint")}
       >
         <Input
           id="newPassword"
@@ -40,7 +42,7 @@ export function ChangePasswordForm() {
           required
         />
       </FormField>
-      <FormField label="ยืนยันรหัสผ่านใหม่" htmlFor="confirmPassword">
+      <FormField label={t("confirmNewPassword")} htmlFor="confirmPassword">
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -52,7 +54,7 @@ export function ChangePasswordForm() {
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังบันทึก…" : "เปลี่ยนรหัสผ่าน"}
+        {pending ? t("saving") : t("changePassword")}
       </Button>
     </form>
   );

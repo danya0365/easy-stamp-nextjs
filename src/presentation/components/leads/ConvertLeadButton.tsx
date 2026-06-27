@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Store } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   convertLeadToShopAction,
@@ -28,9 +29,10 @@ function suggestSlug(name: string): string {
 
 /** Badge + public link shown once a lead is (or has been) converted. */
 function ConvertedBadge({ slug }: { slug: string }) {
+  const t = useTranslations("leads");
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Badge tone="success">แปลงเป็นร้านแล้ว</Badge>
+      <Badge tone="success">{t("convertedBadge")}</Badge>
       <Link
         href={`/s/${slug}`}
         className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
@@ -49,6 +51,7 @@ export function ConvertLeadButton({
   /** Set once this lead has a shop — the page stays mounted across conversion. */
   convertedSlug: string | null;
 }) {
+  const t = useTranslations("leads");
   const [open, setOpen] = useState(false);
   const [handoffDismissed, setHandoffDismissed] = useState(false);
   const [state, action, pending] = useActionState<LeadFormState, FormData>(
@@ -64,12 +67,12 @@ export function ConvertLeadButton({
       <Modal
         open
         onClose={() => setHandoffDismissed(true)}
-        title={`สร้างร้าน "${lead.name}" สำเร็จ`}
+        title={t("shopCreatedTitle", { name: lead.name })}
       >
         <div className="flex flex-col gap-4">
           <ShopCredentialsHandoff handoff={state.handoff} />
           <Button type="button" onClick={() => setHandoffDismissed(true)}>
-            เสร็จสิ้น
+            {t("done")}
           </Button>
         </div>
       </Modal>
@@ -80,9 +83,7 @@ export function ConvertLeadButton({
 
   if (lead.status !== "won") {
     return (
-      <p className="text-sm text-muted">
-        ตั้งสถานะเป็น “ปิดการขายได้” ก่อน จึงจะแปลงเป็นร้านจริงได้
-      </p>
+      <p className="text-sm text-muted">{t("convertNeedWon")}</p>
     );
   }
 
@@ -90,20 +91,18 @@ export function ConvertLeadButton({
     <>
       <Button type="button" onClick={() => setOpen(true)}>
         <Store size={16} />
-        แปลงเป็นร้านจริง
+        {t("convertButton")}
       </Button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={`แปลง "${lead.name}" เป็นร้านจริง`}
+        title={t("convertModalTitle", { name: lead.name })}
       >
         <form action={action} className="flex flex-col gap-3">
           <input type="hidden" name="leadId" value={lead.id} />
-          <p className="text-xs text-muted">
-            ระบบจะสร้างร้าน + บัญชีเจ้าของร้าน + รอบทดลองใช้ และยกพิกัด/ที่อยู่ของลีดไปเป็นสาขาแรกให้
-          </p>
-          <FormField label="slug (ลิงก์ /s/...)" htmlFor="slug">
+          <p className="text-xs text-muted">{t("convertHint")}</p>
+          <FormField label={t("slugLabel")} htmlFor="slug">
             <Input
               id="slug"
               name="slug"
@@ -112,14 +111,14 @@ export function ConvertLeadButton({
               required
             />
           </FormField>
-          <FormField label="อีเมลเจ้าของร้าน" htmlFor="ownerEmail">
+          <FormField label={t("ownerEmail")} htmlFor="ownerEmail">
             <Input id="ownerEmail" name="ownerEmail" type="email" required />
           </FormField>
-          <FormField label="รหัสผ่านเจ้าของร้าน" htmlFor="ownerPassword">
+          <FormField label={t("ownerPassword")} htmlFor="ownerPassword">
             <GeneratedPasswordField />
           </FormField>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="ราคา/วัน (บาท)" htmlFor="pricePerDayBaht">
+            <FormField label={t("pricePerDay")} htmlFor="pricePerDayBaht">
               <Input
                 id="pricePerDayBaht"
                 name="pricePerDayBaht"
@@ -130,7 +129,7 @@ export function ConvertLeadButton({
                 required
               />
             </FormField>
-            <FormField label="เกณฑ์แสตมป์" htmlFor="stampThreshold">
+            <FormField label={t("stampThreshold")} htmlFor="stampThreshold">
               <Input
                 id="stampThreshold"
                 name="stampThreshold"
@@ -141,18 +140,18 @@ export function ConvertLeadButton({
               />
             </FormField>
           </div>
-          <FormField label="ของรางวัล (ข้อความ)" htmlFor="rewardText">
+          <FormField label={t("rewardText")} htmlFor="rewardText">
             <Input
               id="rewardText"
               name="rewardText"
-              placeholder="เครื่องดื่มฟรี 1 แก้ว"
+              placeholder={t("rewardPlaceholder")}
             />
           </FormField>
 
           {state.error && <p className="text-sm text-error">{state.error}</p>}
 
           <Button type="submit" disabled={pending}>
-            {pending ? "กำลังแปลง…" : "ยืนยันแปลงเป็นร้าน"}
+            {pending ? t("converting") : t("convertConfirm")}
           </Button>
         </form>
       </Modal>

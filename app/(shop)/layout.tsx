@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { getBillingState } from "@/src/infrastructure/auth/billing-guard";
@@ -18,6 +19,7 @@ export default async function ShopLayout({
   children: React.ReactNode;
 }) {
   const { user, shopId, impersonating } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const { status } = await getBillingState(shopId);
   const pathname = (await headers()).get("x-pathname") ?? "";
   // Impersonating admins have no shop-owner notifications of their own.
@@ -37,8 +39,7 @@ export default async function ShopLayout({
         <ImpersonationBanner shopName={shop?.name ?? "—"} />
       )}
       <AppHeader
-        brand="Easy Stamp"
-        role={impersonating ? "ดูแบบร้าน" : "ร้านค้า"}
+        role={impersonating ? t("roleImpersonating") : t("roleShop")}
         userEmail={user.email}
         notifications={{ href: "/shop/notifications", unread }}
       />

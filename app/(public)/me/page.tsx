@@ -8,6 +8,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { getTranslations } from "next-intl/server";
+
 import { container } from "@/src/infrastructure/di/container";
 import { getAllMemberTokens } from "@/src/infrastructure/auth/member";
 import { GetBoundCardsUseCase } from "@/src/application/use-cases/member/GetBoundCardsUseCase";
@@ -16,15 +18,20 @@ import { Badge } from "@/src/presentation/components/ui/Badge";
 import { StampDots } from "@/src/presentation/components/ui/StampDots";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { InstallHint } from "@/src/presentation/components/pwa/InstallHint";
+import { BRAND } from "@/src/config/brand";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "บัตรของฉัน · Easy Stamp",
-  manifest: "/me/site.webmanifest",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tr = await getTranslations("publicPages");
+  return {
+    title: tr("metaMyCards", { brand: BRAND.name }),
+    manifest: "/me/site.webmanifest",
+  };
+}
 
 export default async function MyCardsPage() {
+  const tr = await getTranslations("publicPages");
   const tokens = await getAllMemberTokens();
   const cards = await new GetBoundCardsUseCase(
     container.shopRepository,
@@ -39,16 +46,16 @@ export default async function MyCardsPage() {
       <header className="text-center">
         <h1 className="inline-flex items-center justify-center gap-2 text-2xl font-bold text-brand-700">
           <ShoppingBag className="size-6" />
-          บัตรของฉัน
+          {tr("myCardsTitle")}
         </h1>
-        <p className="text-sm text-muted">บัตรสะสมแสตมป์ทุกร้านบนเครื่องนี้</p>
+        <p className="text-sm text-muted">{tr("myCardsSubtitle")}</p>
       </header>
 
       {cards.length === 0 ? (
         <EmptyState
           icon={<Smartphone />}
-          title="ยังไม่มีบัตร"
-          description="ไปที่ร้านแล้วให้พนักงานออก QR ผูกบัตร แล้วสแกนด้วยกล้องมือถือของคุณ"
+          title={tr("noCardsTitle")}
+          description={tr("noCardsDesc")}
         />
       ) : (
         <div className="flex flex-col gap-3">
@@ -69,7 +76,9 @@ export default async function MyCardsPage() {
                     {eligibleCount > 0 && (
                       <Badge tone="success">
                         <PartyPopper className="size-3.5" />
-                        ครบ แลกได้{eligibleCount > 1 ? ` ${eligibleCount}` : ""}
+                        {eligibleCount > 1
+                          ? tr("readyToRedeemN", { count: eligibleCount })
+                          : tr("readyToRedeem")}
                       </Badge>
                     )}
                     <ChevronRight className="size-4 shrink-0 text-muted" />
@@ -101,12 +110,14 @@ export default async function MyCardsPage() {
         </div>
       )}
 
-      <Link
-        href="/privacy"
-        className="mt-2 text-center text-xs text-muted hover:underline"
-      >
-        นโยบายความเป็นส่วนตัว
-      </Link>
+      <div className="mt-2 flex justify-center gap-4 text-xs text-muted">
+        <Link href="/privacy" className="hover:underline">
+          {tr("privacyPolicy")}
+        </Link>
+        <Link href="/tos" className="hover:underline">
+          {tr("termsOfService")}
+        </Link>
+      </div>
     </main>
   );
 }

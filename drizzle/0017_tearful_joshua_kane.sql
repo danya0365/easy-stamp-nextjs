@@ -1,0 +1,1 @@
+ALTER TABLE `leads` ADD `follow_up_notified_at` text;

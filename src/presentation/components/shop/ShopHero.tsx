@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import type { ReviewSummary, ShopImage } from "@/src/domain/entities";
 import { StarRating } from "@/src/presentation/components/ui/StarRating";
@@ -7,24 +9,33 @@ import { StarRating } from "@/src/presentation/components/ui/StarRating";
  * Social-profile style shop hero: a full-width cover banner (or brand gradient
  * fallback) with the circular profile avatar overlapping its bottom edge, then
  * the shop name, category, and rating centered below.
+ *
+ * `coverOverlay` / `profileOverlay` are optional edit affordances (Facebook-style
+ * "tap the image to change it") layered over each image — passed only for the
+ * shop owner viewing their own page. Omitted = the plain public view.
  */
-export function ShopHero({
+export async function ShopHero({
   coverImage,
   profileImage,
   shopName,
   categoryName,
   rating,
+  coverOverlay,
+  profileOverlay,
 }: {
   coverImage: ShopImage | null;
   profileImage: ShopImage | null;
   shopName: string;
   categoryName: string | null;
   rating: ReviewSummary;
+  coverOverlay?: ReactNode;
+  profileOverlay?: ReactNode;
 }) {
+  const t = await getTranslations("shop");
   return (
     <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border">
       {/* Cover */}
-      <div className="h-40 w-full">
+      <div className="relative h-40 w-full">
         {coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -35,11 +46,14 @@ export function ShopHero({
         ) : (
           <div className="h-full w-full bg-linear-to-br from-brand-300 to-brand-500" />
         )}
+        {coverOverlay && (
+          <div className="absolute bottom-2 right-2">{coverOverlay}</div>
+        )}
       </div>
 
       {/* Avatar + identity (relative so it stacks above the cover) */}
       <div className="relative flex flex-col items-center px-4 pb-5 text-center">
-        <div className="-mt-12 mb-2">
+        <div className="relative -mt-12 mb-2">
           {profileImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -51,6 +65,9 @@ export function ShopHero({
             <div className="flex size-24 items-center justify-center rounded-full bg-brand-100 text-brand-500 ring-4 ring-card">
               <Store className="size-10" />
             </div>
+          )}
+          {profileOverlay && (
+            <div className="absolute -bottom-1 -right-1">{profileOverlay}</div>
           )}
         </div>
 
@@ -71,7 +88,7 @@ export function ShopHero({
               </span>
             </div>
           ) : (
-            <span className="text-xs text-muted">ยังไม่มีรีวิว</span>
+            <span className="text-xs text-muted">{t("noReviews")}</span>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   pauseShopAction,
@@ -16,6 +17,7 @@ export function PauseShopToggle({
   shopId: string;
   paused: boolean;
 }) {
+  const t = useTranslations("admin");
   const [pending, start] = useTransition();
   return (
     <Button
@@ -30,7 +32,7 @@ export function PauseShopToggle({
         )
       }
     >
-      {paused ? "เปิดร้าน" : "ปิดชั่วคราว"}
+      {paused ? t("openShop") : t("pauseTemporarily")}
     </Button>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   contactAdminAction,
@@ -17,6 +18,7 @@ import { Textarea } from "@/src/presentation/components/ui/Textarea";
  * to show a cancel/close button (modal mode).
  */
 export function ContactAdminForm({ onCancel }: { onCancel?: () => void }) {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<ContactFormState, FormData>(
     contactAdminAction,
     {},
@@ -31,7 +33,7 @@ export function ContactAdminForm({ onCancel }: { onCancel?: () => void }) {
         </p>
         {onCancel && (
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-            ปิด
+            {t("contactClose")}
           </Button>
         )}
       </div>
@@ -40,17 +42,17 @@ export function ContactAdminForm({ onCancel }: { onCancel?: () => void }) {
 
   return (
     <form action={action} className="flex flex-col gap-3">
-      <Input name="subject" placeholder="หัวข้อ" maxLength={120} required />
+      <Input name="subject" placeholder={t("contactSubject")} maxLength={120} required />
       <Textarea
         name="message"
-        placeholder="รายละเอียดที่ต้องการแจ้ง"
+        placeholder={t("contactMessage")}
         rows={4}
         maxLength={1000}
         required
       />
       <Input
         name="contactChannel"
-        placeholder="ช่องทางติดต่อกลับ (เบอร์โทร / LINE ID / อีเมล)"
+        placeholder={t("contactChannel")}
         maxLength={200}
         required
       />
@@ -58,11 +60,11 @@ export function ContactAdminForm({ onCancel }: { onCancel?: () => void }) {
       <div className="flex justify-end gap-2">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
-            ยกเลิก
+            {t("contactCancel")}
           </Button>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "กำลังส่ง…" : "ส่งคำขอ"}
+          {pending ? t("contactSending") : t("contactSubmit")}
         </Button>
       </div>
     </form>

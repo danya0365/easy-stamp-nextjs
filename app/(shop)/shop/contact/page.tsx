@@ -1,4 +1,5 @@
 import { Clock } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopContactPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const requests = await container.contactRequestRepository.listByShop(
     shopId,
     10,
@@ -23,11 +25,11 @@ export default async function ShopContactPage() {
       {open ? (
         <Card>
           <CardHeader
-            title="คำขอของคุณกำลังรอผู้ดูแลตอบกลับ"
+            title={t("requestPendingTitle")}
             action={
               <Badge tone="warning">
                 <Clock className="size-3.5" />
-                รอดำเนินการ
+                {t("pending")}
               </Badge>
             }
           />
@@ -36,18 +38,17 @@ export default async function ShopContactPage() {
             {open.message}
           </p>
           <p className="mt-2 text-xs text-muted">
-            ส่งเมื่อ {formatDateTime(open.createdAt)}
+            {t("sentAt", { date: formatDateTime(open.createdAt) })}
           </p>
           <p className="mt-3 rounded-lg bg-muted-surface px-3 py-2 text-xs text-muted">
-            ส่งคำขอใหม่ได้เมื่อผู้ดูแลปิดเรื่องนี้แล้ว
-            จะมีการแจ้งเตือนกลับมาเมื่อผู้ดูแลรับเรื่อง
+            {t("requestPendingHint")}
           </p>
         </Card>
       ) : (
         <Card>
           <CardHeader
-            title="ติดต่อผู้ดูแลระบบ"
-            subtitle="มีปัญหาการใช้งานหรือการชำระเงิน ส่งข้อความถึงผู้ดูแล แล้วทิ้งช่องทางให้ติดต่อกลับ"
+            title={t("contactAdminTitle")}
+            subtitle={t("contactPageSubtitle")}
           />
           <ContactAdminForm />
         </Card>
@@ -55,7 +56,7 @@ export default async function ShopContactPage() {
 
       {past.length > 0 && (
         <Card>
-          <CardHeader title="ประวัติคำขอ" />
+          <CardHeader title={t("requestHistoryTitle")} />
           <ul className="flex flex-col divide-y divide-border">
             {past.map((r) => (
               <li
@@ -70,7 +71,7 @@ export default async function ShopContactPage() {
                     {formatDateTime(r.createdAt)}
                   </p>
                 </div>
-                <Badge tone="success">ดำเนินการแล้ว</Badge>
+                <Badge tone="success">{t("resolved")}</Badge>
               </li>
             ))}
           </ul>

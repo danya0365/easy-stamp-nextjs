@@ -45,6 +45,11 @@ const OTP_IP_LIMIT = 10;
 const OTP_IP_WINDOW_MS = 10 * 60_000;
 const LOGIN_LIMIT = 10;
 const LOGIN_WINDOW_MS = 10 * 60_000;
+// 2FA code-entry throttle. OTP-verify is already capped per-account
+// (MAX_OTP_ATTEMPTS), but TOTP/recovery verification has no such counter — only
+// the 5-min pending cookie — so cap guesses per pending user to stop brute-force.
+const TWOFA_VERIFY_LIMIT = 8;
+const TWOFA_VERIFY_WINDOW_MS = 10 * 60_000;
 
 export interface LoginFormState {
   error?: string;
@@ -196,6 +201,19 @@ export async function verifyLoginTwoFactorAction(
   const code = String(formData.get("code") ?? "").trim();
   const userId = await getPendingTwoFactor();
   if (!userId) return { error: "หมดเวลายืนยันตัวตน กรุณาเข้าสู่ระบบใหม่" };
+
+  // Throttle code guesses per pending user (brute-force defense for TOTP).
+  const rl = await container.rateLimitRepository.hit(
+    `2fa_verify:${userId}`,
+    TWOFA_VERIFY_LIMIT,
+    TWOFA_VERIFY_WINDOW_MS,
+  );
+  if (!rl.allowed) {
+    return {
+      error: `ใส่รหัสผิดหลายครั้งเกินไป ลองใหม่ในอีก ${rl.retryAfterSec} วินาที`,
+      twoFactorRequired: true,
+    };
+  }
 
   const ip = await getClientIp();
   const userAgent = await getUserAgent();

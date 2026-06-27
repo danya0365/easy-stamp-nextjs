@@ -35,13 +35,14 @@ function redeem() {
 }
 
 async function makeShop(slug: string) {
-  const shop = await new CreateShopUseCase(
+  const { shop } = await new CreateShopUseCase(
     container.shopRepository,
     container.userRepository,
     container.subscriptionRepository,
     container.passwordHasher,
     container.shopCategoryRepository,
     container.stampTypeRepository,
+    container.branchRepository,
   ).execute({
     name: `Shop ${slug}`,
     slug,

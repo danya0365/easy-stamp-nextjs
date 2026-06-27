@@ -73,3 +73,38 @@ test("resumeDueDate: negative span guarded (clock skew) → no shift", () => {
   const now = new Date(new Date(pausedAt).getTime() - 1000); // now before pause
   assert.equal(resumeDueDate(due, pausedAt, now), due);
 });
+
+test("resumeDueDate: pausing under a full day refunds nothing (anti-arbitrage)", () => {
+  const pausedAt = "2026-06-16T00:00:00.000Z";
+  const due = "2026-06-26T00:00:00.000Z";
+  // Closed only 16h (e.g. overnight) → less than a whole day → no credit.
+  const now = new Date(new Date(pausedAt).getTime() + 16 * 60 * 60 * 1000);
+  assert.equal(resumeDueDate(due, pausedAt, now), due);
+});
+
+test("resumeDueDate: partial days are floored to whole days", () => {
+  const pausedAt = "2026-06-16T00:00:00.000Z";
+  const due = "2026-06-26T00:00:00.000Z";
+  // Closed 2.5 days → credited only 2 whole days.
+  const now = new Date(new Date(pausedAt).getTime() + 2.5 * DAY);
+  assert.equal(resumeDueDate(due, pausedAt, now), "2026-06-28T00:00:00.000Z");
+});
+
+test("frozenDaysSoFar: whole days closed shown for the resume preview", () => {
+  const pausedAt = "2026-06-16T00:00:00.000Z";
+  const due = "2026-06-26T00:00:00.000Z";
+  // Closed only 16h → 0 whole days creditable yet.
+  const just16h = new Date(new Date(pausedAt).getTime() + 16 * 60 * 60 * 1000);
+  assert.equal(
+    computeBillingState({ currentPeriodDueAt: due, pausedAt }, just16h)
+      .frozenDaysSoFar,
+    0,
+  );
+  // Closed 2.5 days → 2 whole days creditable.
+  const twoAndHalf = new Date(new Date(pausedAt).getTime() + 2.5 * DAY);
+  assert.equal(
+    computeBillingState({ currentPeriodDueAt: due, pausedAt }, twoAndHalf)
+      .frozenDaysSoFar,
+    2,
+  );
+});

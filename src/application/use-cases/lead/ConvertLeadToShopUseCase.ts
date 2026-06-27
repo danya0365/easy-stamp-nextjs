@@ -9,7 +9,6 @@ import type { ISubscriptionRepository } from "@/src/application/repositories/ISu
 import type { IStampTypeRepository } from "@/src/application/repositories/IStampTypeRepository";
 import type { IPasswordHasher } from "@/src/application/services/IPasswordHasher";
 import { CreateShopUseCase } from "@/src/application/use-cases/shop/CreateShopUseCase";
-import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 
 export interface ConvertLeadToShopInput {
   leadId: string;
@@ -22,14 +21,12 @@ export interface ConvertLeadToShopInput {
   performedBy: string;
 }
 
-/** Default name for the first branch created from a converted lead. */
-const DEFAULT_BRANCH_NAME = "สาขาหลัก";
-
 /**
  * Turn a won lead into a real billable shop: create shop + owner + trial
- * subscription (via CreateShopUseCase), then a first branch carrying the lead's
- * coordinates/address so it appears on the public map immediately. The lead is
- * linked to the new shop and a "converted" visit log is recorded.
+ * subscription + first branch (via CreateShopUseCase), then carry the lead's
+ * coordinates/address onto that branch so it appears on the public map
+ * immediately. The lead is linked to the new shop and a "converted" visit log
+ * is recorded.
  *
  * Note: multiple writes without a wrapping transaction (matches CreateShopUseCase
  * house style); a mid-way failure could leave a shop created but the lead unlinked.
@@ -59,13 +56,14 @@ export class ConvertLeadToShopUseCase {
       throw new Error('ต้องตั้งสถานะลีดเป็น "ปิดการขายได้" ก่อนแปลงเป็นร้าน');
     }
 
-    const shop = await new CreateShopUseCase(
+    const { shop, branch } = await new CreateShopUseCase(
       this.shops,
       this.users,
       this.subscriptions,
       this.hasher,
       this.categories,
       this.stampTypes,
+      this.branches,
     ).execute({
       name: lead.name,
       slug: input.slug,
@@ -77,12 +75,8 @@ export class ConvertLeadToShopUseCase {
       rewardText: input.rewardText,
     });
 
-    // CreateShopUseCase does not create a branch — make the first one and carry
-    // the lead's location across so the new shop plots on the public map.
-    const branch = await new CreateBranchUseCase(this.branches).execute(
-      shop.id,
-      DEFAULT_BRANCH_NAME,
-    );
+    // Carry the lead's location onto the shop's first branch so the new shop
+    // plots on the public map immediately.
     if (lead.latitude !== null && lead.longitude !== null) {
       await this.branches.updateLocation(branch.id, {
         latitude: lead.latitude,

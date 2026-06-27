@@ -26,11 +26,11 @@ import { Card } from "@/src/presentation/components/ui/Card";
 import { StampDots } from "@/src/presentation/components/ui/StampDots";
 import { Logo } from "@/src/presentation/components/layout/Logo";
 import { AppVersion } from "@/src/presentation/components/layout/AppVersion";
+import { BRAND } from "@/src/config/brand";
 
 export const metadata: Metadata = {
-  title: "วิธีใช้งาน | Easy Stamp",
-  description:
-    "คู่มือใช้งาน Easy Stamp แยกตามผู้ใช้ — ลูกค้าสะสมแต้ม, เจ้าของร้านตั้งค่าร้าน, และพนักงานกดแสตมป์/แลกรางวัล",
+  title: `วิธีใช้งาน | ${BRAND.name}`,
+  description: `คู่มือใช้งาน ${BRAND.name} แยกตามผู้ใช้ — ลูกค้าสะสมแต้ม, เจ้าของร้านตั้งค่าร้าน, และพนักงานกดแสตมป์/แลกรางวัล`,
 };
 
 interface Step {
@@ -182,7 +182,7 @@ export default function TutorialPage() {
       <header className="flex flex-col items-center gap-3 text-center">
         <Logo className="size-14 rounded-2xl" />
         <h1 className="text-2xl font-bold text-brand-700 sm:text-3xl">
-          วิธีใช้งาน Easy Stamp
+          วิธีใช้งาน {BRAND.name}
         </h1>
         <p className="max-w-md text-sm text-muted">
           คู่มือใช้งานแยกตามผู้ใช้ — เลือกหัวข้อที่ตรงกับคุณได้เลย
@@ -272,7 +272,7 @@ export default function TutorialPage() {
           href="/info"
           className="text-sm font-medium text-brand-700 hover:underline"
         >
-          เกี่ยวกับ Easy Stamp
+          เกี่ยวกับ {BRAND.name}
         </Link>
         <AppVersion />
       </footer>

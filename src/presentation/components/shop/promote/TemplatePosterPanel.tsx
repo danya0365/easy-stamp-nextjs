@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type {
   PosterDimensions,
@@ -21,12 +22,13 @@ export function TemplatePosterPanel({
   copy: TemplateCopy;
   seed: PromoSeedData;
 }) {
+  const t = useTranslations("promote");
   const [template, setTemplate] = useState<TemplateId>("classic");
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">ดีไซน์</p>
+        <p className="text-sm font-medium text-foreground">{t("design")}</p>
         <div className="flex flex-wrap gap-2">
           {TEMPLATE_OPTIONS.map((opt) => {
             const active = opt.id === template;
@@ -45,15 +47,13 @@ export function TemplatePosterPanel({
                     : "border-border text-muted hover:text-foreground",
                 )}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             );
           })}
         </div>
         {!seed.profileImageDataUrl && (
-          <p className="text-xs text-muted">
-            ดีไซน์ “รูปร้าน” ต้องตั้งรูปโปรไฟล์ร้านก่อนที่หน้าตั้งค่า
-          </p>
+          <p className="text-xs text-muted">{t("photoNeedsProfile")}</p>
         )}
       </div>
 

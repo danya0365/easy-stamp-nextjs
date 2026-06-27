@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -9,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopRedemptionsPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
 
   const page = await container.rewardRedemptionRepository.pageByShop(shopId);
   const items = await new BuildRedemptionItemsUseCase(
@@ -19,7 +22,7 @@ export default async function ShopRedemptionsPage() {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="ประวัติการแลกรางวัล" subtitle="รายการล่าสุดก่อน" />
+        <CardHeader title={t("redemptionHistoryTitle")} subtitle={t("latestFirst")} />
         {items.length === 0 ? (
           <RedemptionHistory items={[]} showCustomer />
         ) : (

@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ShopReviewsPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const [summary, page] = await Promise.all([
     container.shopReviewRepository.summary(shopId),
     container.shopReviewRepository.pageByShop(shopId, { includeHidden: true }),
@@ -20,11 +22,14 @@ export default async function ShopReviewsPage() {
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader
-          title="รีวิวจากลูกค้า"
+          title={t("reviewsTitle")}
           subtitle={
             summary.count > 0
-              ? `${summary.average.toFixed(1)} จาก ${summary.count} รีวิว`
-              : "ยังไม่มีรีวิว"
+              ? t("reviewsSummary", {
+                  avg: summary.average.toFixed(1),
+                  count: summary.count,
+                })
+              : t("noReviews")
           }
           action={
             summary.count > 0 ? (
@@ -33,7 +38,7 @@ export default async function ShopReviewsPage() {
           }
         />
         {page.items.length === 0 ? (
-          <EmptyState icon={<Star />} title="ยังไม่มีรีวิว" />
+          <EmptyState icon={<Star />} title={t("noReviews")} />
         ) : (
           <OwnerReviewList
             initialItems={page.items}

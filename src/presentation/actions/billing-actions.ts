@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
-import { requireRole } from "@/src/infrastructure/auth/session";
+import { requireShopWrite } from "@/src/infrastructure/auth/session";
 import { SubmitPaymentSlipUseCase } from "@/src/application/use-cases/billing/SubmitPaymentSlipUseCase";
 import { resolveTopupQuote } from "@/src/domain/services/topup-pricing";
 import { renderPromptPayQR } from "@/src/infrastructure/services/promptpay";
@@ -20,16 +20,16 @@ export interface BillingFormState {
 export async function loadMorePaymentsAction(
   cursor: string,
 ): Promise<Page<Payment>> {
-  const user = await requireRole("shop_owner");
-  return container.paymentRepository.pageByShop(user.shopId!, { cursor });
+  const { shopId } = await requireShopWrite();
+  return container.paymentRepository.pageByShop(shopId, { cursor });
 }
 
 /** Next page of the shop's day-credit ledger (top-up history "load more"). */
 export async function loadMoreTopupsAction(
   cursor: string,
 ): Promise<Page<TopupTransaction>> {
-  const user = await requireRole("shop_owner");
-  return container.topupTransactionRepository.pageByShop(user.shopId!, {
+  const { shopId } = await requireShopWrite();
+  return container.topupTransactionRepository.pageByShop(shopId, {
     cursor,
   });
 }
@@ -58,9 +58,8 @@ export async function topupQuoteAction(input: {
   customDays: number | null;
 }): Promise<TopupQuoteResult> {
   try {
-    const user = await requireRole("shop_owner");
-    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
-    const sub = await container.subscriptionRepository.findByShop(user.shopId);
+    const { shopId } = await requireShopWrite();
+    const sub = await container.subscriptionRepository.findByShop(shopId);
     if (!sub) throw new Error("ยังไม่มีแพ็กเกจสำหรับร้านนี้");
 
     const quote = resolveTopupQuote(input, sub.pricePerDaySatang);
@@ -88,8 +87,7 @@ export async function submitSlipAction(
 ): Promise<BillingFormState> {
   try {
     // NOTE: intentionally no assertShopActive — paying must work while suspended.
-    const user = await requireRole("shop_owner");
-    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    const { actor, shopId } = await requireShopWrite();
 
     const file = formData.get("slip");
     if (!(file instanceof File) || file.size === 0) {
@@ -106,8 +104,8 @@ export async function submitSlipAction(
       container.subscriptionRepository,
       container.slipStorage,
     ).execute({
-      shopId: user.shopId,
-      userId: user.id,
+      shopId,
+      userId: actor.id,
       filename: file.name,
       contentType: file.type,
       bytes,
@@ -116,7 +114,7 @@ export async function submitSlipAction(
     });
 
     // Alert admins that a slip is waiting for review (best-effort).
-    const shop = await container.shopRepository.findById(user.shopId);
+    const shop = await container.shopRepository.findById(shopId);
     const totalDays = payment.daysToAdd + payment.bonusDays;
     await container.notificationService.notifyAdmins({
       type: "payment_submitted",

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { Shuffle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { genPassword } from "@/src/presentation/lib/gen-password";
 
 /**
- * Password input with a "สุ่ม" (generate) button. Controlled so the button can
+ * Password input with a randomize (generate) button. Controlled so the button can
  * fill it, but still submits via `name` in the surrounding `<form action>` →
  * FormData. Shown as plain text on purpose: the admin reads it out / hands it to
  * the new shop owner.
@@ -20,6 +21,7 @@ export function GeneratedPasswordField({
   name?: string;
   defaultValue?: string;
 }) {
+  const t = useTranslations("common");
   const [value, setValue] = useState(defaultValue);
 
   return (
@@ -41,7 +43,7 @@ export function GeneratedPasswordField({
         onClick={() => setValue(genPassword())}
       >
         <Shuffle className="size-4" />
-        สุ่ม
+        {t("randomize")}
       </Button>
     </div>
   );

@@ -20,6 +20,12 @@ export interface BillingStatus {
   graceDaysLeft: number;
   /** Why the shop is suspended, when it is. */
   suspendReason: "none" | "overdue" | "admin";
+  /**
+   * While paused: whole days the shop has been closed so far = the days that
+   * would be credited back if it resumed now (0 when not paused, or paused
+   * under a full day). Surfaced in the UI so owners see what reopening refunds.
+   */
+  frozenDaysSoFar: number;
 }
 
 /** Number of days a shop may remain expired before the system blocks it. */
@@ -28,7 +34,20 @@ export const GRACE_DAYS = 7;
 /** Days before expiry within which we start nudging the owner to top up. */
 export const PRE_EXPIRY_WARN_DAYS = 7;
 
+/** Pause policy: how many times a shop may close per rolling window, the window,
+ * and the minimum gap between closures. Shared by the enforcing action and the
+ * UI that explains/shows the quota. */
+export const PAUSE_MAX_PER_30D = 8;
+export const PAUSE_CAP_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 วัน
+export const PAUSE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 ชม.
+
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Whole days a pause has lasted so far — what resuming now credits back. */
+export function frozenWholeDays(pausedAtISO: string, now: Date): number {
+  const ms = now.getTime() - new Date(pausedAtISO).getTime();
+  return ms > 0 ? Math.floor(ms / DAY_MS) : 0;
+}
 
 export interface BillingInput {
   /** ISO-8601 due date of the current billing period. */
@@ -43,16 +62,20 @@ export interface BillingInput {
 
 /**
  * New due date after resuming from a pause: push the original due date forward
- * by however long the shop was paused, so no paid day is consumed.
+ * by the paused duration — but credited only in WHOLE days (floor). Pausing for
+ * less than a full day (overnight, rapid toggle) refunds nothing, so a shop
+ * can't stretch one paid day across many calendar days by closing off-hours;
+ * pausing only pays off for genuine multi-day closures (holidays/renovation).
  */
 export function resumeDueDate(
   dueISO: string,
   pausedAtISO: string,
   now: Date,
 ): string {
-  const pausedMs = now.getTime() - new Date(pausedAtISO).getTime();
-  const span = pausedMs > 0 ? pausedMs : 0;
-  return new Date(new Date(dueISO).getTime() + span).toISOString();
+  const wholeDays = frozenWholeDays(pausedAtISO, now);
+  return new Date(
+    new Date(dueISO).getTime() + wholeDays * DAY_MS,
+  ).toISOString();
 }
 
 /**
@@ -71,6 +94,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       preExpiryBannerLevel: 0,
       graceDaysLeft: 0,
       suspendReason: "admin",
+      frozenDaysSoFar: 0,
     };
   }
 
@@ -89,6 +113,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       preExpiryBannerLevel: 0,
       graceDaysLeft: GRACE_DAYS,
       suspendReason: "none",
+      frozenDaysSoFar: frozenWholeDays(input.pausedAt, now),
     };
   }
 
@@ -114,6 +139,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       preExpiryBannerLevel,
       graceDaysLeft: GRACE_DAYS,
       suspendReason: "none",
+      frozenDaysSoFar: 0,
     };
   }
 
@@ -128,6 +154,7 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
       preExpiryBannerLevel: 0,
       graceDaysLeft: 0,
       suspendReason: "overdue",
+      frozenDaysSoFar: 0,
     };
   }
 
@@ -141,5 +168,6 @@ export function computeBillingState(input: BillingInput, now: Date): BillingStat
     preExpiryBannerLevel: 0,
     graceDaysLeft: GRACE_DAYS - daysOverdue,
     suspendReason: "none",
+    frozenDaysSoFar: 0,
   };
 }

@@ -12,6 +12,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { useTranslations } from "next-intl";
+
 import type { Notification, NotificationType } from "@/src/domain/entities";
 import { EmptyState } from "../ui/EmptyState";
 import { formatDateTime } from "@/src/presentation/lib/format-date";
@@ -59,12 +61,13 @@ export function NotificationRow({ n }: { n: Notification }) {
 }
 
 export function NotificationList({ items }: { items: Notification[] }) {
+  const t = useTranslations("common");
   if (items.length === 0) {
     return (
       <EmptyState
         icon={<Bell />}
-        title="ยังไม่มีการแจ้งเตือน"
-        description="เมื่อมีความเคลื่อนไหว การแจ้งเตือนจะแสดงที่นี่"
+        title={t("noNotificationsTitle")}
+        description={t("noNotificationsDesc")}
       />
     );
   }

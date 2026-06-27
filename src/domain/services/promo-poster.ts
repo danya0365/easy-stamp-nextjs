@@ -23,7 +23,8 @@ export type PosterSize = "ig_square" | "story_9x16" | "a4_print" | "table_tent";
 
 export interface PosterDimensions {
   id: PosterSize;
-  label: string;
+  /** `promote`-namespace message key for the size label (resolve with `t()`). */
+  labelKey: "sizeIgSquare" | "sizeStory" | "sizeA4" | "sizeTableTent";
   /** Exported pixel width/height. */
   w: number;
   h: number;
@@ -38,28 +39,28 @@ export interface PosterDimensions {
 export const POSTER_SIZES: readonly PosterDimensions[] = [
   {
     id: "ig_square",
-    label: "IG / Facebook โพสต์ (1:1)",
+    labelKey: "sizeIgSquare",
     w: 1080,
     h: 1080,
     aspectPhrase: "square 1:1 aspect ratio",
   },
   {
     id: "story_9x16",
-    label: "Story / LINE (9:16)",
+    labelKey: "sizeStory",
     w: 1080,
     h: 1920,
     aspectPhrase: "vertical 9:16 aspect ratio",
   },
   {
     id: "a4_print",
-    label: "A4 ปรินต์",
+    labelKey: "sizeA4",
     w: 1240,
     h: 1754,
     aspectPhrase: "A4 portrait poster, roughly 3:4 aspect ratio",
   },
   {
     id: "table_tent",
-    label: "ป้ายตั้งโต๊ะ",
+    labelKey: "sizeTableTent",
     w: 1004,
     h: 1417,
     aspectPhrase: "tall A5 table-tent card, portrait",
@@ -74,9 +75,18 @@ export function getPosterSize(id: PosterSize): PosterDimensions {
 
 export interface PromoGoalPreset {
   goal: PromoGoal;
-  /** Thai label shown in the goal selector. */
-  label: string;
-  /** Short helper line under the label. */
+  /** `promote`-namespace message key for the goal-selector label (resolve with `t()`). */
+  labelKey:
+    | "goalNewCustomer"
+    | "goalRewardHighlight"
+    | "goalFestival"
+    | "goalWeekdayBoost"
+    | "goalReopenNews";
+  /**
+   * Short helper line under the label (currently unrendered). Generated poster
+   * copy below (headline/subcopy/valueLine/promptVibeSeed) is marketing CONTENT,
+   * left in Thai by design — a clone rewrites it, like the privacy/tutorial prose.
+   */
   hint: string;
   /** Path A — hero copy (may contain {shopName}/{reward}/{threshold}). */
   headline: string;
@@ -104,7 +114,7 @@ export interface PromoGoalPreset {
 export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
   {
     goal: "new_customer",
-    label: "ดึงลูกค้าใหม่",
+    labelKey: "goalNewCustomer",
     hint: "ชวนลูกค้าใหม่มาสะสมแสตมป์",
     headline: "ซื้อที่ร้าน รับแสตมป์ทันที",
     subcopy: "สะสมครบ {threshold} ดวง แลกฟรี {reward}",
@@ -114,7 +124,7 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
   },
   {
     goal: "reward_highlight",
-    label: "โปรโมทของรางวัล",
+    labelKey: "goalRewardHighlight",
     hint: "เน้นของรางวัลที่แลกได้",
     headline: "สะสม {threshold} ดวง แลกฟรี {reward}",
     subcopy: "ที่ {shopName} — ยิ่งซื้อ ยิ่งคุ้ม",
@@ -124,7 +134,7 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
   },
   {
     goal: "festival",
-    label: "เทศกาล / วันสำคัญ",
+    labelKey: "goalFestival",
     hint: "โปรช่วงเทศกาล",
     headline: "ฉลองเทศกาลกับ {shopName}",
     subcopy: "ซื้อรับแสตมป์ สะสมครบ {threshold} ดวง แลกฟรี {reward}",
@@ -134,7 +144,7 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
   },
   {
     goal: "weekday_boost",
-    label: "กระตุ้นวันธรรมดา",
+    labelKey: "goalWeekdayBoost",
     hint: "เพิ่มลูกค้าวันคนน้อย",
     headline: "วันธรรมดาแวะรับแสตมป์ที่ {shopName}",
     subcopy: "สะสมครบ {threshold} ดวง แลกฟรี {reward}",
@@ -144,7 +154,7 @@ export const PROMO_GOAL_PRESETS: readonly PromoGoalPreset[] = [
   },
   {
     goal: "reopen_news",
-    label: "เปิดใหม่ / ข่าวสาร",
+    labelKey: "goalReopenNews",
     hint: "ประกาศข่าว เปิดร้าน/สาขาใหม่",
     headline: "{shopName} เปิดให้สะสมแสตมป์แล้ว!",
     subcopy: "ซื้อรับแสตมป์ สะสมครบ {threshold} ดวง แลกฟรี {reward}",

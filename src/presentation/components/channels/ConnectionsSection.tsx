@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   generateLineLinkCodeAction,
@@ -22,6 +23,7 @@ export function ConnectionsSection({
   linked: boolean;
   addUrl?: string;
 }) {
+  const t = useTranslations("channels");
   const [code, setCode] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -29,7 +31,7 @@ export function ConnectionsSection({
     <div className="flex items-center gap-2">
       <span className="inline-flex items-center gap-1 text-sm text-success">
         <CheckCircle2 size={16} />
-        เชื่อมแล้ว
+        {t("connected")}
       </span>
       <Button
         variant="ghost"
@@ -37,7 +39,7 @@ export function ConnectionsSection({
         disabled={pending}
         onClick={() => start(async () => void (await unlinkLineAction()))}
       >
-        ยกเลิก
+        {t("disconnect")}
       </Button>
     </div>
   ) : code ? null : (
@@ -52,7 +54,7 @@ export function ConnectionsSection({
         })
       }
     >
-      เชื่อมต่อ
+      {t("connect")}
     </Button>
   );
 
@@ -60,10 +62,7 @@ export function ConnectionsSection({
     <div className="flex flex-col gap-3">
       <div className="flex items-start gap-2 rounded-xl bg-brand-50 p-3 text-xs text-brand-800">
         <ShieldCheck className="size-4 shrink-0" />
-        <span>
-          เชื่อมอย่างน้อย 1 ช่องทางเพื่อความปลอดภัย — ใช้รับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส
-          OTP โดยไม่ต้องใช้รหัสผ่าน
-        </span>
+        <span>{t("securityHint")}</span>
       </div>
 
       <ul className="flex flex-col divide-y divide-border">
@@ -73,48 +72,44 @@ export function ConnectionsSection({
             // eslint-disable-next-line no-restricted-syntax -- #06C755 is LINE's official brand color
             iconClassName="bg-[#06C755]/10 text-[#06C755]"
             name="LINE"
-            description="รับการแจ้งเตือน และเข้าสู่ระบบด้วยรหัส OTP"
+            description={t("lineDescription")}
             badge={
               <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700">
-                ใช้เข้าสู่ระบบได้
+                {t("usableForLogin")}
               </span>
             }
             trailing={lineTrailing}
           >
             {!linked && !addUrl && (
-              <p className="text-xs text-warning">
-                * ระบบยังไม่ได้ตั้งค่า LINE OA — เชื่อมต่อได้เมื่อผู้ดูแลตั้งค่าเสร็จ
-              </p>
+              <p className="text-xs text-warning">{t("notConfigured")}</p>
             )}
             {!linked && code && (
               <div className="flex flex-col gap-2 rounded-xl bg-muted-surface p-4 text-sm">
-                <p className="font-medium text-foreground">วิธีเชื่อมต่อ</p>
+                <p className="font-medium text-foreground">{t("howToConnect")}</p>
                 <ol className="list-decimal space-y-1 pl-5 text-muted">
                   <li>
                     {addUrl ? (
                       <>
-                        เพิ่มเพื่อน LINE OA:{" "}
+                        {t("addFriendPrefix")}{" "}
                         <a
                           className="text-brand-700 underline"
                           href={addUrl}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          กดเพิ่มเพื่อน
+                          {t("addFriendLink")}
                         </a>
                       </>
                     ) : (
-                      "เพิ่มเพื่อน LINE OA ของระบบ"
+                      t("addFriendNoUrl")
                     )}
                   </li>
-                  <li>พิมพ์โค้ดนี้ส่งในแชท:</li>
+                  <li>{t("sendCodeInChat")}</li>
                 </ol>
                 <p className="select-all rounded-lg bg-card px-3 py-2 text-center text-lg font-bold tracking-widest text-brand-700">
                   {code}
                 </p>
-                <p className="text-xs text-muted">
-                  เมื่อส่งโค้ดแล้วระบบจะตอบกลับว่าเชื่อมต่อสำเร็จ จากนั้นรีเฟรชหน้านี้
-                </p>
+                <p className="text-xs text-muted">{t("afterSendHint")}</p>
               </div>
             )}
           </ChannelRow>

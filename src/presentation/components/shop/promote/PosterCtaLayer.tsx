@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { ScanLine, Stamp } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { TemplateCopy } from "@/src/domain/services/promo-poster";
 import type { PromoSeedData } from "./types";
@@ -22,6 +23,7 @@ export function PosterCtaLayer({
   seed: PromoSeedData;
   scale: number;
 }) {
+  const t = useTranslations("promote");
   const px = (n: number) => `${Math.round(n * scale)}px`;
 
   return (
@@ -42,7 +44,7 @@ export function PosterCtaLayer({
         className="font-semibold text-brand-600"
         style={{ fontSize: px(30), lineHeight: 1.2 }}
       >
-        ร้านนี้สะสมแสตมป์ · {seed.shopName}
+        {t("ctaShopLine", { shopName: seed.shopName })}
       </p>
       <h2
         className="font-bold text-foreground"
@@ -63,7 +65,7 @@ export function PosterCtaLayer({
       </p>
       <img
         src={seed.qrDataUrl}
-        alt={`QR ร้าน ${seed.shopName}`}
+        alt={t("ctaQrAlt", { shopName: seed.shopName })}
         style={{
           width: px(260),
           height: px(260),
@@ -77,7 +79,7 @@ export function PosterCtaLayer({
         style={{ fontSize: px(24), gap: px(8), lineHeight: 1.2 }}
       >
         <ScanLine style={{ width: px(26), height: px(26) }} />
-        สแกนดูร้าน · ของรางวัล · เช็คแต้มสะสม
+        {t("ctaScanLine")}
       </p>
       <p
         className="break-all text-muted"

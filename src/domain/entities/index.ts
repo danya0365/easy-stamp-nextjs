@@ -347,6 +347,8 @@ export interface Lead {
   /** Only set when status = "lost". */
   lostReason: LeadLostReason | null;
   nextFollowUpAt: string | null;
+  /** When the last follow-up reminder for the current due date was sent. */
+  followUpNotifiedAt: string | null;
   notes: string | null;
   /** Set on conversion: the real shop created from this lead. */
   convertedShopId: string | null;

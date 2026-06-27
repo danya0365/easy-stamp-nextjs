@@ -3,14 +3,13 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { MapPin, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { MapLoading } from "./MapLoading";
 
 const EditorView = dynamic(() => import("./BranchLocationEditorView"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-56 w-full items-center justify-center rounded-lg border border-border bg-muted-surface text-sm text-muted">
-      กำลังโหลดแผนที่…
-    </div>
-  ),
+  loading: () => <MapLoading className="h-56 rounded-lg border border-border" />,
 });
 
 interface Props {
@@ -26,6 +25,7 @@ export function BranchLocationEditor({
   longitude,
   address,
 }: Props) {
+  const t = useTranslations("map");
   const [open, setOpen] = useState(false);
   const hasLocation = latitude !== null && longitude !== null;
 
@@ -37,7 +37,7 @@ export function BranchLocationEditor({
         className="flex items-center gap-1.5 self-start text-xs font-medium text-brand-700 hover:underline"
       >
         {hasLocation ? <MapPin size={14} /> : <Plus size={14} />}
-        {hasLocation ? "แก้ไขตำแหน่งบนแผนที่" : "ตั้งตำแหน่งบนแผนที่"}
+        {hasLocation ? t("editLocation") : t("setLocation")}
         {open ? (
           <ChevronUp size={14} className="text-muted" />
         ) : (

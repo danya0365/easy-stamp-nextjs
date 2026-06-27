@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   createShopAction,
@@ -18,6 +19,7 @@ export function CreateShopForm({
 }: {
   categories: { id: string; name: string }[];
 }) {
+  const t = useTranslations("admin");
   const [state, action, pending] = useActionState<AdminFormState, FormData>(
     createShopAction,
     {},
@@ -36,7 +38,7 @@ export function CreateShopForm({
           variant="outline"
           onClick={() => setDismissed(state.handoff ?? null)}
         >
-          สร้างร้านอื่นต่อ
+          {t("csCreateAnother")}
         </Button>
       </div>
     );
@@ -45,19 +47,19 @@ export function CreateShopForm({
   return (
     <form action={action} className="flex flex-col gap-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="ชื่อร้าน" htmlFor="name">
+        <FormField label={t("csShopName")} htmlFor="name">
           <Input id="name" name="name" required />
         </FormField>
-        <FormField label="slug (ลิงก์ /s/...)" htmlFor="slug">
+        <FormField label={t("csSlug")} htmlFor="slug">
           <Input id="slug" name="slug" placeholder="coffee-shop" required />
         </FormField>
-        <FormField label="อีเมลเจ้าของร้าน" htmlFor="ownerEmail">
+        <FormField label={t("csOwnerEmail")} htmlFor="ownerEmail">
           <Input id="ownerEmail" name="ownerEmail" type="email" required />
         </FormField>
-        <FormField label="รหัสผ่านเจ้าของร้าน" htmlFor="ownerPassword">
+        <FormField label={t("csOwnerPassword")} htmlFor="ownerPassword">
           <GeneratedPasswordField />
         </FormField>
-        <FormField label="ราคา/วัน (บาท)" htmlFor="pricePerDayBaht">
+        <FormField label={t("csPricePerDay")} htmlFor="pricePerDayBaht">
           <Input
             id="pricePerDayBaht"
             name="pricePerDayBaht"
@@ -68,7 +70,7 @@ export function CreateShopForm({
             required
           />
         </FormField>
-        <FormField label="เกณฑ์แสตมป์เริ่มต้น" htmlFor="stampThreshold">
+        <FormField label={t("csStampThreshold")} htmlFor="stampThreshold">
           <Input
             id="stampThreshold"
             name="stampThreshold"
@@ -78,13 +80,13 @@ export function CreateShopForm({
             defaultValue={10}
           />
         </FormField>
-        <FormField label="หมวดหมู่ร้าน" htmlFor="categoryId">
+        <FormField label={t("csCategory")} htmlFor="categoryId">
           <select
             id="categoryId"
             name="categoryId"
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
           >
-            <option value="">— ไม่ระบุ —</option>
+            <option value="">{t("csCategoryNone")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -93,18 +95,16 @@ export function CreateShopForm({
           </select>
         </FormField>
       </div>
-      <FormField label="ของรางวัลเริ่มต้น (ข้อความ)" htmlFor="rewardText">
-        <Input id="rewardText" name="rewardText" placeholder="เครื่องดื่มฟรี 1 แก้ว" />
+      <FormField label={t("csRewardLabel")} htmlFor="rewardText">
+        <Input id="rewardText" name="rewardText" placeholder={t("csRewardPlaceholder")} />
       </FormField>
-      <p className="text-xs text-muted">
-        ระบบจะสร้าง “ประเภทแสตมป์เริ่มต้น” ให้จากค่านี้ — เจ้าของร้านเพิ่มประเภทอื่นได้เองในหน้าตั้งค่า
-      </p>
+      <p className="text-xs text-muted">{t("csHint")}</p>
 
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "กำลังสร้าง…" : "สร้างร้านค้า"}
+        {pending ? t("csCreating") : t("csCreate")}
       </Button>
     </form>
   );

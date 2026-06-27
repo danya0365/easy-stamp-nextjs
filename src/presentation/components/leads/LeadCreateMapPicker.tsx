@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 
+import { MapLoading } from "@/src/presentation/components/map/MapLoading";
+
 // maplibre-gl touches `window`, so the picker is client-only (no SSR) and
 // lazy-loaded, matching the other lead map wrappers.
 const LeadCreateMapPickerView = dynamic(
@@ -9,9 +11,7 @@ const LeadCreateMapPickerView = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-72 w-full items-center justify-center rounded-lg border border-border bg-muted-surface text-sm text-muted">
-        กำลังโหลดแผนที่…
-      </div>
+      <MapLoading className="h-72 rounded-lg border border-border" />
     ),
   },
 );

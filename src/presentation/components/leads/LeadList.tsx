@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   loadMoreLeadsAction,
@@ -11,7 +12,7 @@ import type { LeadStatus } from "@/src/domain/entities";
 import { LoadMore } from "@/src/presentation/components/ui/LoadMore";
 import { Badge } from "@/src/presentation/components/ui/Badge";
 import {
-  LEAD_STATUS_LABEL,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_TONE,
 } from "@/src/presentation/lib/lead-display";
 
@@ -21,6 +22,7 @@ function dayOf(iso: string): string {
 }
 
 function LeadItem({ row }: { row: LeadRow }) {
+  const t = useTranslations("leads");
   const { lead, categoryName } = row;
   const overdueFollowUp =
     lead.nextFollowUpAt !== null &&
@@ -47,14 +49,14 @@ function LeadItem({ row }: { row: LeadRow }) {
             {lead.phone && <span>{lead.phone}</span>}
             {lead.nextFollowUpAt && (
               <span className={overdueFollowUp ? "text-error" : undefined}>
-                นัด {dayOf(lead.nextFollowUpAt)}
+                {t("followUpDate", { date: dayOf(lead.nextFollowUpAt) })}
               </span>
             )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Badge tone={LEAD_STATUS_TONE[lead.status]}>
-            {LEAD_STATUS_LABEL[lead.status]}
+            {t(LEAD_STATUS_KEY[lead.status])}
           </Badge>
           <ChevronRight className="size-4 text-muted" />
         </div>

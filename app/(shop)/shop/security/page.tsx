@@ -1,4 +1,5 @@
 import { ShieldAlert } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -11,17 +12,18 @@ export const dynamic = "force-dynamic";
 /** Owner-facing activity/security log — scoped to this shop only. */
 export default async function ShopSecurityPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const page = await container.auditLogRepository.pageByShop(shopId);
 
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader
-          title="ความปลอดภัย & กิจกรรมของร้าน"
-          subtitle="เหตุการณ์สำคัญของร้านคุณ — เข้าสู่ระบบ, จัดการพนักงาน, การเพิ่มแสตมป์ที่ผิดปกติ"
+          title={t("securityTitle")}
+          subtitle={t("securitySubtitle")}
         />
         {page.items.length === 0 ? (
-          <EmptyState icon={<ShieldAlert />} title="ยังไม่มีเหตุการณ์" />
+          <EmptyState icon={<ShieldAlert />} title={t("noEvents")} />
         ) : (
           <AuditTimeline
             scope="shop"

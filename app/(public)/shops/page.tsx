@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Map as MapIcon, Store } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { container } from "@/src/infrastructure/di/container";
 import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
@@ -19,6 +20,7 @@ export default async function ShopsDirectoryPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
+  const t = await getTranslations("publicPages");
 
   const [shops, categories] = await Promise.all([
     container.shopRepository.list(),
@@ -57,18 +59,18 @@ export default async function ShopsDirectoryPage({
     );
 
   const filters = [
-    { slug: null as string | null, label: "ทั้งหมด" },
+    { slug: null as string | null, label: t("filterAll") },
     ...categories.map((c) => ({ slug: c.slug, label: c.name })),
   ];
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 py-6">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-foreground">ร้านค้าทั้งหมด</h1>
+        <h1 className="text-xl font-bold text-foreground">{t("allShopsTitle")}</h1>
         <Link href="/">
           <Button variant="outline" size="sm">
             <MapIcon size={14} />
-            แผนที่
+            {t("mapButton")}
           </Button>
         </Link>
       </div>
@@ -94,9 +96,9 @@ export default async function ShopsDirectoryPage({
       </div>
 
       <Card>
-        <CardHeader title={`${items.length} ร้าน`} />
+        <CardHeader title={t("shopsCount", { count: items.length })} />
         {items.length === 0 ? (
-          <EmptyState icon={<Store />} title="ยังไม่มีร้านในหมวดนี้" />
+          <EmptyState icon={<Store />} title={t("noShopsInCategory")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {items.map((shop) => (

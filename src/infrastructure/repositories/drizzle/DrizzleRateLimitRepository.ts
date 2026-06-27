@@ -44,4 +44,14 @@ export class DrizzleRateLimitRepository implements IRateLimitRepository {
       .where(eq(t.key, key));
     return { allowed: true, retryAfterSec: 0 };
   }
+
+  async peek(
+    key: string,
+    now: number = Date.now(),
+  ): Promise<{ count: number; resetAt: string } | null> {
+    const row = await db.query.rateLimits.findFirst({ where: eq(t.key, key) });
+    // No row, or the window has elapsed → effectively count 0.
+    if (!row || new Date(row.resetAt).getTime() <= now) return null;
+    return { count: row.count, resetAt: row.resetAt };
+  }
 }

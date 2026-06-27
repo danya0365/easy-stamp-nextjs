@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "./cn";
 
 /**
@@ -15,6 +16,7 @@ export function StarRatingInput({
   name?: string;
   defaultValue?: number;
 }) {
+  const t = useTranslations("common");
   const [value, setValue] = useState(defaultValue);
   const [hover, setHover] = useState(0);
   const shown = hover || value;
@@ -28,11 +30,11 @@ export function StarRatingInput({
           <button
             key={n}
             type="button"
-            aria-label={`${n} ดาว`}
+            aria-label={t("starRatingStars", { n })}
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             onClick={() => setValue(n)}
-            className="p-0.5"
+            className="p-2"
           >
             <Star
               className={cn(

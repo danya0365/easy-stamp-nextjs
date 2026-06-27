@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "./Button";
 import { Modal } from "./Modal";
@@ -14,8 +15,9 @@ import { canvasToCompressedFile } from "@/src/presentation/lib/crop-image";
 const ACCEPT = "image/png,image/jpeg,image/webp";
 
 // `value` is the crop-window aspect ratio (NaN = free / matches the photo).
+// A NaN value renders the translated "free" label; the rest are literal ratios.
 const RATIO_PRESETS: { label: string; value: number }[] = [
-  { label: "อิสระ", value: NaN },
+  { label: "", value: NaN },
   { label: "1:1", value: 1 },
   { label: "4:3", value: 4 / 3 },
   { label: "3:4", value: 3 / 4 },
@@ -51,6 +53,7 @@ export function ImageCropField({
   /** Fired with `true` once a cropped file is staged, `false` while empty/busy. */
   onReadyChange?: (ready: boolean) => void;
 }) {
+  const t = useTranslations("common");
   const cropperRef = useRef<SimpleCropperHandle>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const pickRef = useRef<HTMLInputElement>(null);
@@ -103,7 +106,7 @@ export function ImageCropField({
     setReady(false);
     try {
       const canvas = cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 });
-      if (!canvas) throw new Error("ครอปรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+      if (!canvas) throw new Error(t("cropError"));
       const file = await canvasToCompressedFile(canvas, baseName);
       const dt = new DataTransfer();
       dt.items.add(file);
@@ -122,7 +125,7 @@ export function ImageCropField({
     } finally {
       setProcessing(false);
     }
-  }, [baseName, setReady, closeCropper]);
+  }, [baseName, setReady, closeCropper, t]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -140,7 +143,7 @@ export function ImageCropField({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={preview}
-          alt="ตัวอย่างรูป"
+          alt={t("cropPreviewAlt")}
           className="max-h-48 w-full rounded-lg border border-border object-contain bg-muted-surface"
         />
       ) : null}
@@ -154,10 +157,10 @@ export function ImageCropField({
           onClick={() => pickRef.current?.click()}
         >
           <ImagePlus className="size-4" />
-          {processing ? "กำลังประมวลผล…" : preview ? "เปลี่ยนรูป" : label}
+          {processing ? t("processing") : preview ? t("cropChangeImage") : label}
         </Button>
         {sizeKb !== null && (
-          <span className="text-xs text-muted">พร้อมส่ง: {sizeKb} KB</span>
+          <span className="text-xs text-muted">{t("cropReadySize", { kb: sizeKb })}</span>
         )}
       </div>
 
@@ -166,14 +169,14 @@ export function ImageCropField({
       <Modal
         open={src !== null}
         onClose={closeCropper}
-        title="ปรับรูปก่อนอัปโหลด"
+        title={t("cropTitle")}
         footer={
           <>
             <Button type="button" variant="ghost" size="sm" onClick={closeCropper}>
-              ยกเลิก
+              {t("cancel")}
             </Button>
             <Button type="button" size="sm" disabled={processing} onClick={confirmCrop}>
-              {processing ? "กำลังประมวลผล…" : "ยืนยัน"}
+              {processing ? t("processing") : t("confirm")}
             </Button>
           </>
         }
@@ -194,7 +197,7 @@ export function ImageCropField({
                         : "bg-card text-muted ring-border hover:ring-brand-300"
                     }`}
                   >
-                    {r.label}
+                    {Number.isNaN(r.value) ? t("cropFreeRatio") : r.label}
                   </button>
                 );
               })}

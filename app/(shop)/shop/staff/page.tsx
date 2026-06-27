@@ -1,4 +1,5 @@
 import { LogOut, User } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireShopAccess } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -7,12 +8,14 @@ import { Card, CardHeader } from "@/src/presentation/components/ui/Card";
 import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { AddStaffForm } from "@/src/presentation/components/shop/AddStaffForm";
 import { ToggleActiveButton } from "@/src/presentation/components/shop/ToggleActiveButton";
+import { ConfirmSubmitButton } from "@/src/presentation/components/ui/ConfirmDialog";
 import { ResetPasswordControl } from "@/src/presentation/components/auth/ResetPasswordControl";
 
 export const dynamic = "force-dynamic";
 
 export default async function ShopStaffPage() {
   const { shopId } = await requireShopAccess();
+  const t = await getTranslations("shopPages");
   const [branches, users] = await Promise.all([
     container.branchRepository.listByShop(shopId),
     container.userRepository.listByShop(shopId),
@@ -23,14 +26,14 @@ export default async function ShopStaffPage() {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader title="เพิ่มพนักงานสาขา" />
+        <CardHeader title={t("addStaffTitle")} />
         <AddStaffForm branches={branches.map((b) => ({ id: b.id, name: b.name }))} />
       </Card>
 
       <Card>
-        <CardHeader title={`พนักงานทั้งหมด (${staff.length})`} />
+        <CardHeader title={t("allStaffTitle", { count: staff.length })} />
         {staff.length === 0 ? (
-          <EmptyState icon={<User />} title="ยังไม่มีพนักงาน" />
+          <EmptyState icon={<User />} title={t("noStaff")} />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {staff.map((s) => (
@@ -51,21 +54,20 @@ export default async function ShopStaffPage() {
                     isActive={s.isActive}
                   />
                   <ResetPasswordControl kind="staff" userId={s.id} />
-                  <form
+                  <ConfirmSubmitButton
                     action={async () => {
                       "use server";
                       await forceLogoutStaffAction(s.id);
                     }}
+                    title={t("forceLogoutTitle")}
+                    message={t("forceLogoutMessage")}
+                    confirmLabel={t("forceLogoutConfirm")}
+                    buttonTitle={t("forceLogoutButtonTitle")}
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
                   >
-                    <button
-                      type="submit"
-                      title="บังคับออกจากระบบทุกอุปกรณ์ (บัญชีถูกแฮ็ก)"
-                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-error"
-                    >
-                      <LogOut className="size-3.5" />
-                      เตะออก
-                    </button>
-                  </form>
+                    <LogOut className="size-3.5" />
+                    {t("kickOut")}
+                  </ConfirmSubmitButton>
                 </div>
               </li>
             ))}

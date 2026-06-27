@@ -2,6 +2,7 @@
 
 import { useActionState, useTransition } from "react";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { StampType } from "@/src/domain/entities";
 import {
@@ -22,6 +23,7 @@ function bahtValue(priceSatang: number | null): string {
 }
 
 function TypeRow({ type }: { type: StampType }) {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     updateStampTypeAction,
     {},
@@ -40,12 +42,12 @@ function TypeRow({ type }: { type: StampType }) {
             required
             className="flex-1"
           />
-          {type.isDefault && <Badge tone="brand">เริ่มต้น</Badge>}
-          {!type.isActive && <Badge tone="neutral">ปิดอยู่</Badge>}
+          {type.isDefault && <Badge tone="brand">{t("stBadgeDefault")}</Badge>}
+          {!type.isActive && <Badge tone="neutral">{t("stBadgeInactive")}</Badge>}
         </div>
         <div className="flex gap-2">
           <label className="flex-1 text-xs text-muted">
-            จำนวนครบ
+            {t("stThreshold")}
             <input
               name="threshold"
               type="number"
@@ -56,7 +58,7 @@ function TypeRow({ type }: { type: StampType }) {
             />
           </label>
           <label className="flex-1 text-xs text-muted">
-            ราคา/บาท (ไม่บังคับ)
+            {t("stPriceBahtOptional")}
             <input
               name="priceBaht"
               type="number"
@@ -71,14 +73,14 @@ function TypeRow({ type }: { type: StampType }) {
         <Input
           name="rewardText"
           defaultValue={type.rewardText}
-          placeholder="ของรางวัล เช่น เครื่องดื่มฟรี 1 แก้ว"
+          placeholder={t("stRewardPlaceholder")}
           maxLength={200}
         />
         {state.error && <p className="text-sm text-error">{state.error}</p>}
         {state.success && <p className="text-sm text-success">{state.success}</p>}
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={pending}>
-            บันทึก
+            {t("stSave")}
           </Button>
           {!type.isDefault && (
             <Button
@@ -92,7 +94,7 @@ function TypeRow({ type }: { type: StampType }) {
                 })
               }
             >
-              {type.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}
+              {type.isActive ? t("stDeactivate") : t("stActivate")}
             </Button>
           )}
         </div>
@@ -102,17 +104,18 @@ function TypeRow({ type }: { type: StampType }) {
 }
 
 function AddTypeForm() {
+  const t = useTranslations("shop");
   const [state, action, pending] = useActionState<FormState, FormData>(
     createStampTypeAction,
     {},
   );
   return (
     <form action={action} className="flex flex-col gap-2 pt-4">
-      <p className="text-sm font-medium text-foreground">เพิ่มประเภทใหม่</p>
-      <Input name="name" placeholder="ชื่อประเภท เช่น แสตมป์ 20฿" maxLength={40} required />
+      <p className="text-sm font-medium text-foreground">{t("stAddTypeTitle")}</p>
+      <Input name="name" placeholder={t("stTypeNamePlaceholder")} maxLength={40} required />
       <div className="flex gap-2">
         <label className="flex-1 text-xs text-muted">
-          จำนวนครบ
+          {t("stThreshold")}
           <input
             name="threshold"
             type="number"
@@ -123,7 +126,7 @@ function AddTypeForm() {
           />
         </label>
         <label className="flex-1 text-xs text-muted">
-          ราคา/บาท (ไม่บังคับ)
+          {t("stPriceBahtOptional")}
           <input
             name="priceBaht"
             type="number"
@@ -136,14 +139,14 @@ function AddTypeForm() {
       </div>
       <Input
         name="rewardText"
-        placeholder="ของรางวัล เช่น เครื่องดื่มฟรี 1 แก้ว"
+        placeholder={t("stRewardPlaceholder")}
         maxLength={200}
       />
       {state.error && <p className="text-sm text-error">{state.error}</p>}
       {state.success && <p className="text-sm text-success">{state.success}</p>}
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
         <Plus size={16} />
-        เพิ่มประเภท
+        {t("stAddType")}
       </Button>
     </form>
   );

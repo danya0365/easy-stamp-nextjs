@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPinned, Map as MapIcon, Plus } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { requireRole } from "@/src/infrastructure/auth/session";
 import { container } from "@/src/infrastructure/di/container";
@@ -10,7 +11,7 @@ import { EmptyState } from "@/src/presentation/components/ui/EmptyState";
 import { LeadList } from "@/src/presentation/components/leads/LeadList";
 import type { LeadRow } from "@/src/presentation/actions/lead-actions";
 import {
-  LEAD_STATUS_LABEL,
+  LEAD_STATUS_KEY,
   LEAD_STATUS_ORDER,
 } from "@/src/presentation/lib/lead-display";
 import { cn } from "@/src/presentation/components/ui/cn";
@@ -29,6 +30,8 @@ export default async function AdminLeadsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   await requireRole("platform_admin");
+  const t = await getTranslations("leads");
+  const tp = await getTranslations("adminPages");
   const { status: statusParam } = await searchParams;
   const status = parseStatus(statusParam);
 
@@ -45,34 +48,34 @@ export default async function AdminLeadsPage({
   }));
 
   const filters: { value: LeadStatus | null; label: string }[] = [
-    { value: null, label: "ทั้งหมด" },
-    ...LEAD_STATUS_ORDER.map((s) => ({ value: s, label: LEAD_STATUS_LABEL[s] })),
+    { value: null, label: tp("leadsAll") },
+    ...LEAD_STATUS_ORDER.map((s) => ({ value: s, label: t(LEAD_STATUS_KEY[s]) })),
   ];
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-lg font-semibold text-foreground">
-          ลีด (ร้านที่กำลังสำรวจ)
+          {tp("leadsTitle")}
         </h1>
         <div className="flex gap-2">
           <Link href="/admin/leads/map">
             <Button variant="outline" size="sm">
               <MapIcon size={14} />
-              แผนที่
+              {tp("leadsMapButton")}
             </Button>
           </Link>
           <Link href="/admin/leads/new">
             <Button size="sm">
               <Plus size={14} />
-              เพิ่มลีด
+              {tp("leadsAddButton")}
             </Button>
           </Link>
         </div>
       </div>
 
       <Card>
-        <CardHeader title="ลีดทั้งหมด" />
+        <CardHeader title={tp("leadsAllTitle")} />
         <div className="mb-3 flex flex-wrap gap-1.5">
           {filters.map((f) => {
             const active = f.value === status;
@@ -96,7 +99,7 @@ export default async function AdminLeadsPage({
         </div>
 
         {rows.length === 0 ? (
-          <EmptyState icon={<MapPinned />} title="ยังไม่มีลีดในสถานะนี้" />
+          <EmptyState icon={<MapPinned />} title={tp("leadsEmptyStatus")} />
         ) : (
           <LeadList
             initialItems={rows}

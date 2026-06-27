@@ -8,6 +8,7 @@ import Map, {
   type MapRef,
 } from "react-map-gl/maplibre";
 import { LocateFixed, MapPin, Search, Store } from "lucide-react";
+import { useTranslations } from "next-intl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import {
@@ -45,6 +46,8 @@ export default function LeadCreateMapPickerView({
 }: {
   categories: Category[];
 }) {
+  const t = useTranslations("leads");
+  const tc = useTranslations("common");
   const router = useRouter();
   const mapRef = useRef<MapRef>(null);
   const [state, action, pending] = useActionState<LeadFormState, FormData>(
@@ -140,7 +143,7 @@ export default function LeadCreateMapPickerView({
 
   function detectCurrentLocation() {
     if (!navigator.geolocation) {
-      setGeoError("อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง");
+      setGeoError(tc("geoUnsupported"));
       return;
     }
     setLocating(true);
@@ -157,8 +160,8 @@ export default function LeadCreateMapPickerView({
       (err) => {
         setGeoError(
           err.code === err.PERMISSION_DENIED
-            ? "กรุณาอนุญาตให้เข้าถึงตำแหน่งในเบราว์เซอร์"
-            : "ระบุตำแหน่งไม่สำเร็จ ลองใหม่อีกครั้ง",
+            ? tc("geoPermissionDenied")
+            : tc("geoFailed"),
         );
         setLocating(false);
       },
@@ -201,7 +204,7 @@ export default function LeadCreateMapPickerView({
                 void runSearch();
               }
             }}
-            placeholder="ค้นหาย่าน/สถานที่ เช่น สยามสแควร์"
+            placeholder={t("searchPlacePlaceholder")}
           />
           <Button
             type="button"
@@ -210,7 +213,7 @@ export default function LeadCreateMapPickerView({
             disabled={searching}
           >
             <Search size={16} />
-            {searching ? "…" : "ค้นหา"}
+            {searching ? "…" : t("search")}
           </Button>
         </div>
         {results.length > 0 && (
@@ -237,9 +240,7 @@ export default function LeadCreateMapPickerView({
 
       {/* Map */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted">
-          แตะหมุดร้านเพื่อดึงข้อมูล หรือแตะจุดบนแผนที่ถ้าไม่เจอร้าน
-        </p>
+        <p className="text-xs text-muted">{t("tapPoiHint")}</p>
         <Button
           type="button"
           variant="outline"
@@ -248,7 +249,7 @@ export default function LeadCreateMapPickerView({
           disabled={locating}
         >
           <LocateFixed size={14} />
-          {locating ? "กำลังหา…" : "ตำแหน่งปัจจุบัน"}
+          {locating ? t("locatingShort") : tc("currentLocation")}
         </Button>
       </div>
       {geoError && <p className="text-xs text-error">{geoError}</p>}
@@ -305,10 +306,10 @@ export default function LeadCreateMapPickerView({
         <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
           <span className="pointer-events-auto rounded-full bg-card/90 px-3 py-1 text-xs text-muted shadow-sm backdrop-blur">
             {loadingPois
-              ? "กำลังโหลดร้านในพื้นที่…"
+              ? t("loadingPois")
               : zoomLow
-                ? "ซูมเข้าเพื่อแสดงร้านในพื้นที่"
-                : `พบ ${pois.length} ร้านในมุมมองนี้`}
+                ? t("zoomForPois")
+                : t("poisFound", { count: pois.length })}
           </span>
         </div>
       </div>
@@ -319,7 +320,7 @@ export default function LeadCreateMapPickerView({
         <input type="hidden" name="longitude" value={pos ? pos.lng : ""} />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="ชื่อร้าน" htmlFor="name">
+          <FormField label={t("shopName")} htmlFor="name">
             <Input
               id="name"
               name="name"
@@ -328,7 +329,7 @@ export default function LeadCreateMapPickerView({
               required
             />
           </FormField>
-          <FormField label="เบอร์โทร" htmlFor="phone">
+          <FormField label={t("phone")} htmlFor="phone">
             <Input
               id="phone"
               name="phone"
@@ -337,7 +338,7 @@ export default function LeadCreateMapPickerView({
               onChange={(e) => setPhone(e.target.value)}
             />
           </FormField>
-          <FormField label="หมวดหมู่ร้าน" htmlFor="categoryId">
+          <FormField label={t("category")} htmlFor="categoryId">
             <select
               id="categoryId"
               name="categoryId"
@@ -345,7 +346,7 @@ export default function LeadCreateMapPickerView({
               onChange={(e) => setCategoryId(e.target.value)}
               className={SELECT_CLASS}
             >
-              <option value="">— ไม่ระบุ —</option>
+              <option value="">{t("categoryNone")}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -353,12 +354,12 @@ export default function LeadCreateMapPickerView({
               ))}
             </select>
           </FormField>
-          <FormField label="นัดติดตามครั้งหน้า" htmlFor="nextFollowUpAt">
+          <FormField label={t("nextFollowUp")} htmlFor="nextFollowUpAt">
             <Input id="nextFollowUpAt" name="nextFollowUpAt" type="date" />
           </FormField>
         </div>
 
-        <FormField label="ที่อยู่ / จุดสังเกต" htmlFor="address">
+        <FormField label={t("addressLabel")} htmlFor="address">
           <Input
             id="address"
             name="address"
@@ -368,20 +369,22 @@ export default function LeadCreateMapPickerView({
           />
         </FormField>
 
-        <FormField label="โน้ต" htmlFor="notes">
+        <FormField label={t("notes")} htmlFor="notes">
           <Textarea id="notes" name="notes" rows={2} />
         </FormField>
 
         <p className="text-xs text-muted">
           {pos
-            ? `ปักหมุดที่ ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`
-            : "ยังไม่ได้ปักตำแหน่ง — แตะบนแผนที่"}
+            ? t("pinnedAt", {
+                coords: `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`,
+              })
+            : t("notPinnedTapMap")}
         </p>
 
         {state.error && <p className="text-sm text-error">{state.error}</p>}
 
         <Button type="submit" disabled={pending}>
-          {pending ? "กำลังเพิ่ม…" : "เพิ่มลีด"}
+          {pending ? t("adding") : t("addLead")}
         </Button>
       </form>
     </div>

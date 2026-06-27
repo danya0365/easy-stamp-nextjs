@@ -3,8 +3,16 @@
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/src/infrastructure/di/container";
-import { requireRole } from "@/src/infrastructure/auth/session";
-import { assertShopActive } from "@/src/infrastructure/auth/billing-guard";
+import { requireShopWrite } from "@/src/infrastructure/auth/session";
+import {
+  assertShopActive,
+  getBillingState,
+} from "@/src/infrastructure/auth/billing-guard";
+import {
+  PAUSE_MAX_PER_30D,
+  PAUSE_CAP_WINDOW_MS,
+  PAUSE_COOLDOWN_MS,
+} from "@/src/domain/services/subscription-status";
 import { UpdateShopSettingsUseCase } from "@/src/application/use-cases/shop/UpdateShopSettingsUseCase";
 import { CreateBranchUseCase } from "@/src/application/use-cases/shop/CreateBranchUseCase";
 import { UpdateBranchLocationUseCase } from "@/src/application/use-cases/shop/UpdateBranchLocationUseCase";
@@ -18,6 +26,7 @@ import { SetStampTypeActiveUseCase } from "@/src/application/use-cases/stamp/Set
 import { SaveShopImageUseCase } from "@/src/application/use-cases/shop/SaveShopImageUseCase";
 import { DeleteShopImageUseCase } from "@/src/application/use-cases/shop/DeleteShopImageUseCase";
 import { UpdateShopProfileUseCase } from "@/src/application/use-cases/shop/UpdateShopProfileUseCase";
+import { AnonymizeCustomerUseCase } from "@/src/application/use-cases/customer/AnonymizeCustomerUseCase";
 import { ReplyToReviewUseCase } from "@/src/application/use-cases/review/ReplyToReviewUseCase";
 import {
   AnnotateCustomerEligibilityUseCase,
@@ -35,25 +44,102 @@ export interface FormState {
   success?: string;
 }
 
+// Abuse guard-rails for "temporarily close shop" — cap + cooldown are shared
+// with the UI (PAUSE_* live in the domain). The economic loophole (stretching one
+// paid day across calendar days by closing off-hours) is already neutralized by
+// whole-day-floor crediting in resumeDueDate; these add visibility + churn limits.
+
 /** Owner temporarily closes their shop (freezes billing days). */
-export async function pauseMyShopAction(): Promise<void> {
-  const user = await requireRole("shop_owner");
-  await new PauseShopUseCase(
-    container.shopRepository,
-    container.subscriptionRepository,
-  ).execute(user.shopId!);
-  revalidatePath("/shop");
-  revalidatePath("/shop/settings");
+export async function pauseMyShopAction(): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+
+    // Only enforce quotas on a real active→paused transition (skip no-ops).
+    const { status } = await getBillingState(shopId);
+    if (status.isPaused) return {}; // already closed — nothing to do
+    if (status.isSuspended) {
+      return { error: "ร้านถูกระงับอยู่ ไม่สามารถปิดชั่วคราวได้" };
+    }
+
+    // Cooldown: at most one closure per 24h (no admin alert — just "wait").
+    const cd = await container.rateLimitRepository.hit(
+      `shop_pause_cd:${shopId}`,
+      1,
+      PAUSE_COOLDOWN_MS,
+    );
+    if (!cd.allowed) {
+      const hrs = Math.max(1, Math.ceil(cd.retryAfterSec / 3600));
+      return {
+        error: `เพิ่งปิด/เปิดร้านไปไม่นาน กรุณารออีกประมาณ ${hrs} ชม. ก่อนปิดอีกครั้ง`,
+      };
+    }
+
+    // Monthly cap: alerts admins + owner once when the threshold trips.
+    const ip = await getClientIp();
+    const cap = await container.sensitiveActionGuard.check({
+      key: `shop_pause_cap:${shopId}`,
+      limit: PAUSE_MAX_PER_30D,
+      windowMs: PAUSE_CAP_WINDOW_MS,
+      shopId,
+      actorUserId: actor.id,
+      ip,
+      alertTitle: "⚠️ ร้านปิดชั่วคราวบ่อยผิดปกติ",
+      alertBody: `ร้านหนึ่งปิดชั่วคราวเกิน ${PAUSE_MAX_PER_30D} ครั้งใน 30 วัน — อาจกำลังเลี่ยงการนับวันใช้งาน`,
+    });
+    if (!cap.allowed) {
+      return {
+        error: `เดือนนี้ปิดร้านครบ ${PAUSE_MAX_PER_30D} ครั้งแล้ว ระบบแจ้งผู้ดูแลแล้ว หากจำเป็นโปรดติดต่อผู้ดูแล`,
+      };
+    }
+
+    await new PauseShopUseCase(
+      container.shopRepository,
+      container.subscriptionRepository,
+    ).execute(shopId);
+
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.shopPaused,
+      targetType: "shop",
+      targetId: shopId,
+      shopId,
+      ip,
+    });
+
+    revalidatePath("/shop");
+    revalidatePath("/shop/settings");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
-/** Owner reopens their shop (resumes billing; remaining days unchanged). */
-export async function resumeMyShopAction(): Promise<void> {
-  const user = await requireRole("shop_owner");
-  await new ResumeShopUseCase(container.subscriptionRepository).execute(
-    user.shopId!,
-  );
-  revalidatePath("/shop");
-  revalidatePath("/shop/settings");
+/** Owner reopens their shop (resumes billing; remaining whole days unchanged). */
+export async function resumeMyShopAction(): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    const changed = await new ResumeShopUseCase(
+      container.subscriptionRepository,
+    ).execute(shopId);
+
+    if (changed) {
+      await container.auditLogger.record({
+        actorUserId: actor.id,
+        actorRole: actor.role,
+        action: AUDIT_ACTIONS.shopResumed,
+        targetType: "shop",
+        targetId: shopId,
+        shopId,
+        ip: await getClientIp(),
+      });
+      revalidatePath("/shop");
+      revalidatePath("/shop/settings");
+    }
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
 }
 
 /** Next page of the shop's customer list (optionally filtered by search). */
@@ -61,8 +147,7 @@ export async function loadMoreCustomersAction(
   search: string,
   cursor: string,
 ): Promise<Page<CustomerRow>> {
-  const user = await requireRole("shop_owner");
-  const shopId = user.shopId!;
+  const { shopId } = await requireShopWrite();
   const page = await container.customerRepository.pageByShop(shopId, {
     cursor,
     search: search || undefined,
@@ -77,6 +162,37 @@ export async function loadMoreCustomersAction(
   };
 }
 
+/** PDPA erasure: strip a customer's personal data (anonymize). Irreversible. */
+export async function anonymizeCustomerAction(
+  customerId: string,
+): Promise<{ error?: string }> {
+  try {
+    const { actor, shopId } = await requireShopWrite();
+    const customer = await container.customerRepository.findById(shopId, customerId);
+    if (!customer) return { error: "ไม่พบลูกค้าในร้านนี้" };
+
+    await new AnonymizeCustomerUseCase(
+      container.customerRepository,
+      container.customerDeviceRepository,
+    ).execute(shopId, customerId);
+
+    await container.auditLogger.record({
+      actorUserId: actor.id,
+      actorRole: actor.role,
+      action: AUDIT_ACTIONS.customerErased,
+      targetType: "customer",
+      targetId: customerId,
+      shopId,
+      ip: await getClientIp(),
+    });
+
+    revalidatePath("/shop/customers");
+    return {};
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 /** Parse an optional baht price field → satang or null. */
 function parsePriceSatang(raw: string): number | null {
   const trimmed = raw.trim();
@@ -87,10 +203,9 @@ function parsePriceSatang(raw: string): number | null {
 }
 
 async function ownerShopId(): Promise<string> {
-  const user = await requireRole("shop_owner");
-  if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
-  await assertShopActive(user.shopId);
-  return user.shopId;
+  const { shopId } = await requireShopWrite();
+  await assertShopActive(shopId);
+  return shopId;
 }
 
 export async function updateSettingsAction(
@@ -197,10 +312,9 @@ export async function replyToReviewAction(
   formData: FormData,
 ): Promise<FormState> {
   try {
-    const user = await requireRole("shop_owner");
-    if (!user.shopId) throw new Error("บัญชีนี้ไม่ได้ผูกกับร้านค้า");
+    const { shopId } = await requireShopWrite();
     await new ReplyToReviewUseCase(container.shopReviewRepository).execute(
-      user.shopId,
+      shopId,
       String(formData.get("reviewId") ?? ""),
       String(formData.get("reply") ?? ""),
     );
@@ -215,8 +329,8 @@ export async function replyToReviewAction(
 export async function loadMoreShopReviewsAction(
   cursor: string,
 ): Promise<Page<ShopReview>> {
-  const user = await requireRole("shop_owner");
-  return container.shopReviewRepository.pageByShop(user.shopId!, {
+  const { shopId } = await requireShopWrite();
+  return container.shopReviewRepository.pageByShop(shopId, {
     cursor,
     includeHidden: true,
   });
@@ -343,8 +457,8 @@ export async function createStaffAction(
   formData: FormData,
 ): Promise<FormState> {
   try {
-    const owner = await requireRole("shop_owner");
-    const shopId = await ownerShopId();
+    const { actor, shopId } = await requireShopWrite();
+    await assertShopActive(shopId);
     const password = String(formData.get("password") ?? "");
     await assertPasswordAcceptable(password, container.passwordBreachChecker);
     const staff = await new CreateStaffUseCase(
@@ -358,8 +472,8 @@ export async function createStaffAction(
       password,
     });
     await container.auditLogger.record({
-      actorUserId: owner.id,
-      actorRole: owner.role,
+      actorUserId: actor.id,
+      actorRole: actor.role,
       action: AUDIT_ACTIONS.staffCreated,
       targetType: "user",
       targetId: staff.id,
@@ -392,19 +506,19 @@ export async function forceLogoutStaffAction(
   userId: string,
 ): Promise<{ error?: string }> {
   try {
-    const owner = await requireRole("shop_owner");
+    const { actor, shopId } = await requireShopWrite();
     const target = await container.userRepository.findById(userId);
-    if (!target || target.shopId !== owner.shopId || target.role !== "branch_staff") {
+    if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
       throw new Error("ไม่พบพนักงานในร้านนี้");
     }
     await container.sessionRepository.deleteAllForUser(userId);
     await container.auditLogger.record({
-      actorUserId: owner.id,
-      actorRole: owner.role,
+      actorUserId: actor.id,
+      actorRole: actor.role,
       action: AUDIT_ACTIONS.forceLogout,
       targetType: "user",
       targetId: userId,
-      shopId: owner.shopId,
+      shopId,
       ip: await getClientIp(),
       metadata: { email: target.email },
     });
@@ -419,8 +533,8 @@ export async function forceLogoutStaffAction(
 export async function loadMoreShopAuditAction(
   cursor: string,
 ): Promise<Page<AuditLog>> {
-  const owner = await requireRole("shop_owner");
-  return container.auditLogRepository.pageByShop(owner.shopId!, { cursor });
+  const { shopId } = await requireShopWrite();
+  return container.auditLogRepository.pageByShop(shopId, { cursor });
 }
 
 /** Owner sets a new password for one of their staff (e.g. they forgot it). */
@@ -429,8 +543,7 @@ export async function resetStaffPasswordAction(
   newPassword: string,
 ): Promise<{ error?: string }> {
   try {
-    const owner = await requireRole("shop_owner");
-    const shopId = owner.shopId;
+    const { actor, shopId } = await requireShopWrite();
     const target = await container.userRepository.findById(userId);
     if (!target || target.shopId !== shopId || target.role !== "branch_staff") {
       throw new Error("ไม่พบพนักงานในร้านนี้");
@@ -442,8 +555,8 @@ export async function resetStaffPasswordAction(
       container.passwordBreachChecker,
     ).execute(userId, newPassword);
     await container.auditLogger.record({
-      actorUserId: owner.id,
-      actorRole: owner.role,
+      actorUserId: actor.id,
+      actorRole: actor.role,
       action: AUDIT_ACTIONS.passwordResetByAdmin,
       targetType: "user",
       targetId: userId,

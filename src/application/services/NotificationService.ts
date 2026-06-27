@@ -2,6 +2,11 @@ import type { NotificationType } from "@/src/domain/entities";
 import type { INotificationRepository } from "@/src/application/repositories/INotificationRepository";
 import type { IUserRepository } from "@/src/application/repositories/IUserRepository";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
+import {
+  type IEmailSender,
+  nullEmailSender,
+} from "@/src/application/services/IEmailSender";
+import { type ILogger, noopLogger } from "@/src/application/services/ILogger";
 
 export interface NotifyInput {
   type: NotificationType;
@@ -12,17 +17,20 @@ export interface NotifyInput {
 
 /**
  * Creates in-app notifications and (best-effort) mirrors them to the recipient's
- * LINE via the message pusher. Every method is best-effort: it swallows its own
- * errors so a failed notification never breaks the triggering business flow.
+ * LINE (message pusher) and email (email sender). Every method is best-effort:
+ * it swallows its own errors so a failed notification never breaks the
+ * triggering business flow. LINE/email are no-ops until configured.
  */
 export class NotificationService {
   constructor(
     private readonly notifications: INotificationRepository,
     private readonly users: IUserRepository,
     private readonly pusher: IMessagePusher,
+    private readonly logger: ILogger = noopLogger,
+    private readonly email: IEmailSender = nullEmailSender,
   ) {}
 
-  /** Notify one user (in-app + LINE if linked). */
+  /** Notify one user (in-app + LINE if linked + email if configured). */
   async notify(userId: string, input: NotifyInput): Promise<void> {
     try {
       await this.notifications.create({ userId, ...input });
@@ -33,8 +41,16 @@ export class NotificationService {
           `${input.title}\n${input.body}`,
         );
       }
+      if (user?.email) {
+        const link = input.linkUrl ? `\n\n${input.linkUrl}` : "";
+        await this.email.send({
+          to: user.email,
+          subject: input.title,
+          text: `${input.body}${link}`,
+        });
+      }
     } catch (e) {
-      console.error("[notify] failed for user", userId, e);
+      this.logger.captureException(e, { scope: "notify", userId });
     }
   }
 
@@ -44,7 +60,7 @@ export class NotificationService {
       const admins = await this.users.listByRole("platform_admin");
       await Promise.all(admins.map((a) => this.notify(a.id, input)));
     } catch (e) {
-      console.error("[notify] notifyAdmins failed", e);
+      this.logger.captureException(e, { scope: "notify", op: "notifyAdmins" });
     }
   }
 
@@ -56,7 +72,11 @@ export class NotificationService {
       );
       await Promise.all(owners.map((o) => this.notify(o.id, input)));
     } catch (e) {
-      console.error("[notify] notifyShopOwner failed", shopId, e);
+      this.logger.captureException(e, {
+        scope: "notify",
+        op: "notifyShopOwner",
+        shopId,
+      });
     }
   }
 }

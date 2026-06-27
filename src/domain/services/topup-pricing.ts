@@ -12,7 +12,6 @@
 export interface TopupPackage {
   /** Stable id, stored on the payment so historical orders stay accurate. */
   id: string;
-  label: string;
   /** Base paid days. Price is derived as `days × shop's pricePerDaySatang`. */
   days: number;
   /** Free days granted on top of `days`. */
@@ -28,18 +27,17 @@ export interface PromoConfig {
   active: boolean;
   /** Whole-percent discount applied to every top-up price. */
   percentOff: number;
-  /** Shown on the promo banner. */
-  label: string;
 }
 
 /**
  * Hardcoded launch promo. To END the promo, set `active: false` and redeploy —
  * every price reverts to full automatically (single source: resolveTopupQuote).
+ * The banner copy lives in the i18n catalog (`billing.promoLabel`, keyed off
+ * `percentOff`) — this stays a pure config.
  */
 export const TOPUP_PROMO: PromoConfig = {
   active: true,
   percentOff: 50,
-  label: "โปรเปิดตัว ลดทุกแพ็ก 50%",
 };
 
 export function isPromoActive(promo: PromoConfig = TOPUP_PROMO): boolean {
@@ -67,10 +65,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * owners to choose.
  */
 export const TOPUP_PRESETS: readonly TopupPackage[] = [
-  { id: "d30", label: "30 วัน", days: 30, bonusDays: 0 },
-  { id: "d90", label: "90 วัน", days: 90, bonusDays: 7 },
-  { id: "d180", label: "180 วัน", days: 180, bonusDays: 20, badge: "popular" },
-  { id: "d365", label: "365 วัน", days: 365, bonusDays: 45, badge: "best_value" },
+  { id: "d30", days: 30, bonusDays: 0 },
+  { id: "d90", days: 90, bonusDays: 7 },
+  { id: "d180", days: 180, bonusDays: 20, badge: "popular" },
+  { id: "d365", days: 365, bonusDays: 45, badge: "best_value" },
 ];
 
 export function findPreset(id: string): TopupPackage | null {
