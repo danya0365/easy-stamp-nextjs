@@ -60,8 +60,9 @@ export class ResendEmailSender implements IEmailSender {
         { retries: 2 },
       );
     } catch {
-      // Last resort — never throw from a best-effort send.
-      console.error("[email] failed to deliver", { to: message.to });
+      // Last resort — never throw from a best-effort send. Don't log the
+      // recipient address (PII / clear-text logging).
+      console.error("[email] failed to deliver");
     }
   }
 }

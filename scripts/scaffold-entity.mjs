@@ -13,7 +13,7 @@
  * those edits are printed so you stay in control. See docs/EXTENDING.md.
  */
 import { writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 
 const name = process.argv[2];
 if (!name || !/^[A-Z][A-Za-z0-9]+$/.test(name)) {
@@ -29,7 +29,14 @@ const table = process.argv[3] ?? `${kebab.replace(/-/g, "_")}s`;
 const root = join(import.meta.dirname, "..");
 
 function write(rel, contents) {
-  const abs = join(root, rel);
+  // Containment guard: the resolved path must stay inside the repo root, so a
+  // crafted name can never escape via traversal (defence-in-depth on top of the
+  // strict name validation above).
+  const abs = resolve(root, rel);
+  if (abs !== root && !abs.startsWith(root + sep)) {
+    console.error(`! refusing to write outside the repo: ${rel}`);
+    process.exit(1);
+  }
   if (existsSync(abs)) {
     console.error(`! skip (exists): ${rel}`);
     return;
