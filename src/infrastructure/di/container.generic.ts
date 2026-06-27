@@ -30,6 +30,7 @@ import {
   lineConfigFromEnv,
 } from "@/src/infrastructure/services/LineMessagingPusher";
 import { createGeocoder } from "@/src/infrastructure/services/OsmGeocoder";
+import { createEmailSender } from "@/src/infrastructure/services/ResendEmailSender";
 import { NotificationService } from "@/src/application/services/NotificationService";
 import { AuditLogger } from "@/src/application/services/AuditLogger";
 import { LoginSecurityService } from "@/src/application/services/LoginSecurityService";
@@ -51,6 +52,7 @@ import type { IPaymentVerifier } from "@/src/application/services/IPaymentVerifi
 import type { ISlipStorage } from "@/src/application/services/ISlipStorage";
 import type { IMessagePusher } from "@/src/application/services/IMessagePusher";
 import type { IGeocoder } from "@/src/application/services/IGeocoder";
+import type { IEmailSender } from "@/src/application/services/IEmailSender";
 import type { ILogger } from "@/src/application/services/ILogger";
 import { logger } from "@/src/infrastructure/observability/logger";
 
@@ -119,6 +121,7 @@ export class GenericContainer {
   readonly messagePusher: IMessagePusher = createMessagePusher();
   readonly turnstile: TurnstileVerifier = createTurnstile();
   readonly geocoder: IGeocoder = createGeocoder();
+  readonly emailSender: IEmailSender = createEmailSender();
 
   readonly logger: ILogger = logger;
   readonly notificationService: NotificationService = new NotificationService(
@@ -126,6 +129,7 @@ export class GenericContainer {
     this.userRepository,
     this.messagePusher,
     this.logger,
+    this.emailSender,
   );
   readonly auditLogger: AuditLogger = new AuditLogger(
     this.auditLogRepository,

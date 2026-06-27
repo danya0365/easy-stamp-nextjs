@@ -187,6 +187,34 @@ checkboxes as items land.
   (payments/leads/shop_images keys). Fails closed (reference set gathered up front) and spares files
   newer than a 24h grace window so it can't race in-flight uploads.
 
+## P3 — SaaS-starter roadmap (make cloning fast; Thai-vertical scope)
+
+Scope decision: keep the admin-onboarded + LINE + PromptPay-manual-slip model. **Out of scope by
+choice:** self-serve public signup, Stripe/auto card gateway + recurring billing + invoices,
+multi-locale routing, public REST API / outbound webhooks, Docker/IaC. Ordered by impact on being a
+good starter. (Roadmap detail: the plan file referenced from `docs/FORKING.md`.)
+
+- [x] **Clone runbook + delete-manifest** — [FORKING.md](FORKING.md): step-by-step "rename → delete
+  domain → model new domain → deploy" with a grep-friendly file list. Turns REUSE_MAP into a runbook.
+- [x] **DI container generic/domain split** — `container.generic.ts` (`GenericContainer` = account/
+  auth/billing/notifications/audit/rate-limit/payments + shared services) and `container.ts` (domain
+  subclass). Forking = delete domain folders + edit the domain repos in one file.
+- [x] **Email capability** — vendor-neutral `IEmailSender` (`src/application/services/IEmailSender.ts`,
+  no-op `nullEmailSender`) + `ResendEmailSender` (fetch-based, env-gated by `RESEND_API_KEY` +
+  `EMAIL_FROM`, fail-soft + retry; swap-in another provider in `createEmailSender()`). Wired as a
+  third best-effort channel in `NotificationService.notify()` alongside in-app + LINE, so every
+  notification can email the user; **off (no-op) until configured** — zero behavior change by default.
+  Unit-tested.
+- [x] **Legal scaffold** — `app/(public)/tos/page.tsx` (Terms, BRAND-driven, per-clone prose) linked
+  from the public footers; `public/.well-known/security.txt` (RFC 9116, placeholder per clone).
+- [x] **Ops hardening** — `.github/dependabot.yml` (npm + actions), `codeql.yml` (security-and-quality
+  scan), and CI `build` (`npx next build` vs a throwaway DB — never the prod-migrating `npm run build`)
+  + `security` (`npm audit --omit=dev --audit-level=high`) jobs.
+- [ ] **Entity scaffolding generator** — collapse the 10-step EXTENDING flow into a script (deferred).
+- [ ] **Finish brand centralization** — logo/theme-color/social-copy config knobs (deferred).
+- [ ] **Pre-commit hook + Sentry adapter** — husky/lint-staged + an env-gated Sentry impl behind the
+  existing `ErrorTracker` (deferred; both need a dependency install).
+
 ---
 
 ## How to use this for a new product (e.g. Easy Queue)

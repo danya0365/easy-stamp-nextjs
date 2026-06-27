@@ -98,6 +98,12 @@ export function validateEnv(): void {
   if (line.some((k) => process.env[k]) && !line.every((k) => process.env[k])) {
     warnings.push(`Partial LINE config — set both ${line.join(" and ")} or neither.`);
   }
+  const email = ["RESEND_API_KEY", "EMAIL_FROM"];
+  if (email.some((k) => process.env[k]) && !email.every((k) => process.env[k])) {
+    warnings.push(
+      `Partial email config — set both ${email.join(" and ")} or neither (email notifications stay off).`,
+    );
+  }
 
   for (const w of warnings) logger.warn(w, { scope: "env" });
   if (errors.length > 0) {
